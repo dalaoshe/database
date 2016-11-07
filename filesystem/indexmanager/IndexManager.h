@@ -50,7 +50,7 @@ public:
 
     IX_IndexHandle  (){};                             // Constructor
     ~IX_IndexHandle (){};                             // Destructor
-
+    //TODO search-problem(i -> i-1)
     RC InsertEntry     (char *key, RID  rid) {
         printf("insert \n");
         //待插入索引码该插入的叶级节点
@@ -63,19 +63,18 @@ public:
         int index;
         //根级页到叶级页的路径（包括叶级页）
         vector<Pointer> path;
-        printf("begin search \n");
         if(this->searchEntryLeaf(k.key,node,index,path).equal(RC(0))) {
 
             //索引码存在直接插入指针桶
             if(node.exist(k)) {
                 int i = node.search(k);
+                --i;
                 int index_type = node.getPointerType(i+1);
                 int index_tag = node.getTag(i);
                 /*
                  * 根据指针为指针桶还是行定位器进行不同的插入操作
                  */
                 if(index_type == IndexType::bucket) {
-                    printf("bucket search \n");
                     Pointer bucket_pointer = node.getPointer(i+1);
                     int bucket_index;
                     int bucket_pid = bucket_pointer.pid;
@@ -88,7 +87,6 @@ public:
                         bucket_page = this->bpm->getPage(fileID,bucket_pointer.pid,bucket_index);
                         bucket.reset(bucket_page,Pointer(bucket_pid,page_header_size));
                     }
-                    printf("end while \n");
                     if(bucket.canInsert()) {
                         bucket.insertKey(k,pointer,tag);
                         bucket.writeback();
@@ -114,7 +112,6 @@ public:
                     return RC();
                 }
                 else if(index_type == IndexType::id){
-                    printf("id search \n");
                     int bucket_index;
                     Pointer bucket_pointer(page_num,page_header_size);
                     BufType bucket_page = this->bpm->allocPage(fileID, page_num, bucket_index);
@@ -139,9 +136,7 @@ public:
                 }
             }
             else {
-                printf("new key \n");
                 node.insertKey(k,pointer,IndexType::id,tag);
-                printf("insert over \n");
                 solveOverflow(node,index,path);
                 return RC(0);
             }
@@ -347,7 +342,7 @@ public:
         searchEntryLeaf(key,node,temp,path);
         int i = node.search((char*)key);
         printf("i:%d \n",i);
-        pointer = node.getPointer(i+1);
+        pointer = node.getPointer(i);
         return RC();
     };
 
@@ -507,15 +502,12 @@ public:
                      IX_IndexHandle &indexHandle) {
         FileManager *fm = new FileManager();
         int fileID;
-        printf("b1");
         if(fm->openFile(fileName,fileID)) {
             BufPageManager *bpm = new BufPageManager(fm);
             indexHandle.setBufManager(bpm);
             indexHandle.setFileID(fileID);
             indexHandle.setFileManager(fm);
-            printf("b2");
             indexHandle.init();
-            printf("b3");
             return RC(0);
         }
         printf("error\n");

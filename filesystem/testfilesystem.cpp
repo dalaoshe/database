@@ -48,12 +48,9 @@ void only_test_index(){
     char key2 = 233;
 //    indexManager-> CreateIndex(a,0,INT,4);
 
-    printf("breakpoint...0\n");
     indexManager-> OpenIndex(a,0,ixIndexHandle);
-    printf("breakpoint...1\n");
-//    ixIndexHandle.InsertEntry(&key1,rid);
-//    ixIndexHandle.InsertEntry(&key2,rid);
-//    printf("breakpoint...2\n");
+    ixIndexHandle.InsertEntry(&key1,rid);
+    ixIndexHandle.InsertEntry(&key2,rid);
     Node node;
     Pointer pointer;
     ixIndexHandle.searchEntry(&key1,pointer);

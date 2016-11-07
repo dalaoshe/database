@@ -226,7 +226,7 @@ struct Node
     bool exist(Key k) {
         if(this->index_num == 0)return false;
         int i = this->search(k);
-        Key key = this->getKey(i);
+        Key key = this->getKey(i-1);
         return k.equal(key,key_byte_size);
     }
 
