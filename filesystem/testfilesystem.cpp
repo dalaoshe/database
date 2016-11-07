@@ -22,6 +22,7 @@
 #include "bufmanager/BufPageManager.h"
 #include "fileio/FileManager.h"
 #include "recordmaneger/RecordManager.h"
+#include "indexmanager/IndexManager.h"
 #include "utils/pagedef.h"
 #include <iostream>
 

@@ -4,8 +4,15 @@
 
 #ifndef FILESYSTEM_INDEX_UTIL_H
 #define FILESYSTEM_INDEX_UTIL_H
-enum IndexType {
-    cluster,bucket,id,index,
+namespace IndexType {
+    enum {
+        cluster = 1,
+        bucket = 2,
+        id = 3,
+        index = 4,
+        valid = 5,
+        invalid = 6,
+    };
 };
 struct Key{
     char* key;
@@ -16,6 +23,21 @@ struct Key{
         for(int i = 0 ; i < len ; ++i) {
             *(page+i) = *(key+i);
         }
+    }
+    bool equal(Key target, int len) {
+        char* t = target.key;
+        for(int i = 0 ; i < len ; ++i) {
+            char a = *(key+i);
+            char b = *(t+i);
+            if(a != b) return false;
+        }
+        return true;
+    }
+    bool less(Key target, int len) {
+        return true;
+    }
+    bool greater(Key target, int len) {
+        return true;
     }
 };
 /*
@@ -41,5 +63,6 @@ struct Pointer{
         *(p) = pid;
         *(p+1) = offset;
     }
+    Pointer(){}
 };
 #endif //FILESYSTEM_INDEX_UTIL_H

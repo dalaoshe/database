@@ -13,5 +13,8 @@ public:
     RC(int c) {
         this->c = c;
     }
+    bool equal(RC r) {
+        return this->c == r.c;
+    }
 };
 #endif //RC_H

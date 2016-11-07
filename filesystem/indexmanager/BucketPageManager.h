@@ -46,7 +46,7 @@ class BucketPageManager {
     //该页的类型
     int page_type;
 
-
+public:
     BucketPageManager(BufType page,int key_offset, int key_byte_size, int index_byte_size, int page_header_size, int key_type,int max_num,
                       int min_num, Pointer pointer) {
         this->init(page, pointer);
@@ -81,14 +81,15 @@ class BucketPageManager {
 
     void initBucketPageInfo() {
         *(bool*)page = this->isleaf = false;
-        *(((unsigned int *)page)+1) = this->next_page_offset = -1;
-        *(((unsigned int *)page)+2) = this->last_offset = page_header_size;
-        *(((unsigned int *)page)+3) = this->index_num = 0;
+        *(((int *)page)+1) = this->next_page_id = -1;
+        *(((int *)page)+2) = this->index_num = 0;
+        *(((int *)page)+3) = this->page_type = IndexType::bucket;
     }
 
-    void insert(Key key,Pointer pointer) {
+    void insertKey(Key key,Pointer pointer, int tag) {
         char *p = (char*)page;
         p = p + page_header_size + index_num * index_byte_size;
+        *(int*)p = tag;
         key.writeback(p+key_offset,key_byte_size);
         p += key_offset + key_byte_size;
         pointer.writeback(p);
@@ -108,13 +109,29 @@ class BucketPageManager {
         return this->next_page_id;
     }
     void setNextPid(int pid) {
-        return this->next_page_id = pid;
+         this->next_page_id = pid;
     }
     void writeback() {
-        *(bool*)page = this->isleaf ;
-        *(((unsigned int *)page)+1) = this->next_page_offset ;
-        *(((unsigned int *)page)+2) = this->last_offset ;
-        *(((unsigned int *)page)+3) = this->index_num ;
+        //指针桶页不是叶级页
+        *(bool*)page = false ;
+        *(((int *)page)+1) = this->next_page_id;
+        *(((int *)page)+2) = this->index_num;
+        *(((int *)page)+3) = this->page_type;
+    }
+    int searchPointer(Pointer pointer) {
+        char* p = (char*)this->page;
+        for(int i = 0 ; i < this->index_num ; ++i) {
+            char* temp = p + page_header_size + i*index_byte_size + key_offset + key_byte_size;
+            int pid = *(int *)temp;
+            int sid = *(((int*)temp)+1);
+            if(pid == pointer.pid && sid == pointer.offset) return i;
+        }
+        return -1;
+    }
+    void setPointerTag(int i, int tag) {
+        char* p = (char*)this->page;
+        char* temp = p + page_header_size + i*index_byte_size;
+        *(int*)temp = tag;
     }
 };
 #endif //FILESYSTEM_BUCKETPAGEMANAGER_H

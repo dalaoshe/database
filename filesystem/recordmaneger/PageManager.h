@@ -88,7 +88,7 @@ public:
     }
 
     void getSlotNum(int &slot_num) {
-        slot_num = SLOT_NUM;
+        slot_num = this->slot_num;
     }
 
 

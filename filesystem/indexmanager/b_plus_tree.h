@@ -69,19 +69,25 @@ struct Node
     }
     bool isLeaf() { return this->isleaf; }
 
-    Key getKey(i) {
+    Key getKey(int i) {
         char *p = (char*)page;
         p = p + page_header_size + i * index_byte_size + key_offset;
         return Key(p);
     }
 
-    Pointer getPointer(i) {
+    int getTag(int i) {
+        char *p = (char*)page;
+        p = p + page_header_size + i * index_byte_size;
+        return *(int *)p;
+    }
+
+    Pointer getPointer(int i) {
         char *p = (char*)page;
         p = p + page_header_size + (i-1) * index_byte_size + key_offset + key_byte_size;
         return Pointer(p);
     }
 
-    int getPointerType(i) {
+    int getPointerType(int i) {
         char *p = (char*)page;
         p = p + page_header_size + (i-1) * index_byte_size + key_offset + key_byte_size + 8;
         return *(int *)p;
@@ -94,15 +100,16 @@ struct Node
         if(this->index_num == 0) {
             return 1;
         }
-        if(key < this->getKey(1))
+        if(key.less(this->getKey(1),key_byte_size))
             return 1;
-        else if(key > this->getKey(this->index_num))
+        else if(key.greater(this->getKey(this->index_num),key_byte_size))
             return this->index_num+1;
         else {
             for (int i = 2; i <= index_num; ++i) {
                 Key k1 = this->getKey(i - 1);
                 Key k2 = this->getKey(i);
-                if (k1 <= key && key < k2) {
+                if ((k1.less(key,key_byte_size) || k1.equal(key,key_byte_size))
+                    && key.less(k2,key_byte_size)) {
                     return i;
                 }
             }
@@ -135,30 +142,34 @@ struct Node
      * 将关键码为key的，指针为pointer的项插入该节点
      * 插入操作直接修改缓存，执行后需要标记其为脏页
      */
-    void insertKey(Key key, Pointer pointer, IndexType type) {
+    void insertKey(Key key, Pointer pointer, int type, int tag) {
         int i = this->search(key);
         int j = this->index_num;
         for(int k = j ; k >= i ; --k) {
             copyIndex(k,k+1);
         }
+
         char *p = (char*)page;
         p = p + page_header_size + i * index_byte_size;
+        //插入状态位
+        *(int *)p = tag;
+        //插入索引码
         key.writeback(p+key_offset,key_byte_size);
         p += key_offset + key_byte_size;
+        //插入索引指针
         pointer.writeback(p);
         p += 8;
+        //插入索引类型
         *(int *)p = type;
-
         this->index_num += 1;
-        //(*p) =
     }
     /*
      * copy data in index i to index j
      */
     void copyIndex(int i, int j) {
         char *p = (char*)page;
-        target = p + page_header_size + j * index_byte_size;
-        source = p + page_header_size + i * index_byte_size;
+        char *target = p + page_header_size + j * index_byte_size;
+        char *source = p + page_header_size + i * index_byte_size;
         for(int k = 0 ; k < index_byte_size ; ++i) {
             *(target+k) = *(source+k);
         }
@@ -175,9 +186,9 @@ struct Node
      */
     void writeback() {
         *(bool*)page = this->isleaf ;
-        *(((unsigned int *)page)+1) = this->next_page_id ;
-        *(((unsigned int *)page)+2) = this->last_offset ;
-        *(((unsigned int *)page)+3) = this->index_num ;
+        *(((int *)page)+1) = this->next_page_id ;
+        *(((int *)page)+2) = this->index_num ;
+        *(((int *)page)+3) = this->page_type ;
     }
     /*
      * 获取分裂轴点
@@ -194,12 +205,17 @@ struct Node
         pointer.writeback(p);
     }
     /*
-     * 设置第i个指针类型
+     * 设置第i个索引的指针类型
      */
-    void setPointerType(int i, IndexType type) {
+    void setPointerType(int i, int type) {
         char *p = (char*)page;
         p = p + page_header_size + (i-1)*index_byte_size + key_offset + key_byte_size + 8;
-        *(unsigned int *)p = type;
+        *(int *)p = type;
+    }
+    void setPointerTag(int i, int tag) {
+        char *p = (char*)page;
+        p = p + page_header_size + (i)*index_byte_size;
+        *(int *)p = tag;
     }
     /*
      * 判断索引码k是否存在该节点
@@ -208,8 +224,10 @@ struct Node
         if(this->index_num == 0)return false;
         int i = this->search(k);
         Key key = this->getKey(i);
-        return key == k;
+        return k.equal(key,key_byte_size);
     }
+
+
 };
 
 
