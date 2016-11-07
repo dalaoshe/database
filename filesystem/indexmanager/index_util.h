@@ -4,6 +4,7 @@
 
 #ifndef FILESYSTEM_INDEX_UTIL_H
 #define FILESYSTEM_INDEX_UTIL_H
+#include "../utils/base.h"
 namespace IndexType {
     enum {
         cluster = 1,
@@ -33,10 +34,69 @@ struct Key{
         }
         return true;
     }
-    bool less(Key target, int len) {
+
+    bool less(Key target, int len,int key_type) {
+        char* t = target.key;
+        switch(key_type){
+            case INT:{
+                len = (len>>2);
+                for(int i = 0 ; i < len  ; ++i) {
+                    int a = *(int*)(key+i*4);
+                    int b = *(int*)(t+i*4);
+                    if(a >= b) return false;
+                }
+                return true;
+            }
+            case FLOAT:{
+                len = (len>>3);
+                for(int i = 0 ; i < len  ; ++i) {
+                    float a = *(float*)(key+i*8);
+                    float b = *(float*)(t+i*8);
+                    if(a >= b) return false;
+                }
+                return true;
+            }
+            case STRING:{
+                for(int i = 0 ; i < len ; ++i) {
+                    char a = *(key+i);
+                    char b = *(t+i);
+                    if((int)a >= (int)b) return false;
+                }
+                return true;
+            }
+        }
         return true;
     }
-    bool greater(Key target, int len) {
+    bool greater(Key target, int len,int key_type) {
+        char* t = target.key;
+        switch(key_type){
+            case INT:{
+                len = (len>>2);
+                for(int i = 0 ; i < len  ; ++i) {
+                    int a = *(int*)(key+i*4);
+                    int b = *(int*)(t+i*4);
+                    if(a <= b) return false;
+                }
+                return true;
+            }
+            case FLOAT:{
+                len = (len>>3);
+                for(int i = 0 ; i < len  ; ++i) {
+                    float a = *(float*)(key+i*8);
+                    float b = *(float*)(t+i*8);
+                    if(a <= b) return false;
+                }
+                return true;
+            }
+            case STRING:{
+                for(int i = 0 ; i < len ; ++i) {
+                    char a = *(key+i);
+                    char b = *(t+i);
+                    if((int)a <= (int)b) return false;
+                }
+                return true;
+            }
+        }
         return true;
     }
 };

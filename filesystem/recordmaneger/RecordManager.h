@@ -189,19 +189,20 @@ public:
         if(this->fm->createFile(name)) {
             int fileID;
             fm->openFile(name,fileID);
-            int index,findex;
+            int index;
+//            int findex;
             BufType page_header = bpm->getPage(fileID,0,index);
-            BufType page_first = bpm->getPage(fileID,1,findex);
-            //code to edit page_header
-            //0 page_num
+//            BufType page_first = bpm->getPage(fileID,1,findex);
+            //TODO: code to edit page_header
+            //0 pageID
             //1 slot_size
             page_header[0] = 1;
             page_header[1] = record_int_size;
             //....
             bpm->markDirty(index);
-            bpm->markDirty(findex);
+//            bpm->markDirty(findex);
             bpm->writeBack(index);
-            bpm->writeBack(findex);
+//            bpm->writeBack(findex);
             printf("create! slot_int_size: %d\n",record_int_size);
             return RC();
         }

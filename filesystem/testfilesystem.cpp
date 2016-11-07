@@ -30,6 +30,37 @@ using namespace std;
 
 
 
+void only_test_index(){
+    FileManager* fm = new FileManager();
+    BufPageManager* bpm = new BufPageManager(fm);
+
+    IndexManager* indexManager = new IndexManager(fm,bpm);
+    IX_IndexHandle ixIndexHandle;
+    char a[] = "test26.txt";
+//    rm->createFile(a,24);
+//    RM_FileHandle handle;
+//    rm->openFile(a,handle);
+//    printf("open file: %s ok \n",a);
+    RID rid;
+    rid.pid = 1;
+    rid.sid = 5;
+    char key1 = 666;
+    char key2 = 233;
+//    indexManager-> CreateIndex(a,0,INT,4);
+
+    printf("breakpoint...0\n");
+    indexManager-> OpenIndex(a,0,ixIndexHandle);
+    printf("breakpoint...1\n");
+//    ixIndexHandle.InsertEntry(&key1,rid);
+//    ixIndexHandle.InsertEntry(&key2,rid);
+//    printf("breakpoint...2\n");
+    Node node;
+    Pointer pointer;
+    ixIndexHandle.searchEntry(&key1,pointer);
+    ixIndexHandle.close();
+    printf("search node info: pid:%d ; offset:%d\n",pointer.pid,pointer.offset);
+}
+
 void test2() {
     FileManager* fm = new FileManager();
     BufPageManager* bpm = new BufPageManager(fm);
@@ -104,5 +135,6 @@ void test1() {
 }
 
 int main() {
-    test2();
+    only_test_index();
+    //test2();
 }

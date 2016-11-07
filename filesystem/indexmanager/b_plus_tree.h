@@ -97,19 +97,20 @@ struct Node
      */
     int search(Key key)
     {
+        printf("index num : %d\n",index_num);
         if(this->index_num == 0) {
             return 1;
         }
-        if(key.less(this->getKey(1),key_byte_size))
+        if(key.less(this->getKey(1),key_byte_size,key_type))
             return 1;
-        else if(key.greater(this->getKey(this->index_num),key_byte_size))
+        else if(key.greater(this->getKey(this->index_num),key_byte_size,key_type))
             return this->index_num+1;
         else {
             for (int i = 2; i <= index_num; ++i) {
                 Key k1 = this->getKey(i - 1);
                 Key k2 = this->getKey(i);
-                if ((k1.less(key,key_byte_size) || k1.equal(key,key_byte_size))
-                    && key.less(k2,key_byte_size)) {
+                if ((k1.less(key,key_byte_size,key_type) || k1.equal(key,key_byte_size))
+                    && key.less(k2,key_byte_size,key_type)) {
                     return i;
                 }
             }
@@ -146,6 +147,8 @@ struct Node
         int i = this->search(key);
         int j = this->index_num;
         for(int k = j ; k >= i ; --k) {
+            printf("k:%d; i:%d; j:%d\n",k,i,j);
+
             copyIndex(k,k+1);
         }
 
@@ -170,7 +173,7 @@ struct Node
         char *p = (char*)page;
         char *target = p + page_header_size + j * index_byte_size;
         char *source = p + page_header_size + i * index_byte_size;
-        for(int k = 0 ; k < index_byte_size ; ++i) {
+        for(int k = 0 ; k < index_byte_size ; ++k) {
             *(target+k) = *(source+k);
         }
     }
