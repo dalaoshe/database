@@ -10,7 +10,7 @@
 
 #include "PageBitmap.h"
 #include "Record.h"
-#include "rc.h"
+#include "../utils/rc.h"
 class PageManager {
     //4 * 2048byte
     int slot_num;

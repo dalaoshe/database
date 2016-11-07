@@ -7,8 +7,8 @@
 #include "PageManager.h"
 #include "Record.h"
 #include <iostream>
-#include "rc.h"
-#include "base.h"
+#include "../utils/rc.h"
+#include "../utils/base.h"
 using namespace std;
 //以记录的粒度管理记录
 class RM_FileHandle {
