@@ -24,6 +24,6 @@ set(SOURCE_FILES
     filesystem/utils/MyLinkList.h
     filesystem/utils/pagedef.h
     filesystem/utils/rc.h
-    filesystem/testfilesystem.cpp)
+    filesystem/testfilesystem.cpp filesystem/systemManager/SM_Manager.h filesystem/parse/sql/DropDBStatement.h filesystem/parse/sql/UseDBStatement.h filesystem/parse/sql/ShowDBStatement.h filesystem/parse/sql/ShowTableStatement.h filesystem/parse/sql/DescStatement.h filesystem/parse/sql/CreateIndexStatement.h filesystem/parse/sql/DropIndexStatement.h)
 
 add_executable(database ${SOURCE_FILES})

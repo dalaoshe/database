@@ -63,16 +63,18 @@ void test2() {
     BufPageManager* bpm = new BufPageManager(fm);
     RecordManager* rm = new RecordManager(fm,bpm);
     char a[] = "test25.txt";
-    rm->createFile(a,24);
+    RM_FileAttr * attrType = new RM_FileAttr();
+    rm->createFile(a,24,attrType);
     RM_FileHandle handle;
     rm->openFile(a,handle);
     printf("open file: %s ok \n",a);
-
+/*
     RID old;
     old.pid = 1;
     old.sid = 5;
     handle.deleteRec(old);
     printf("delete rid<%d,%d> ok \n",old.pid,old.sid);
+    */
 
     RID rid;
     BufType data = new unsigned int[10];
@@ -132,6 +134,6 @@ void test1() {
 }
 
 int main() {
-    only_test_index();
-    //test2();
+//    only_test_index();
+    test2();
 }

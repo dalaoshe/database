@@ -19,7 +19,9 @@
  */
 //页头大小 32 byte
 #define PAGE_HEADER_SIZE 32
-
+#define PAGE_HEADER_ATTR_CNT 4
+//数据页首页中字段定义的偏移
+#define ATTR_SIZE 32
 #define PAGE_SIZE_IDX 13
 #define MAX_FMT_INT_NUM 128
 //#define BUF_PAGE_NUM 65536
@@ -57,4 +59,5 @@ typedef int inter;
 typedef int(cf)(uchar*, uchar*);
 int current = 0;
 int tt = 0;
+
 #endif

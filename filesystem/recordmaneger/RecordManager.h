@@ -7,9 +7,38 @@
 #include "PageManager.h"
 #include "Record.h"
 #include <iostream>
+#include <vector>
 #include "../utils/rc.h"
 #include "../utils/base.h"
 using namespace std;
+/**
+ * 解析数据表的字段
+ */
+class RM_FileAttr{
+public:
+    vector<string> key_name;
+    vector<AttrType> key_type;
+    vector<int> not_null;
+    vector<int> value_length;
+
+    /**
+     * 构造函数
+     */
+    RM_FileAttr(){
+    }
+    /**
+     * 功能：获取定长数据长度
+     * @return
+     */
+    int getFsize(){
+        int size = 0;
+        int count = value_length.size();
+        for(int i=0;i<count;++i)
+            //TODO 判断是否为定长数据
+            size += value_length[i];
+        return size;
+    }
+};
 //以记录的粒度管理记录
 class RM_FileHandle {
     //文件头关闭时需要写回
@@ -18,11 +47,12 @@ class RM_FileHandle {
     FileManager* fm;
     BufPageManager* bpm;
     PageManager* pm;
-    int slot_int_size;
+    int record_size;
     int fileID;
     int headIndex;
+    //TODO find free page
     int _findFreePage() {
-        int pageID = 2;
+        int pageID = 1;
         return pageID;
     }
 public:
@@ -43,7 +73,7 @@ public:
     RC getRec(const RID &rid, Record &rec) {
         int index;
         BufType page = bpm->getPage(fileID,rid.pid,index);
-        pm->resetPage(page,slot_int_size);
+        pm->resetPage(page,record_size);
         return pm->getRecordCopy(rid,rec);
     };
     /*
@@ -58,7 +88,7 @@ public:
         int pid = this->_findFreePage();
         rid.pid = pid;
         BufType page = bpm->getPage(fileID,pid,index);
-        pm->resetPage(page,slot_int_size);
+        pm->resetPage(page,record_size);
         if(pm->insertRecord(data,rid)) {
             bpm->markDirty(index);
             return RC();
@@ -74,7 +104,7 @@ public:
     RC deleteRec(const RID &rid) {
         int index;
         BufType page = bpm->getPage(fileID,rid.pid,index);
-        pm->resetPage(page,slot_int_size);
+        pm->resetPage(page,record_size);
         if(pm->deleteRecord(rid.sid)) {
             bpm->markDirty(index);
             return RC();
@@ -90,7 +120,7 @@ public:
     RC updateRec(const Record &rec){
         int index;
         BufType page = bpm->getPage(fileID,rec.getRID().pid,index);
-        pm->resetPage(page,slot_int_size);
+        pm->resetPage(page,record_size);
         BufType data = rec.getData();
         RID rid = rec.getRID();
         if(pm->updateRecord(rid.sid,data)) {
@@ -108,6 +138,9 @@ public:
     }
     void setFileManager(FileManager* fm) {
         this->fm = fm;
+    }
+    int getFileID(){
+        return this->fileID;
     }
 
     /*
@@ -128,8 +161,9 @@ public:
      */
     RC init() {
         this->fileHeader = this->bpm->getPage(fileID,0,this->headIndex);
-        this->slot_int_size = fileHeader[1];
-        printf("fileId: %d, slot_int_size: %d\n",fileID,slot_int_size);
+        this->record_size = fileHeader[1];
+        //printf("fileId: %d, slot_int_size: %d\n",fileID,slot_int_size);
+        printf("fileId: %d\n",fileID);
         bpm->markDirty(this->headIndex);
         return RC();
     }
@@ -160,7 +194,7 @@ public:
     */
     RC getSlotNum(int pid, int &slot_num) {
         BufType page = bpm->getPage(fileID,pid,this->headIndex);
-        pm->resetPage(page,slot_int_size);
+        pm->resetPage(page,record_size);
         pm->getSlotNum(slot_num);
         return RC();
     }
@@ -185,7 +219,7 @@ public:
     * 功能:新建一个文件，并初始化文件头页对应的信息写入文件
     * 返回:成功操作返回RC(0)
     */
-    RC createFile(const char* name ,int record_int_size) {
+    RC createFile(const char* name ,int record_int_size, RM_FileAttr* attr) {
         if(this->fm->createFile(name)) {
             int fileID;
             fm->openFile(name,fileID);
@@ -193,17 +227,32 @@ public:
 //            int findex;
             BufType page_header = bpm->getPage(fileID,0,index);
 //            BufType page_first = bpm->getPage(fileID,1,findex);
-            //TODO: code to edit page_header
+            //TODO: code to edit root_page
             //0 pageID
-            //1 slot_size
-            page_header[0] = 1;
+            //1 record_init_size
+            //2 attr_size 字段数
+            //.....
+            //自32起，每32bytes为一个字段的定义
+            //key_name 20,key_type 4,null 4,length 4
+            page_header[0] = 0;
             page_header[1] = record_int_size;
+            int attr_offset = 32>>2;
+            int attr_count = attr->key_type.size();
+            page_header[2] = attr_count;
+            for(int i=0;i<attr_count;++i){
+                int offset = attr_offset*i + ATTR_SIZE;
+                ((char*)(page_header[offset])) = (char*)attr->key_name[i].data();
+                page_header[offset+1] = attr->key_type[i];
+                page_header[offset+2] = attr->not_null[i];
+                page_header[offset+3] = attr->value_length[i];
+            }
+
+//            page_header[2] = fix_col_num;
+//            page_header[3] = var_col_num;
             //....
             bpm->markDirty(index);
-//            bpm->markDirty(findex);
             bpm->writeBack(index);
-//            bpm->writeBack(findex);
-            printf("create! slot_int_size: %d\n",record_int_size);
+            printf("create! record_int_size: %d\n",record_int_size);
             return RC();
         }
         return RC(-1);
@@ -281,4 +330,5 @@ public:
     RC closeScan    ();                                // Terminate file scan
     bool checkRecord(Record &rec) const ;
 };
+
 #endif
