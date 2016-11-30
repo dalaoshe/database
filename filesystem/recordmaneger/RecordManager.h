@@ -1,44 +1,22 @@
 #ifndef RECORD_MANAGER_H
 #define RECORD_MANAGER_H
 
+#include "PageManager.h"
+#include "Record.h"
+#include "FileAttr.h"
 #include "../bufmanager/BufPageManager.h"
 #include "../fileio/FileManager.h"
 #include "../utils/pagedef.h"
-#include "PageManager.h"
-#include "Record.h"
-#include <iostream>
-#include <vector>
 #include "../utils/rc.h"
 #include "../utils/base.h"
+#include <iostream>
+#include <vector>
+
 using namespace std;
 /**
  * 解析数据表的字段
  */
-class RM_FileAttr{
-public:
-    vector<string> key_name;
-    vector<AttrType> key_type;
-    vector<int> not_null;
-    vector<int> value_length;
 
-    /**
-     * 构造函数
-     */
-    RM_FileAttr(){
-    }
-    /**
-     * 功能：获取定长数据长度
-     * @return
-     */
-    int getFsize(){
-        int size = 0;
-        int count = value_length.size();
-        for(int i=0;i<count;++i)
-            //TODO 判断是否为定长数据
-            size += value_length[i];
-        return size;
-    }
-};
 //以记录的粒度管理记录
 class RM_FileHandle {
     //文件头关闭时需要写回
@@ -198,6 +176,22 @@ public:
         pm->getSlotNum(slot_num);
         return RC();
     }
+
+    RC ShowSchema(){
+        int index;
+        BufType page_header = bpm->getPage(fileID,0,index);
+        printf("page_ID: %d\n",page_header[0]);
+        printf("record_size: %d\n",page_header[1]);
+        int attr_offset = 32>>2;
+        int attr_count = page_header[2];
+        for(int i=0;i<attr_count;++i){
+            int offset = attr_offset*i + ATTR_SIZE;
+            printf("attr_name: %s\t",(char*)(page_header[offset]));
+            printf("attr_type: %d\t ",page_header[offset+5]) ;
+            printf("attr_length: %d\t ",page_header[offset+6]) ;
+            printf("attr_not_null: %d\t\n ",page_header[offset+7]) ;
+        }
+    }
 };
 
 class RecordManager{
@@ -234,22 +228,28 @@ public:
             //.....
             //自32起，每32bytes为一个字段的定义
             //key_name 20,key_type 4,null 4,length 4
+            printf("index:%d\n",index);
             page_header[0] = 0;
             page_header[1] = record_int_size;
             int attr_offset = 32>>2;
             int attr_count = attr->key_type.size();
             page_header[2] = attr_count;
+            printf("1\n");
             for(int i=0;i<attr_count;++i){
                 int offset = attr_offset*i + ATTR_SIZE;
-                ((char*)(page_header[offset])) = (char*)attr->key_name[i].data();
-                page_header[offset+1] = attr->key_type[i];
-                page_header[offset+2] = attr->not_null[i];
-                page_header[offset+3] = attr->value_length[i];
+                const char* name = attr->key_name[i].c_str();
+                for(int i=0;i<attr->key_name[i].size();++i){
+                    *((char*)(page_header[offset])+i) = *(name+i);
+                }
+                page_header[offset+5] = attr->key_type[i];
+                page_header[offset+6] = attr->value_length[i];
+                page_header[offset+7] = attr->not_null[i];
             }
 
 //            page_header[2] = fix_col_num;
 //            page_header[3] = var_col_num;
             //....
+            printf("10\n");
             bpm->markDirty(index);
             bpm->writeBack(index);
             printf("create! record_int_size: %d\n",record_int_size);
