@@ -45,6 +45,19 @@ namespace hsql {
     }
 
 
+    Expr* Expr::makeOpBinary(Expr* expr1, OperatorType op, std::vector<Expr*>* list) {
+        Expr* e = new Expr(kExprOperator);
+        e->op_type = op;
+        e->expr = expr1;
+        e->expr2 = NULL;
+        e->literal_list = list;
+        return e;
+    }
+
+    Expr* Expr::makeLiteral() {
+        Expr* e = new Expr(kExprLiteralNull);
+        return e;
+    }
 
     Expr* Expr::makeLiteral(int64_t val) {
         Expr* e = new Expr(kExprLiteralInt);

@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 #include <memory>
-
+#include <vector>
 namespace hsql {
 
 // Helper function
@@ -19,7 +19,8 @@ namespace hsql {
         kExprPlaceholder,
         kExprColumnRef,
         kExprFunctionRef,
-        kExprOperator
+        kExprOperator,
+        kExprLiteralNull
     } ExprType;
 
 
@@ -51,7 +52,13 @@ namespace hsql {
             // Unary
             NOT,
             UMINUS,
-            ISNULL
+            ISNULL,
+            //calculate
+            SUM,
+            AVG,
+            MAX,
+            MIN,
+            IN
         } OperatorType;
 
 
@@ -61,6 +68,7 @@ namespace hsql {
             expr(NULL),
             expr2(NULL),
             name(NULL),
+            literal_list(NULL),
             table(NULL),
             alias(NULL) {};
 
@@ -78,7 +86,7 @@ namespace hsql {
         float fval;
         int64_t ival;
         int64_t ival2;
-
+        std::vector<Expr*>* literal_list;
         OperatorType op_type;
         char op_char;
         bool distinct;
@@ -117,10 +125,12 @@ namespace hsql {
         static Expr* makeOpUnary(OperatorType op, Expr* expr);
         static Expr* makeOpBinary(Expr* expr1, char op, Expr* expr2);
         static Expr* makeOpBinary(Expr* expr1, OperatorType op, Expr* expr2);
+        static Expr* makeOpBinary(Expr* expr1, OperatorType op, std::vector<Expr*>* list);
 
         static Expr* makeLiteral(int64_t val);
         static Expr* makeLiteral(double val);
         static Expr* makeLiteral(char* val);
+        static Expr* makeLiteral();
 
         static Expr* makeColumnRef(char* name);
         static Expr* makeColumnRef(char* table, char* name);

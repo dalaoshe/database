@@ -186,10 +186,14 @@ public:
         int attr_count = page_header[2];
         for(int i=0;i<attr_count;++i){
             int offset = attr_offset*i + ATTR_SIZE;
-            printf("attr_name: %s\t",(char*)(page_header[offset]));
-            printf("attr_type: %d\t ",page_header[offset+5]) ;
-            printf("attr_length: %d\t ",page_header[offset+6]) ;
-            printf("attr_not_null: %d\t\n ",page_header[offset+7]) ;
+            page_header+=offset;
+            printf("attr_name: %s \t",(char*)(page_header));
+            /*printf("%s",(char*)(page_header+1));
+            printf("%s",(char*)(page_header+2));
+            printf("%s\t",(char*)(page_header+3));*/
+            printf("attr_type: %d\t ",page_header[5]) ;
+            printf("attr_length: %d\t ",page_header[6]) ;
+            printf("attr_not_null: %d\t\n ",page_header[7]) ;
         }
     }
 };
@@ -234,22 +238,22 @@ public:
             int attr_offset = 32>>2;
             int attr_count = attr->key_type.size();
             page_header[2] = attr_count;
-            printf("1\n");
             for(int i=0;i<attr_count;++i){
                 int offset = attr_offset*i + ATTR_SIZE;
+                page_header += offset;
                 const char* name = attr->key_name[i].c_str();
-                for(int i=0;i<attr->key_name[i].size();++i){
-                    *((char*)(page_header[offset])+i) = *(name+i);
+                for(int j=0;j<attr->key_name[i].length();++j){
+                    *((char*)(page_header)+j) = *(name+j);
                 }
-                page_header[offset+5] = attr->key_type[i];
-                page_header[offset+6] = attr->value_length[i];
-                page_header[offset+7] = attr->not_null[i];
+                *((char*)(page_header)+attr->key_name[i].length()) = '\0';
+                page_header[5] = attr->key_type[i];
+                page_header[6] = attr->value_length[i];
+                page_header[7] = attr->not_null[i];
             }
 
 //            page_header[2] = fix_col_num;
 //            page_header[3] = var_col_num;
             //....
-            printf("10\n");
             bpm->markDirty(index);
             bpm->writeBack(index);
             printf("create! record_int_size: %d\n",record_int_size);

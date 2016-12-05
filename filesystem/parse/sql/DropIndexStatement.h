@@ -10,20 +10,23 @@
 namespace hsql {
 
 /**
- * @struct DropDBStatement
- * @brief Represents "DROP DATABASE Dbname"
+ * @struct DropIndexStatement
+ * @brief Represents "DROP INDEX customer(name)"
  */
     struct DropIndexStatement : SQLStatement {
 
         DropIndexStatement() :
                 SQLStatement(kStmtDropIndex),
-                DBname(NULL) {};
+                table(NULL),
+                column(NULL) {};
 
         virtual ~DropIndexStatement() {
-            delete DBname;
+            delete table;
+            delete column;
         }
 
-        const char* DBname;
+        const char* column;
+        const char* table;
     };
 
 

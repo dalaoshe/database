@@ -1,5 +1,5 @@
-#ifndef __CREATE_STATEMENT_H__
-#define __CREATE_STATEMENT_H__
+#ifndef __CREATEDB_STATEMENT_H__
+#define __CREATEDB_STATEMENT_H__
 
 #include "SQLStatement.h"
 
@@ -12,14 +12,14 @@ namespace hsql {
 
         CreateDBStatement() :
             SQLStatement(kStmtCreateDB),
-            dbName(NULL)
+            DBname(NULL)
             {};
 
-        ~CreateStatement() {
-            delete dbName;
+        ~CreateDBStatement() {
+            delete DBname;
         }
 
-        const char* dbName;
+        const char* DBname;
     };
 
 } // namespace hsql

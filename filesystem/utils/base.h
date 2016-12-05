@@ -16,10 +16,6 @@
 #define MAXATTRS      40                // maximum number of attributes
 // in a relation
 
-#define YY_SKIP_YYWRAP 1
-#define yywrap() 1
-void yyerror(const char *);
-
 //
 // Return codes
 //
@@ -57,9 +53,9 @@ const int ALL_PAGES = -1;
 // Attribute types
 //
 enum AttrType {
-    INT = 1,
-    FLOAT = 2,
-    STRING = 3,
+    INT ,
+    FLOAT,
+    STRING,
 };
 
 //

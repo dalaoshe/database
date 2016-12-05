@@ -9,20 +9,23 @@
 
 namespace hsql {
     /**
-     * Represents SQL CreateDB statements.
-     * Example: "CREATE DATABASE orderDB"
+     * Represents SQL CreateIndex statements.
+     * Example: "CREATE INDEX customer(name)"
      */
     struct CreateIndexStatement : SQLStatement {
 
         CreateIndexStatement() :
                 SQLStatement(kStmtCreateIndex),
-                indexName(NULL){};
+                column(NULL),
+                table(NULL){};
 
         ~CreateIndexStatement() {
-            delete indexName;
+            delete column;
+            delete table;
         }
 
-        const char* indexName;
+        const char* column;
+        const char* table;
     };
 
 } // namespace hsql

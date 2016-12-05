@@ -11,64 +11,36 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="aed4a9f3-7bb9-4572-9321-eee685754beb" name="Default" comment="begin parse module">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/SQLParser.o" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/SQLParserResult.o" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/parser/bison_parser.o" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/parser/flex_lexer.o" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/sql/Expr.o" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/sql/destruct.o" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/sqlhelper.o" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/SQLParser.cpp" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/SQLParser.h" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/SQLParserResult.cpp" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/SQLParserResult.h" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/parser/.gitignore" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/parser/Makefile" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/parser/bison_parser.cpp" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/parser/bison_parser.h" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/parser/bison_parser.y" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/parser/flex_lexer.cpp" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/parser/flex_lexer.h" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/parser/flex_lexer.l" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/parser/keywordlist_generator.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/parser/parser_typedef.h" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/parser/sql_keywords.txt" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/sql/CreateDBStatement.h" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/sql/CreateIndexStatement.h" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/sql/CreateStatement.h" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/sql/DeleteStatement.h" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/sql/DescStatement.h" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/sql/DropDBStatement.h" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/sql/DropIndexStatement.h" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/sql/DropStatement.h" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/sql/ExecuteStatement.h" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/sql/Expr.cpp" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/sql/Expr.h" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/sql/ImportStatement.h" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/sql/InsertStatement.h" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/sql/PrepareStatement.h" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/sql/SQLStatement.h" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/sql/SelectStatement.h" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/sql/ShowDBStatement.h" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/sql/ShowTableStatement.h" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/sql/Table.h" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/sql/UpdateStatement.h" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/sql/UseDBStatement.h" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/sql/destruct.cpp" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/sql/statements.h" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/sqlhelper.cpp" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/parse/sqlhelper.h" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/systemManager/SM_Manager.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/database.iml" afterPath="$PROJECT_DIR$/.idea/database.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
+    <list default="true" id="aed4a9f3-7bb9-4572-9321-eee685754beb" name="Default" comment="">
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/recordmaneger/FileAttr.h" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/filesystem/systemManager/DatabaseSystem.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/filesystem/parse/SQLParser.o" afterPath="$PROJECT_DIR$/filesystem/parse/SQLParser.o" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/filesystem/parse/SQLParserResult.o" afterPath="$PROJECT_DIR$/filesystem/parse/SQLParserResult.o" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/filesystem/parse/parser/bison_parser.o" afterPath="$PROJECT_DIR$/filesystem/parse/parser/bison_parser.o" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/filesystem/parse/parser/flex_lexer.o" afterPath="$PROJECT_DIR$/filesystem/parse/parser/flex_lexer.o" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/filesystem/parse/sql/Expr.o" afterPath="$PROJECT_DIR$/filesystem/parse/sql/Expr.o" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/filesystem/parse/sql/destruct.o" afterPath="$PROJECT_DIR$/filesystem/parse/sql/destruct.o" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/filesystem/parse/sqlhelper.o" afterPath="$PROJECT_DIR$/filesystem/parse/sqlhelper.o" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/CMakeLists.txt" afterPath="$PROJECT_DIR$/CMakeLists.txt" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/filesystem/recordmaneger/PageBitmap.h" afterPath="$PROJECT_DIR$/filesystem/recordmaneger/PageBitmap.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/filesystem/recordmaneger/PageManager.h" afterPath="$PROJECT_DIR$/filesystem/recordmaneger/PageManager.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/filesystem/parse/SQLParser.cpp" afterPath="$PROJECT_DIR$/filesystem/parse/SQLParser.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/filesystem/parse/parser/bison_parser.cpp" afterPath="$PROJECT_DIR$/filesystem/parse/parser/bison_parser.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/filesystem/parse/parser/bison_parser.h" afterPath="$PROJECT_DIR$/filesystem/parse/parser/bison_parser.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/filesystem/parse/parser/bison_parser.y" afterPath="$PROJECT_DIR$/filesystem/parse/parser/bison_parser.y" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/filesystem/parse/parser/flex_lexer.cpp" afterPath="$PROJECT_DIR$/filesystem/parse/parser/flex_lexer.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/filesystem/parse/parser/flex_lexer.h" afterPath="$PROJECT_DIR$/filesystem/parse/parser/flex_lexer.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/filesystem/parse/parser/flex_lexer.l" afterPath="$PROJECT_DIR$/filesystem/parse/parser/flex_lexer.l" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/filesystem/parse/sql/CreateDBStatement.h" afterPath="$PROJECT_DIR$/filesystem/parse/sql/CreateDBStatement.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/filesystem/parse/sql/CreateIndexStatement.h" afterPath="$PROJECT_DIR$/filesystem/parse/sql/CreateIndexStatement.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/filesystem/parse/sql/CreateStatement.h" afterPath="$PROJECT_DIR$/filesystem/parse/sql/CreateStatement.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/filesystem/parse/sql/DropIndexStatement.h" afterPath="$PROJECT_DIR$/filesystem/parse/sql/DropIndexStatement.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/filesystem/parse/sql/Expr.cpp" afterPath="$PROJECT_DIR$/filesystem/parse/sql/Expr.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/filesystem/parse/sql/Expr.h" afterPath="$PROJECT_DIR$/filesystem/parse/sql/Expr.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/filesystem/parse/sql/statements.h" afterPath="$PROJECT_DIR$/filesystem/parse/sql/statements.h" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/filesystem/recordmaneger/RecordManager.h" afterPath="$PROJECT_DIR$/filesystem/recordmaneger/RecordManager.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/filesystem/systemManager/SM_Manager.h" afterPath="$PROJECT_DIR$/filesystem/systemManager/SM_Manager.h" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/filesystem/testfilesystem.cpp" afterPath="$PROJECT_DIR$/filesystem/testfilesystem.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/filesystem/utils/pagedef.h" afterPath="$PROJECT_DIR$/filesystem/utils/pagedef.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/filesystem/utils/base.h" afterPath="$PROJECT_DIR$/filesystem/utils/base.h" />
     </list>
     <ignored path="database.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -88,91 +60,55 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="CreateDBStatement.h" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/CreateDBStatement.h">
+      <file leaf-file-name="testfilesystem.cpp" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/filesystem/testfilesystem.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="252">
-              <caret line="14" column="24" lean-forward="false" selection-start-line="14" selection-start-column="24" selection-end-line="14" selection-end-column="24" />
+            <state relative-caret-position="900">
+              <caret line="53" column="13" lean-forward="false" selection-start-line="53" selection-start-column="13" selection-end-line="53" selection-end-column="13" />
+              <folding>
+                <element signature="e#616#654#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="DatabaseSystem.h" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/filesystem/systemManager/DatabaseSystem.h">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="14">
+              <caret line="80" column="41" lean-forward="false" selection-start-line="80" selection-start-column="41" selection-end-line="80" selection-end-column="41" />
+              <folding>
+                <element signature="e#108#131#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="SM_Manager.h" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/filesystem/systemManager/SM_Manager.h">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="246">
+              <caret line="354" column="30" lean-forward="false" selection-start-line="354" selection-start-column="30" selection-end-line="354" selection-end-column="30" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="CreateIndexStatement.h" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/CreateIndexStatement.h">
+      <file leaf-file-name="RecordManager.h" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/filesystem/recordmaneger/RecordManager.h">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="556">
+              <caret line="247" column="65" lean-forward="false" selection-start-line="247" selection-start-column="65" selection-end-line="247" selection-end-column="65" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="FileAttr.h" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/filesystem/recordmaneger/FileAttr.h">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="216">
-              <caret line="12" column="35" lean-forward="true" selection-start-line="12" selection-start-column="35" selection-end-line="12" selection-end-column="35" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="SQLStatement.h" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/SQLStatement.h">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="157">
-              <caret line="28" column="22" lean-forward="false" selection-start-line="28" selection-start-column="22" selection-end-line="28" selection-end-column="22" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="DropIndexStatement.h" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/DropIndexStatement.h">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="324">
-              <caret line="18" column="22" lean-forward="true" selection-start-line="18" selection-start-column="22" selection-end-line="18" selection-end-column="22" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="flex_lexer.l" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/filesystem/parse/parser/flex_lexer.l">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-1433">
-              <caret line="105" column="6" lean-forward="false" selection-start-line="105" selection-start-column="0" selection-end-line="105" selection-end-column="6" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="bison_parser.y" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/filesystem/parse/parser/bison_parser.y">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="774">
-              <caret line="43" column="0" lean-forward="true" selection-start-line="43" selection-start-column="0" selection-end-line="43" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="keywordlist_generator.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/filesystem/parse/parser/keywordlist_generator.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="72">
-              <caret line="4" column="5" lean-forward="false" selection-start-line="4" selection-start-column="5" selection-end-line="4" selection-end-column="5" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="DropDBStatement.h" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/DropDBStatement.h">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="108">
-              <caret line="6" column="25" lean-forward="true" selection-start-line="6" selection-start-column="25" selection-end-line="6" selection-end-column="25" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="DropStatement.h" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/DropStatement.h">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="180">
-              <caret line="10" column="26" lean-forward="false" selection-start-line="10" selection-start-column="26" selection-end-line="10" selection-end-column="26" />
+              <caret line="13" column="19" lean-forward="false" selection-start-line="13" selection-start-column="19" selection-end-line="13" selection-end-column="19" />
               <folding />
             </state>
           </provider>
@@ -182,18 +118,36 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>resetPage</find>
-      <find>slot_num</find>
-      <find>alloc</find>
-      <find>free_data</find>
-      <find>slot_int_size</find>
-      <find>key_name</find>
-      <find>class</find>
-      <find>_DBlist</find>
-      <find>crea</find>
-      <find>fileID</find>
-      <find>AttrInfo</find>
-      <find>tables</find>
+      <find>SHOW</find>
+      <find>DATABASES</find>
+      <find>DBROOT</find>
+      <find>DBRootPath</find>
+      <find>printf</find>
+      <find>!fin</find>
+      <find>INTeger</find>
+      <find>INTEGER</find>
+      <find>INT</find>
+      <find>char</find>
+      <find>AttrType</find>
+      <find>DOUBLE</find>
+      <find>ColumnDefinition</find>
+      <find>DataType</find>
+      <find>SQL_STRING</find>
+      <find>STRING</find>
+      <find>sval</find>
+      <find>literal_list</find>
+      <find>literal</find>
+      <find>in</find>
+      <find>check</find>
+      <find>opt_where</find>
+      <find>IDENTIFIER</find>
+      <find>column_type</find>
+      <find>opt_check</find>
+      <find>RM_FileAttr</find>
+      <find>ExprType</find>
+      <find>NULL</find>
+      <find>comp_expr</find>
+      <find>SUM</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -212,22 +166,33 @@
         <option value="$PROJECT_DIR$/filesystem/utils/pagedef.h" />
         <option value="$PROJECT_DIR$/filesystem/recordmaneger/PageBitmap.h" />
         <option value="$PROJECT_DIR$/filesystem/recordmaneger/PageManager.h" />
-        <option value="$PROJECT_DIR$/filesystem/testfilesystem.cpp" />
         <option value="$PROJECT_DIR$/main.cpp" />
         <option value="$PROJECT_DIR$/test.cpp" />
-        <option value="$PROJECT_DIR$/filesystem/recordmaneger/RecordManager.h" />
-        <option value="$PROJECT_DIR$/filesystem/systemManager/SM_Manager.h" />
         <option value="$PROJECT_DIR$/filesystem/parse/sql/DropDBStatement.h" />
         <option value="$PROJECT_DIR$/filesystem/parse/sql/UseDBStatement.h" />
         <option value="$PROJECT_DIR$/filesystem/parse/sql/ShowDBStatement.h" />
         <option value="$PROJECT_DIR$/filesystem/parse/sql/ShowTableStatement.h" />
-        <option value="$PROJECT_DIR$/filesystem/parse/sql/CreateStatement.h" />
         <option value="$PROJECT_DIR$/filesystem/parse/sql/DescStatement.h" />
-        <option value="$PROJECT_DIR$/filesystem/parse/sql/CreateDBStatement.h" />
-        <option value="$PROJECT_DIR$/filesystem/parse/sql/CreateIndexStatement.h" />
-        <option value="$PROJECT_DIR$/filesystem/parse/sql/DropIndexStatement.h" />
         <option value="$PROJECT_DIR$/filesystem/parse/sql/SQLStatement.h" />
+        <option value="$PROJECT_DIR$/filesystem/parse/sql/DropIndexStatement.h" />
+        <option value="$PROJECT_DIR$/filesystem/parse/sql/statements.h" />
+        <option value="$PROJECT_DIR$/filesystem/parse/sql/CreateIndexStatement.h" />
+        <option value="$PROJECT_DIR$/filesystem/parse/sql/CreateDBStatement.h" />
+        <option value="$PROJECT_DIR$/filesystem/parse/SQLParser.cpp" />
+        <option value="$PROJECT_DIR$/filesystem/parse/Parse.h" />
+        <option value="$PROJECT_DIR$/filesystem/fileio/FileManager.h" />
+        <option value="$PROJECT_DIR$/filesystem/systemManager/DatabaseSystem.cpp" />
+        <option value="$PROJECT_DIR$/filesystem/recordmaneger/FileAttr.h" />
+        <option value="$PROJECT_DIR$/filesystem/utils/base.h" />
+        <option value="$PROJECT_DIR$/filesystem/systemManager/SM_Manager.h" />
+        <option value="$PROJECT_DIR$/filesystem/parse/sql/Expr.cpp" />
+        <option value="$PROJECT_DIR$/filesystem/parse/sql/Expr.h" />
+        <option value="$PROJECT_DIR$/filesystem/parse/sql/CreateStatement.h" />
+        <option value="$PROJECT_DIR$/filesystem/parse/parser/bison_parser.y" />
         <option value="$PROJECT_DIR$/filesystem/parse/parser/flex_lexer.l" />
+        <option value="$PROJECT_DIR$/filesystem/systemManager/DatabaseSystem.h" />
+        <option value="$PROJECT_DIR$/filesystem/testfilesystem.cpp" />
+        <option value="$PROJECT_DIR$/filesystem/recordmaneger/RecordManager.h" />
       </list>
     </option>
   </component>
@@ -241,8 +206,8 @@
   <component name="ProjectFrameBounds">
     <option name="x" value="55" />
     <option name="y" value="24" />
-    <option name="width" value="1865" />
-    <option name="height" value="1056" />
+    <option name="width" value="1311" />
+    <option name="height" value="744" />
   </component>
   <component name="ProjectView">
     <navigator currentView="ProjectPane" proportions="" version="1">
@@ -318,86 +283,6 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="recordmaneger" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="database" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.CidrFilesViewHelper$MyProjectTreeStructure$1" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="database" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="filesystem" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="parse" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="database" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.CidrFilesViewHelper$MyProjectTreeStructure$1" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="database" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="filesystem" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="parse" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="sql" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="database" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.CidrFilesViewHelper$MyProjectTreeStructure$1" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="database" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="filesystem" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="parse" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="parser" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="database" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.CidrFilesViewHelper$MyProjectTreeStructure$1" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="database" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="filesystem" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="indexmanager" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -629,12 +514,28 @@
       <workItem from="1480073891418" duration="140000" />
       <workItem from="1480074161704" duration="20591000" />
       <workItem from="1480243318563" duration="10111000" />
-      <workItem from="1480301538940" duration="3662000" />
+      <workItem from="1480301538940" duration="28113000" />
+      <workItem from="1480345857340" duration="377000" />
+      <workItem from="1480380685047" duration="2743000" />
+      <workItem from="1480384232769" duration="6052000" />
+      <workItem from="1480411962887" duration="1144000" />
+      <workItem from="1480413431203" duration="11432000" />
+      <workItem from="1480425065379" duration="12230000" />
+      <workItem from="1480437313389" duration="1056000" />
+      <workItem from="1480466751473" duration="3307000" />
     </task>
+    <task id="LOCAL-00001" summary="begin parse module">
+      <created>1480307376501</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1480307376501</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="65695000" />
+    <option name="totallyTimeSpent" value="128487000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -646,25 +547,25 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="55" y="24" width="1865" height="1056" extended-state="6" />
+    <frame x="55" y="24" width="1311" height="744" extended-state="6" />
     <editor active="false" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.1844504" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2959573" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3298647" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32723576" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="CMake" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="8" side_tool="true" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32886904" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Version Control" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3292683" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.23780487" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.24960506" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.22662602" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32520324" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33956388" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.30691057" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32886904" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3109756" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
     </layout>
@@ -710,12 +611,12 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/filesystem/testfilesystem.cpp</url>
-          <line>82</line>
+          <line>124</line>
           <option name="timeStamp" value="4" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/filesystem/recordmaneger/RecordManager.h</url>
-          <line>91</line>
+          <line>69</line>
           <option name="timeStamp" value="5" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
@@ -723,204 +624,17 @@
           <line>69</line>
           <option name="timeStamp" value="6" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/filesystem/testfilesystem.cpp</url>
+          <line>21</line>
+          <option name="timeStamp" value="10" />
+        </line-breakpoint>
       </breakpoints>
-      <option name="time" value="10" />
+      <option name="time" value="14" />
     </breakpoint-manager>
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/filesystem/recordmaneger/PageManager.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="666">
-          <caret line="37" column="48" lean-forward="false" selection-start-line="37" selection-start-column="32" selection-end-line="37" selection-end-column="48" />
-          <folding>
-            <element signature="e#152#175#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/recordmaneger/RecordManager.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/recordmaneger/PageManager.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="558">
-          <caret line="31" column="11" lean-forward="false" selection-start-line="31" selection-start-column="11" selection-end-line="31" selection-end-column="11" />
-          <folding>
-            <element signature="e#152#175#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/recordmaneger/Record.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="270">
-          <caret line="15" column="17" lean-forward="false" selection-start-line="15" selection-start-column="17" selection-end-line="15" selection-end-column="17" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/recordmaneger/RecordManager.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/recordmaneger/PageManager.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="306">
-          <caret line="17" column="12" lean-forward="false" selection-start-line="17" selection-start-column="12" selection-end-line="17" selection-end-column="12" />
-          <folding>
-            <element signature="e#152#175#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/recordmaneger/PageBitmap.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="396">
-          <caret line="22" column="25" lean-forward="false" selection-start-line="22" selection-start-column="25" selection-end-line="22" selection-end-column="25" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/utils/pagedef.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="864">
-          <caret line="48" column="22" lean-forward="false" selection-start-line="48" selection-start-column="22" selection-end-line="48" selection-end-column="22" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/recordmaneger/RecordManager.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/recordmaneger/PageBitmap.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/recordmaneger/PageManager.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="108">
-          <caret line="6" column="17" lean-forward="false" selection-start-line="6" selection-start-column="17" selection-end-line="6" selection-end-column="17" />
-          <folding>
-            <element signature="e#152#175#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/recordmaneger/Record.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/Debug/test26.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/indexmanager/index_util.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/indexmanager/BucketPageManager.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1396">
-          <caret line="88" column="9" lean-forward="false" selection-start-line="88" selection-start-column="9" selection-end-line="88" selection-end-column="9" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/indexmanager/b_plus_tree.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1069">
-          <caret line="99" column="16" lean-forward="false" selection-start-line="99" selection-start-column="16" selection-end-line="99" selection-end-column="16" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="324">
-          <caret line="18" column="0" lean-forward="false" selection-start-line="18" selection-start-column="0" selection-end-line="18" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/recordmaneger/RecordManager.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/recordmaneger/Record.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="37">
-          <caret line="15" column="17" lean-forward="false" selection-start-line="15" selection-start-column="17" selection-end-line="15" selection-end-column="17" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/utils/MyBitMap.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2052">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/utils/pagedef.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="378">
-          <caret line="21" column="30" lean-forward="false" selection-start-line="21" selection-start-column="30" selection-end-line="21" selection-end-column="30" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/bufmanager/BufPageManager.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="336">
-          <caret line="80" column="0" lean-forward="false" selection-start-line="80" selection-start-column="0" selection-end-line="80" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/recordmaneger/PageManager.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="253">
-          <caret line="61" column="0" lean-forward="false" selection-start-line="61" selection-start-column="0" selection-end-line="61" selection-end-column="0" />
-          <folding>
-            <element signature="e#152#175#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/recordmaneger/PageBitmap.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="163">
-          <caret line="119" column="36" lean-forward="false" selection-start-line="119" selection-start-column="36" selection-end-line="119" selection-end-column="36" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/filesystem/Debug/test25.txt">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -932,14 +646,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/utils/base.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1116">
-          <caret line="62" column="2" lean-forward="false" selection-start-line="62" selection-start-column="2" selection-end-line="62" selection-end-column="2" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -959,165 +665,10 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/test.cpp" />
-    <entry file="file://$PROJECT_DIR$/filesystem/indexmanager/IndexManager.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="308">
-          <caret line="417" column="11" lean-forward="false" selection-start-line="417" selection-start-column="7" selection-end-line="417" selection-end-column="11" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/testfilesystem.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="307">
-          <caret line="48" column="42" lean-forward="false" selection-start-line="48" selection-start-column="41" selection-end-line="48" selection-end-column="42" />
-          <folding>
-            <element signature="e#2428#3998#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/recordmaneger/RecordManager.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="468">
-          <caret line="244" column="50" lean-forward="false" selection-start-line="244" selection-start-column="50" selection-end-line="244" selection-end-column="50" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/systemManager/SM_Manager.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="414">
-          <caret line="23" column="37" lean-forward="false" selection-start-line="23" selection-start-column="37" selection-end-line="23" selection-end-column="37" />
-          <folding>
-            <element signature="e#37#55#0" expanded="false" />
-            <element signature="e#1284#2065#0" expanded="false" />
-            <element signature="e#2363#3228#0" expanded="false" />
-            <element signature="e#3233#4825#0" expanded="false" />
-            <element signature="e#4831#5965#0" expanded="false" />
-            <element signature="e#5971#6463#0" expanded="false" />
-            <element signature="e#6469#6907#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/fileio/FileManager.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="90">
-          <caret line="12" column="6" lean-forward="false" selection-start-line="12" selection-start-column="6" selection-end-line="12" selection-end-column="6" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/DeleteStatement.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="252">
-          <caret line="14" column="36" lean-forward="false" selection-start-line="14" selection-start-column="25" selection-end-line="14" selection-end-column="36" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/DropStatement.h">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="180">
           <caret line="10" column="26" lean-forward="false" selection-start-line="10" selection-start-column="26" selection-end-line="10" selection-end-column="26" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/ShowDBStatement.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="378">
-          <caret line="21" column="34" lean-forward="false" selection-start-line="21" selection-start-column="34" selection-end-line="21" selection-end-column="34" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/ShowTableStatement.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="85">
-          <caret line="5" column="37" lean-forward="true" selection-start-line="5" selection-start-column="37" selection-end-line="5" selection-end-column="37" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/UseDBStatement.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="252">
-          <caret line="14" column="25" lean-forward="false" selection-start-line="14" selection-start-column="25" selection-end-line="14" selection-end-column="25" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/DescStatement.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="270">
-          <caret line="15" column="24" lean-forward="false" selection-start-line="15" selection-start-column="11" selection-end-line="15" selection-end-column="24" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/CreateStatement.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="558">
-          <caret line="55" column="28" lean-forward="false" selection-start-line="55" selection-start-column="28" selection-end-line="55" selection-end-column="28" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/CreateDBStatement.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="252">
-          <caret line="14" column="24" lean-forward="false" selection-start-line="14" selection-start-column="24" selection-end-line="14" selection-end-column="24" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/DropDBStatement.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="108">
-          <caret line="6" column="25" lean-forward="true" selection-start-line="6" selection-start-column="25" selection-end-line="6" selection-end-column="25" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/SQLStatement.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="157">
-          <caret line="28" column="22" lean-forward="false" selection-start-line="28" selection-start-column="22" selection-end-line="28" selection-end-column="22" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/CreateIndexStatement.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="216">
-          <caret line="12" column="35" lean-forward="true" selection-start-line="12" selection-start-column="35" selection-end-line="12" selection-end-column="35" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/DropIndexStatement.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="324">
-          <caret line="18" column="22" lean-forward="true" selection-start-line="18" selection-start-column="22" selection-end-line="18" selection-end-column="22" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/parse/parser/flex_lexer.l">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1433">
-          <caret line="105" column="6" lean-forward="false" selection-start-line="105" selection-start-column="0" selection-end-line="105" selection-end-column="6" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/filesystem/parse/parser/bison_parser.y">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="774">
-          <caret line="43" column="0" lean-forward="true" selection-start-line="43" selection-start-column="0" selection-end-line="43" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1125,6 +676,300 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="72">
           <caret line="4" column="5" lean-forward="false" selection-start-line="4" selection-start-column="5" selection-end-line="4" selection-end-column="5" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/parse/parser/flex_lexer.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/parse/parser/flex_lexer.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="54">
+          <caret line="3" column="49" lean-forward="false" selection-start-line="3" selection-start-column="49" selection-end-line="3" selection-end-column="49" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/makefile" />
+    <entry file="file://$PROJECT_DIR$/filesystem/makefile">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="18">
+          <caret line="1" column="52" lean-forward="false" selection-start-line="1" selection-start-column="52" selection-end-line="1" selection-end-column="52" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/parse/sqlhelper.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="214">
+          <caret line="65" column="19" lean-forward="false" selection-start-line="65" selection-start-column="19" selection-end-line="65" selection-end-column="19" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/parse/parser/bison_parser.output">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="204">
+          <caret line="1299" column="12" lean-forward="false" selection-start-line="1299" selection-start-column="4" selection-end-line="1299" selection-end-column="12" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/DropIndexStatement.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="270">
+          <caret line="15" column="29" lean-forward="false" selection-start-line="15" selection-start-column="11" selection-end-line="15" selection-end-column="29" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/DropDBStatement.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="252">
+          <caret line="14" column="26" lean-forward="false" selection-start-line="14" selection-start-column="11" selection-end-line="14" selection-end-column="26" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/ShowDBStatement.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="288">
+          <caret line="16" column="26" lean-forward="false" selection-start-line="16" selection-start-column="11" selection-end-line="16" selection-end-column="26" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/ShowTableStatement.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="288">
+          <caret line="16" column="29" lean-forward="false" selection-start-line="16" selection-start-column="11" selection-end-line="16" selection-end-column="29" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/UseDBStatement.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="234">
+          <caret line="13" column="25" lean-forward="true" selection-start-line="13" selection-start-column="25" selection-end-line="13" selection-end-column="25" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/CreateIndexStatement.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="342">
+          <caret line="19" column="21" lean-forward="false" selection-start-line="19" selection-start-column="21" selection-end-line="19" selection-end-column="21" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/parse/SQLParser.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="342">
+          <caret line="28" column="18" lean-forward="false" selection-start-line="28" selection-start-column="18" selection-end-line="28" selection-end-column="18" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/parse/SQLParserResult.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-162">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/parse/SQLParserResult.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="432">
+          <caret line="24" column="28" lean-forward="false" selection-start-line="24" selection-start-column="28" selection-end-line="24" selection-end-column="28" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/parse/Parse.h" />
+    <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/DeleteStatement.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="252">
+          <caret line="14" column="36" lean-forward="false" selection-start-line="14" selection-start-column="25" selection-end-line="14" selection-end-column="36" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/Debug/makefile">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/indexmanager/IndexManager.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="486">
+          <caret line="57" column="20" lean-forward="false" selection-start-line="57" selection-start-column="10" selection-end-line="57" selection-end-column="20" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/fileio/FileManager.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="360">
+          <caret line="20" column="24" lean-forward="true" selection-start-line="20" selection-start-column="24" selection-end-line="20" selection-end-column="24" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/systemManager/DatabaseSystem.cpp" />
+    <entry file="file:///usr/include/unistd.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="214">
+          <caret line="499" column="11" lean-forward="false" selection-start-line="499" selection-start-column="11" selection-end-line="499" selection-end-column="11" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/SQLStatement.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="378">
+          <caret line="21" column="21" lean-forward="false" selection-start-line="21" selection-start-column="8" selection-end-line="21" selection-end-column="21" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/include/c++/5/bits/basic_string.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="214">
+          <caret line="5211" column="4" lean-forward="false" selection-start-line="5211" selection-start-column="4" selection-end-line="5211" selection-end-column="4" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/parse/SQLParser.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="198">
+          <caret line="12" column="39" lean-forward="false" selection-start-line="12" selection-start-column="39" selection-end-line="12" selection-end-column="39" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/statements.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="342">
+          <caret line="19" column="20" lean-forward="true" selection-start-line="19" selection-start-column="20" selection-end-line="19" selection-end-column="20" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/DescStatement.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="324">
+          <caret line="18" column="38" lean-forward="false" selection-start-line="18" selection-start-column="29" selection-end-line="18" selection-end-column="38" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/parse/parser/bison_parser.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="354">
+          <caret line="83" column="4" lean-forward="false" selection-start-line="83" selection-start-column="4" selection-end-line="83" selection-end-column="4" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/parse/parser/bison_parser.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="27050">
+          <caret line="2144" column="34" lean-forward="false" selection-start-line="2144" selection-start-column="34" selection-end-line="2144" selection-end-column="34" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/Expr.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="270">
+          <caret line="68" column="43" lean-forward="true" selection-start-line="68" selection-start-column="43" selection-end-line="68" selection-end-column="43" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/CreateDBStatement.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="252">
+          <caret line="14" column="15" lean-forward="false" selection-start-line="14" selection-start-column="15" selection-end-line="14" selection-end-column="15" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/utils/base.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="270">
+          <caret line="17" column="0" lean-forward="false" selection-start-line="17" selection-start-column="0" selection-end-line="17" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/Expr.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-499">
+          <caret line="88" column="24" lean-forward="false" selection-start-line="88" selection-start-column="20" selection-end-line="88" selection-end-column="24" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/parse/sql/CreateStatement.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="486">
+          <caret line="27" column="12" lean-forward="false" selection-start-line="27" selection-start-column="12" selection-end-line="27" selection-end-column="12" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/parse/sqlhelper.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/parse/parser/flex_lexer.l">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="204">
+          <caret line="178" column="3" lean-forward="false" selection-start-line="178" selection-start-column="0" selection-end-line="178" selection-end-column="3" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/parse/parser/bison_parser.y">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="40">
+          <caret line="537" column="39" lean-forward="false" selection-start-line="537" selection-start-column="28" selection-end-line="537" selection-end-column="39" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/recordmaneger/FileAttr.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="216">
+          <caret line="13" column="19" lean-forward="false" selection-start-line="13" selection-start-column="19" selection-end-line="13" selection-end-column="19" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/systemManager/SM_Manager.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="246">
+          <caret line="354" column="30" lean-forward="false" selection-start-line="354" selection-start-column="30" selection-end-line="354" selection-end-column="30" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/systemManager/DatabaseSystem.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="14">
+          <caret line="80" column="41" lean-forward="false" selection-start-line="80" selection-start-column="41" selection-end-line="80" selection-end-column="41" />
+          <folding>
+            <element signature="e#108#131#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/testfilesystem.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="900">
+          <caret line="53" column="13" lean-forward="false" selection-start-line="53" selection-start-column="13" selection-end-line="53" selection-end-column="13" />
+          <folding>
+            <element signature="e#616#654#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/filesystem/recordmaneger/RecordManager.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="556">
+          <caret line="247" column="65" lean-forward="false" selection-start-line="247" selection-start-column="65" selection-end-line="247" selection-end-column="65" />
           <folding />
         </state>
       </provider>

@@ -41,11 +41,12 @@ int yyerror(YYLTYPE* llocp, SQLParserResult** result, yyscan_t scanner, const ch
 // Specify code that is included in the generated .h and .c files
 %code requires {
 // %code requires block	
-
+#include "stdio.h"
 #include "../sql/statements.h"
 #include "../SQLParserResult.h"
+#include "../sqlhelper.h"
 #include "parser_typedef.h"
-
+#include "../../utils/base.h"
 // Auto update column and line number
 #define YY_USER_ACTION \
     yylloc->first_line = yylloc->last_line; \
@@ -127,6 +128,15 @@ int yyerror(YYLTYPE* llocp, SQLParserResult** result, yyscan_t scanner, const ch
 
 	hsql::SQLParserResult* stmt_list;
 
+    hsql::CreateIndexStatement* createIndex_stmt;
+    hsql::CreateDBStatement* createDB_stmt;
+    hsql::DescStatement* desc_stmt;
+    hsql::DropDBStatement* dropDB_stmt;
+    hsql::DropIndexStatement* dropIndex_stmt;
+    hsql::ShowDBStatement* showDB_stmt;
+    hsql::ShowTableStatement* showTable_stmt;
+    hsql::UseDBStatement* useDB_stmt;
+
 	std::vector<char*>* str_vec;
 	std::vector<hsql::TableRef*>* table_vec;
 	std::vector<hsql::ColumnDefinition*>* column_vec;
@@ -158,7 +168,8 @@ int yyerror(YYLTYPE* llocp, SQLParserResult** result, yyscan_t scanner, const ch
 %token DROP FILE FROM FULL HASH HINT INTO JOIN LEFT LIKE
 %token LOAD NULL PART PLAN SHOW TEXT TIME VIEW WITH ADD ALL
 %token AND ASC CSV FOR INT KEY NOT OFF SET TBL TOP AS BY IF
-%token IN IS OF ON OR TO
+%token IN IS OF ON OR TO DATABASE USE CHECK SUM AVG MIN MAX
+%token DATABASES
 
 
 /*********************************
@@ -175,14 +186,25 @@ int yyerror(YYLTYPE* llocp, SQLParserResult** result, yyscan_t scanner, const ch
 %type <delete_stmt> delete_statement truncate_statement
 %type <update_stmt> update_statement
 %type <drop_stmt>	drop_statement
-%type <sval> 		table_name opt_alias alias file_path
-%type <bval> 		opt_not_exists opt_distinct
+
+%type <createIndex_stmt>	createIndex_statement
+%type <createDB_stmt>	    createDB_statement
+%type <dropDB_stmt>	dropDB_statement
+%type <useDB_stmt> 	useDB_statement
+%type <dropIndex_stmt>	dropIndex_statement
+%type <showDB_stmt>	showDB_statement
+%type <showTable_stmt> 	showTable_statement
+%type <desc_stmt>	desc_statement
+
+%type <sval> 		table_name opt_alias alias file_path DBname opt_primary_key
+%type <bval> 		opt_not_exists opt_distinct opt_not_null
+%type <ival>        opt_size
 %type <uval>		import_file_type opt_join_type column_type
 %type <table> 		from_clause table_ref table_ref_atomic table_ref_name
 %type <table>		join_clause join_table table_ref_name_no_alias
 %type <expr> 		expr scalar_expr unary_expr binary_expr function_expr star_expr expr_alias placeholder_expr
 %type <expr> 		column_name literal int_literal num_literal string_literal
-%type <expr> 		comp_expr opt_where join_condition opt_having
+%type <expr> 		comp_expr opt_where join_condition opt_having opt_check
 %type <order>		opt_order
 %type <limit>		opt_limit
 %type <order_type>	opt_order_type
@@ -209,6 +231,7 @@ int yyerror(YYLTYPE* llocp, SQLParserResult** result, yyscan_t scanner, const ch
 %nonassoc	NOTNULL
 %nonassoc	ISNULL
 %nonassoc	IS				/* sets precedence for IS NULL, etc */
+%left       IN
 %left		'+' '-'
 %left		'*' '/' '%'
 %left		'^'
@@ -257,6 +280,14 @@ preparable_statement:
 	|	update_statement { $$ = $1; }
 	|	drop_statement { $$ = $1; }
 	|	execute_statement { $$ = $1; }
+	|   createDB_statement { $$ = $1; }
+    |	dropDB_statement { $$ = $1; }
+    |	useDB_statement { $$ = $1; }
+    |	showDB_statement { $$ = $1; }
+    |	showTable_statement { $$ = $1; }
+    |	createIndex_statement { $$ = $1; }
+    |	dropIndex_statement { $$ = $1; }
+    |	desc_statement { $$ = $1; }
 	;
 
 
@@ -321,12 +352,19 @@ create_statement:
 			$$->tableName = $4;
 			$$->filePath = $8;
 		}
-	|	CREATE TABLE opt_not_exists table_name '(' column_def_commalist ')' {
+	|	CREATE TABLE opt_not_exists table_name '(' column_def_commalist opt_primary_key')' {
 			$$ = new CreateStatement(CreateStatement::kTable);
 			$$->ifNotExists = $3;
 			$$->tableName = $4;
 			$$->columns = $6;
+			$$->primary_key = $7;
 		}
+	;
+
+opt_primary_key:
+		',' PRIMARY KEY '(' IDENTIFIER ')'{ $$ = $5; }
+	|	PRIMARY KEY '(' IDENTIFIER ')'{ $$ = $4; }
+	|	/* empty */ { $$ = NULL; }
 	;
 
 opt_not_exists:
@@ -340,17 +378,32 @@ column_def_commalist:
 	;
 
 column_def:
-		IDENTIFIER column_type {
-			$$ = new ColumnDefinition($1, (ColumnDefinition::DataType) $2);
+		IDENTIFIER column_type opt_size opt_not_null {
+			$$ = new ColumnDefinition($1, (AttrType) $2, $3, $4);
+		}
+		|opt_check {
+            $$ = new ColumnDefinition($1);
 		}
 	;
 
+opt_size:
+		'(' INTVAL ')' { $$ = $2; }
+	|	/* empty */ { $$ = 20;}
+
+opt_not_null:
+		NOT NULL { $$ = true; }
+	| 	/* empty */ { $$ = false;}
+
+opt_check:
+		',' CHECK '(' comp_expr ')' { $$ = $4; }
+	|	 CHECK '(' comp_expr ')' { $$ = $3; }
+	|	/* empty */ { $$ = NULL; }
 
 column_type:
-		INT { $$ = ColumnDefinition::INT; }
-	|	INTEGER { $$ = ColumnDefinition::INT; }
-	|	DOUBLE { $$ = ColumnDefinition::DOUBLE; }
-	|	TEXT { $$ = ColumnDefinition::TEXT; }
+		INT { $$ = AttrType::INT; }
+	|	INTEGER { $$ = AttrType::INT; }
+	|	DOUBLE { $$ = AttrType::FLOAT; }
+	|	TEXT { $$ = AttrType::STRING; }
 	;
 
 /******************************
@@ -552,7 +605,7 @@ expr_list:
 	;
 
 literal_list:
-		literal { $$ = new std::vector<Expr*>(); $$->push_back($1); }
+		literal { $$ = new std::vector<Expr*>(); $$->push_back($1);}
 	|	literal_list ',' literal { $1->push_back($3); $$ = $1; }
 	;
 
@@ -604,6 +657,7 @@ comp_expr:
 	|	expr '>' expr		{ $$ = Expr::makeOpBinary($1, '>', $3); }
 	|	expr LESSEQ expr	{ $$ = Expr::makeOpBinary($1, Expr::LESS_EQ, $3); }
 	|	expr GREATEREQ expr	{ $$ = Expr::makeOpBinary($1, Expr::GREATER_EQ, $3); }
+	|   expr IN '(' literal_list ')'     { $$ = Expr::makeOpBinary($1, Expr::IN,$4);}
 	;
 
 function_expr:
@@ -618,6 +672,7 @@ column_name:
 literal:
 		string_literal
 	|	num_literal
+	|   NULL{$$ = Expr::makeLiteral();}
 	|	placeholder_expr
 	;
 
@@ -769,6 +824,102 @@ ident_commalist:
 		IDENTIFIER { $$ = new std::vector<char*>(); $$->push_back($1); }
 	|	ident_commalist ',' IDENTIFIER { $1->push_back($3); $$ = $1; }
 	;
+
+
+
+/******************************
+ * CreateDB Statement
+ * CREATE DATABASE orderDB
+ ******************************/
+createDB_statement:
+		CREATE DATABASE DBname {
+			$$ = new CreateDBStatement();
+			$$->DBname = $3;
+		}
+	;
+DBname:
+		IDENTIFIER
+	;
+
+/******************************
+ * DropDB Statement
+ * DROP DATABASE orderDB
+ ******************************/
+dropDB_statement:
+		DROP DATABASE DBname {
+			$$ = new DropDBStatement();
+			$$->DBname = $3;
+		}
+	;
+
+/******************************
+ * UseDB Statement
+ * USE orderDB
+ ******************************/
+useDB_statement:
+		USE DBname {
+			$$ = new UseDBStatement();
+			$$->DBname = $2;
+		}
+	;
+
+/******************************
+ * showDB Statement
+ * DESC customer;
+ ******************************/
+ showDB_statement:
+ 		SHOW DATABASES {
+ 			$$ = new ShowDBStatement();
+ 		}
+ 	;
+/******************************
+ * ShowTable Statement
+ * SHOW TABLES
+ ******************************/
+showTable_statement:
+		SHOW TABLES {
+			$$ = new ShowTableStatement();
+		}
+	;
+
+/******************************
+ * CreateIndex Statement
+ * CREATE INDEX customer(name)
+ ******************************/
+createIndex_statement:
+		CREATE INDEX table_name '(' IDENTIFIER ')' {
+			$$ = new CreateIndexStatement();
+			$$->table = $3;
+			$$->column = $5;
+		}
+	;
+
+/******************************
+ * DropIndex Statement
+ * DROP INDEX customer(name)
+ ******************************/
+dropIndex_statement:
+		DROP INDEX table_name '(' IDENTIFIER ')' {
+			$$ = new DropIndexStatement();
+			$$->table = $3;
+			$$->column = $5;
+		}
+	;
+
+
+/******************************
+ * Desc Statement
+ * DESC customer;
+ ******************************/
+
+desc_statement:
+		DESC table_name {
+			$$ = new DescStatement();
+			$$->table_name = $2;
+		}
+	;
+
+
 
 %%
 /*********************************

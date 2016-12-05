@@ -28,6 +28,7 @@ namespace hsql {
 
         if (hsql_parse(&result, scanner)) {
             // Returns an error stmt object
+            printf("error\n");
             return result;
         }
 

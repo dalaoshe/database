@@ -25,10 +25,52 @@
 #include "indexmanager/IndexManager.h"
 #include "utils/pagedef.h"
 #include <iostream>
+#include "parse/SQLParser.h"
+#include "parse/sqlhelper.h"
+#include "parse/sql/statements.h"
+#include "systemManager/DatabaseSystem.h"
 
 using namespace std;
+using namespace hsql;
 
-
+int test_parse(int argc, char **argv){
+    DatabaseSystem myDB;
+    if(argv[1][0]=='0') {
+        while (true) {
+            char sql[1000];
+            cin.getline(sql, 1000);
+            string sqlStmt(sql);
+            if (sqlStmt == string("quit"))
+                break;
+            else{
+                myDB.readSQL(sqlStmt);
+                cout << endl <<endl;
+            }
+        }
+    }
+    else if (argv[1][0]=='1'){
+        char *name = argv[2];
+        printf("name: %s\n",name);
+        myDB.readSQLfile("test_example/"+string(name));
+//        myDB.readSQLfile( "test_example/create.sql");
+//        cout<<myDB.readSQLfile("test_example/publisher.sql");
+//        cout<<myDB.readSQLfile("test_example/customer.sql");
+//        cout<<myDB.readSQLfile("test_example/book.sql");
+//        cout<<myDB.readSQLfile("test_example/orders.sql");
+        while(true)
+        {
+            char sql[1000];
+            cin.getline(sql, 1000);
+            string sqlStmt(sql);
+            if(sqlStmt == string("quit"))
+                break;
+            else{
+                cout<<myDB.readSQL(sqlStmt);
+                cout<<endl<<endl;
+            }
+        }
+    }
+}
 
 void only_test_index(){
     FileManager* fm = new FileManager();
@@ -44,8 +86,8 @@ void only_test_index(){
     RID rid;
     rid.pid = 1;
     rid.sid = 5;
-    char key1 = 666;
-    char key2 = 233;
+    char key1 = 31;
+    char key2 = 32;
 //    indexManager-> CreateIndex(a,0,INT,4);
 
     indexManager-> OpenIndex(a,0,ixIndexHandle);
@@ -133,7 +175,8 @@ void test1() {
     return ;
 }
 
-int main() {
+int main(int argc, char **argv) {
 //    only_test_index();
-    test2();
+//    test2();
+    test_parse(argc, argv);
 }

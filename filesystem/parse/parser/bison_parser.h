@@ -51,11 +51,12 @@ extern int hsql_debug;
 #line 42 "bison_parser.y" /* yacc.c:1909  */
 
 // %code requires block	
-
+#include "stdio.h"
 #include "../sql/statements.h"
 #include "../SQLParserResult.h"
+#include "../sqlhelper.h"
 #include "parser_typedef.h"
-
+#include "../../utils/base.h"
 // Auto update column and line number
 #define YY_USER_ACTION \
     yylloc->first_line = yylloc->last_line; \
@@ -71,7 +72,7 @@ extern int hsql_debug;
         } \
     }
 
-#line 75 "bison_parser.h" /* yacc.c:1909  */
+#line 76 "bison_parser.h" /* yacc.c:1909  */
 
 /* Token type.  */
 #ifndef HSQL_TOKENTYPE
@@ -196,11 +197,19 @@ extern int hsql_debug;
     SQL_ON = 373,
     SQL_OR = 374,
     SQL_TO = 375,
-    SQL_EQUALS = 376,
-    SQL_LESS = 377,
-    SQL_GREATER = 378,
-    SQL_NOTNULL = 379,
-    SQL_UMINUS = 380
+    SQL_DATABASE = 376,
+    SQL_USE = 377,
+    SQL_CHECK = 378,
+    SQL_SUM = 379,
+    SQL_AVG = 380,
+    SQL_MIN = 381,
+    SQL_MAX = 382,
+    SQL_DATABASES = 383,
+    SQL_EQUALS = 384,
+    SQL_LESS = 385,
+    SQL_GREATER = 386,
+    SQL_NOTNULL = 387,
+    SQL_UMINUS = 388
   };
 #endif
 
@@ -209,7 +218,7 @@ extern int hsql_debug;
 
 union HSQL_STYPE
 {
-#line 101 "bison_parser.y" /* yacc.c:1909  */
+#line 102 "bison_parser.y" /* yacc.c:1909  */
 
 	double fval;
 	int64_t ival;
@@ -239,13 +248,22 @@ union HSQL_STYPE
 
 	hsql::SQLParserResult* stmt_list;
 
+    hsql::CreateIndexStatement* createIndex_stmt;
+    hsql::CreateDBStatement* createDB_stmt;
+    hsql::DescStatement* desc_stmt;
+    hsql::DropDBStatement* dropDB_stmt;
+    hsql::DropIndexStatement* dropIndex_stmt;
+    hsql::ShowDBStatement* showDB_stmt;
+    hsql::ShowTableStatement* showTable_stmt;
+    hsql::UseDBStatement* useDB_stmt;
+
 	std::vector<char*>* str_vec;
 	std::vector<hsql::TableRef*>* table_vec;
 	std::vector<hsql::ColumnDefinition*>* column_vec;
 	std::vector<hsql::UpdateClause*>* update_vec;
 	std::vector<hsql::Expr*>* expr_vec;
 
-#line 249 "bison_parser.h" /* yacc.c:1909  */
+#line 267 "bison_parser.h" /* yacc.c:1909  */
 };
 
 typedef union HSQL_STYPE HSQL_STYPE;
