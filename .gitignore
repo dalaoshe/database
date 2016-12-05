@@ -5,3 +5,13 @@ filesystem/Debug/testfilesystem.o
 .idea/*
 .idea
 CMakeLists.txt
+cmake-build-debug/*
+cmake-build-debug/
+filesystem/.idea/*
+filesystem/.metadata/*
+filesystem/.metadata/
+filesystem/*.o
+*.o
+*.d
+test
+*.txt

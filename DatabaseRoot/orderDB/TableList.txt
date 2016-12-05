@@ -1,5 +1,0 @@
-4
-publisher
-book
-customer
-orders

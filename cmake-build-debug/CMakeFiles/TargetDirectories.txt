@@ -1,3 +1,0 @@
-/home/ykd/database/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/ykd/database/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/ykd/database/cmake-build-debug/CMakeFiles/database.dir
