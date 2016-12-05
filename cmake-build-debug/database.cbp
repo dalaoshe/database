@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="database"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/home/ykd/database/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j4 -f &quot;/home/ykd/database/cmake-build-debug/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/home/ykd/database/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j4 -f &quot;/home/ykd/database/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j4 -f &quot;/home/ykd/database/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="/home/ykd/database/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j4 -f &quot;/home/ykd/database/cmake-build-debug/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/home/ykd/database/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j4 -f &quot;/home/ykd/database/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j4 -f &quot;/home/ykd/database/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="/home/ykd/database/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j4 -f &quot;/home/ykd/database/cmake-build-debug/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/home/ykd/database/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j4 -f &quot;/home/ykd/database/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j4 -f &quot;/home/ykd/database/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="database">
+				<Option output="/home/ykd/database/cmake-build-debug/database" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/ykd/database/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/5/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+					<Add directory="/usr/include/c++/5"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/5"/>
+					<Add directory="/usr/include/c++/5/backward"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j4 -f &quot;/home/ykd/database/cmake-build-debug/Makefile&quot;  VERBOSE=1 database"/>
+					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/home/ykd/database/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j4 -f &quot;/home/ykd/database/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j4 -f &quot;/home/ykd/database/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="database/fast">
+				<Option output="/home/ykd/database/cmake-build-debug/database" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/ykd/database/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/5/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+					<Add directory="/usr/include/c++/5"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/5"/>
+					<Add directory="/usr/include/c++/5/backward"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j4 -f &quot;/home/ykd/database/cmake-build-debug/Makefile&quot;  VERBOSE=1 database/fast"/>
+					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/home/ykd/database/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j4 -f &quot;/home/ykd/database/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j4 -f &quot;/home/ykd/database/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/home/ykd/database/filesystem/bufmanager/BufPageManager.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/bufmanager/FindReplace.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/fileio/FileManager.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/fileio/FileTable.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/indexmanager/BucketPageManager.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/indexmanager/IndexManager.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/indexmanager/IndexPageManager.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/indexmanager/b_plus_tree.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/indexmanager/index_util.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/parse/sql/CreateIndexStatement.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/parse/sql/DescStatement.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/parse/sql/DropDBStatement.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/parse/sql/DropIndexStatement.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/parse/sql/ShowDBStatement.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/parse/sql/ShowTableStatement.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/parse/sql/UseDBStatement.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/recordmaneger/FileAttr.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/recordmaneger/PageBitmap.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/recordmaneger/PageManager.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/recordmaneger/Record.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/recordmaneger/RecordManager.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/systemManager/DatabaseSystem.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/systemManager/SM_Manager.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/testfilesystem.cpp">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/utils/MyBitMap.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/utils/MyHashMap.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/utils/MyLinkList.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/utils/base.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/utils/compare.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/utils/pagedef.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/filesystem/utils/rc.h">
+			<Option target="database"/>
+		</Unit>
+		<Unit filename="/home/ykd/database/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

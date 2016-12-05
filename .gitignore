@@ -1,0 +1,7 @@
+filesystem/.idea/workspace.xml
+filesystem/Debug/filesystem
+filesystem/Debug/testfilesystem.d
+filesystem/Debug/testfilesystem.o
+.idea/*
+.idea
+CMakeLists.txt

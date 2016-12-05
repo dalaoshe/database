@@ -50,8 +50,9 @@ public:
 
     IX_IndexHandle  (){};                             // Constructor
     ~IX_IndexHandle (){};                             // Destructor
-
-    RC InsertEntry     (void *key, const RID &rid) {
+    //TODO search-problem(i -> i-1)
+    RC InsertEntry     (char *key, RID  rid) {
+        printf("insert \n");
         //待插入索引码该插入的叶级节点
         Node node;
         //待插入的索引码指针对
@@ -63,9 +64,11 @@ public:
         //根级页到叶级页的路径（包括叶级页）
         vector<Pointer> path;
         if(this->searchEntryLeaf(k.key,node,index,path).equal(RC(0))) {
+
             //索引码存在直接插入指针桶
             if(node.exist(k)) {
                 int i = node.search(k);
+                --i;
                 int index_type = node.getPointerType(i+1);
                 int index_tag = node.getTag(i);
                 /*
@@ -106,6 +109,7 @@ public:
                         this->bpm->markDirty(bucket_index);
                         page_num += 1;
                     }
+                    return RC();
                 }
                 else if(index_type == IndexType::id){
                     int bucket_index;
@@ -128,6 +132,7 @@ public:
                     bucket.writeback();
                     this->bpm->markDirty(bucket_index);
                     page_num += 1;
+                    return RC();
                 }
             }
             else {
@@ -136,12 +141,14 @@ public:
                 return RC(0);
             }
         }
-    };
+        return RC(-1);
+    }
     /*
      * 解决节点上溢
      */
     RC solveOverflow(Node node, int index, vector<Pointer>& path) {
         //递归基，不再上溢直接写回缓存标记脏页
+        printf("solve overflow \n");
         if (!node.overflow()) {
             node.writeback();
             this->bpm->markDirty(index);
@@ -307,7 +314,7 @@ public:
     /*
      * key索引码 node,索引码所在的叶级节点 path，根到叶级节点的路径
      */
-    RC searchEntryLeaf(void *key, Node &node, int &pageIndexInbpm , vector<Pointer>& path) {
+    RC searchEntryLeaf(void *key, Node &node, int &pageIndexInbpm, vector<Pointer>& path) {
         Key k = Key((char*)key);
         Pointer pointer = Pointer(rootPageId,page_header_size);
         BufType page = bpm->getPage(fileID,rootPageId,pageIndexInbpm);
@@ -323,6 +330,21 @@ public:
         return RC(0);
     }
 
+
+    /*
+     * key 索引码； node 索引码所在的页级节点
+     * 根据key索引码查询索引所在的页
+     */
+    RC searchEntry(void *key, Pointer& pointer){
+        int temp =0 ;
+        vector<Pointer> path;
+        Node node;
+        searchEntryLeaf(key,node,temp,path);
+        int i = node.search((char*)key);
+        printf("i:%d \n",i);
+        pointer = node.getPointer(i);
+        return RC();
+    };
 
     /*
      * @函数名close
@@ -344,7 +366,7 @@ public:
     RC init() {
         this->header = this->bpm->getPage(fileID,0,this->headIndex);
         /*
-         *  解析页头信息
+         *  解析文件头页信息
          */
         //根页号
         this->rootPageId = *(((int *)header));
@@ -394,8 +416,8 @@ public:
 
 
     RC CreateIndex  (const char *fileName,          // Create new index
-                     int        indexNo,
-                     AttrType   key_type,
+                     int        indexNo,            //TODO multiple indexes
+                     int   key_type,
                      int        key_byte_size) {
         int fileID,headIndex;
         if(fm->createFile(fileName)) {
@@ -406,7 +428,7 @@ public:
                     key_offset = 4,
                     //索引长度为 状态位长度+索引码长度+指针长度+索引指向的类型长度
                     index_byte_size = key_offset + key_byte_size + 8 + 4,
-                    page_header_size = PAGE_HEADER_SIZE;
+                    page_header_size = PAGE_HEADER_SIZE;//TODO page_header_size definition where?
                 //每页能存的最多索引数为页大小-页头大小-3个预留索引长度 / 索引长度
                 max_num = (PAGE_SIZE - page_header_size - index_byte_size * 3) / index_byte_size;
                 //最少为最多的一半
@@ -419,14 +441,17 @@ public:
                 //获取第一个根页，初始化信息
                 int index;
                 BufType rootPage = this->bpm->getPage(fileID, 1, index);
-                this->setIndexPage(rootPage, true, -1, 0, IndexType::index);
+                this->setIndexPage(rootPage, true, -1, indexNo, IndexType::index);//0 -> indexNO
                 this->bpm->markDirty(index);
                 this->bpm->writeBack(index);
-                return RC(0);
+                fm->closeFile(fileID);
+                printf("create success \n");
+                return RC();
             }
             printf("create success but open fail\n");
         }
         printf("create error\n");
+        //return;
         return RC(-1);
     };
 
@@ -452,11 +477,11 @@ public:
         *(((int *)header)+8) = page_header_size;
         return RC(0);
     }
-
+// TODO 数据类型未对齐
     RC setIndexPage(BufType page, bool isleaf, int next_page_id, int index_num, int page_type) {
         *(((bool *)page)) = isleaf;
         //下一页的页号
-        *(((int *)page)+1) = next_page_id;
+        *(((int *)page)+1) = next_page_id; //*((int *)(page + 1)) = next_page_id or isleaf占用4字节？
         //该页记录的索引数目
         *(((int *)page)+2) = index_num;
         //该页的类型
@@ -467,7 +492,7 @@ public:
 
 
     RC DestroyIndex (const char *fileName,          // Destroy index
-                     int        indexNo) {
+                     int        indexNo) {          //TODO indexNo in destroy function？
         this->fm->destroyFile(fileName);
         return RC(0);
     };
