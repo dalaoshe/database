@@ -20,10 +20,17 @@ class DatabaseSystem {
     SM_Manager* system_manager;
     IndexManager* indexManager;
     RecordManager* recordManager;
+    FileManager* fm;
+    BufPageManager* bpm;
 public:
 
     DatabaseSystem() {
-        system_manager = new SM_Manager(indexManager,recordManager);
+        this->fm = new FileManager();
+        this->bpm = new BufPageManager(fm);
+        this->indexManager = new IndexManager(fm,bpm);
+        this->recordManager = new RecordManager(fm,bpm);
+
+        system_manager = new SM_Manager(indexManager,recordManager,fm,bpm);
     }
 
     ~DatabaseSystem() {
@@ -120,11 +127,76 @@ public:
                 system_manager->DropTable(dropStatement->name);
                 return "";
             }
+            case kStmtInsert:{
+                //打印语句信息
+                printInsertStatementInfo((InsertStatement*)stmt, 0);
+                printf("insert options\n");
+
+                InsertStatement* insertStmt = (InsertStatement*)stmt;
+                //获取要插入的表名
+                string filename = insertStmt->tableName;
+                RM_FileHandle fileHandle;
+                //获取rm handle
+                recordManager->openFile(filename.c_str(),fileHandle);
+                BufType fileHeader = fileHandle.getFileHeader();
+                //获取表头信息
+                RM_FileAttr* fileAttr = new RM_FileAttr();
+                fileAttr->getFileAttrFromPageHeader(fileHeader);
+                //获取要插入的数据块data
+                BufType data;
+                fileAttr->buildValidInsertData(insertStmt,data);
+                //插入槽
+                RID rid;
+                fileHandle.insertRec(data,rid);
+                printf("rid pid %d sid %d\n",rid.pid,rid.sid);
+                delete fileAttr;
+                return "";
+            }
+            case kStmtSelect:{
+                //打印语句信息
+                printSelectStatementInfo((SelectStatement*)stmt, 0);
+                printf("select options\n");
+                SelectStatement* selectStatement = (SelectStatement*)stmt;
+                //获取要选取的表名
+                string filename = selectStatement->fromTable->getName();
+                RM_FileHandle fileHandle;
+
+                //获取rm handle
+                recordManager->openFile(filename.c_str(),fileHandle);
+                BufType fileHeader = fileHandle.getFileHeader();
+                //获取表头信息
+                RM_FileAttr* fileAttr = new RM_FileAttr();
+                fileAttr->getFileAttrFromPageHeader(fileHeader);
+
+                //获取记录
+                Record record;
+                RID rid; rid.pid=1; rid.sid=0;
+                fileHandle.getRec(rid,record);
+
+                //打印记录
+                fileAttr->printRecordInfo(record.getData());
+
+
+                return "";
+            }
+            case kStmtUpdate:{
+                //printUpdateStatementInfo((UpdateStatement*)stmt, 0);
+                printf("update \n  ");
+                return "";
+            }
+            case kStmtDelete:{
+                //printDeleteStatementInfo((DeleteStatement*)stmt, 0);
+
+                printf("delete \n  ");
+                return "";
+            }
             default:{
                 return "WTH!? "+ stmt->type();
             }
         }
     }
+
+
 
     /**
      *

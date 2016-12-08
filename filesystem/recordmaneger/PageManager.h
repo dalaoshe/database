@@ -11,10 +11,14 @@
 #include "PageBitmap.h"
 #include "Record.h"
 #include "../utils/rc.h"
+
+//对内存中page数据块进行读取修改操作
 class PageManager {
     //4 * 2048byte
     int slot_num;
     int slot_int_size;//一个槽中的数据长度
+    int slot_max_number;//最多可以存储的槽位数量
+    int slot_used_number;//已经使用的槽位数
     int free_cnt;//空闲4字节数目
     int  free_data;//第一个空闲空间的4字节偏移
     BufType page; //缓存在bfm中的页的首地址
@@ -28,77 +32,133 @@ public:
         this->page = NULL;
         bitmap = new PageBitmap(page);
     }
-    void resetPage(BufType page,int record_size) {
+    void resetPage(BufType page,int record_int_size) {
         this->page = page;
-//        this->slot_int_size = *(page+1);
-        this->slot_int_size = record_size;
-        this->free_cnt = *(page+2);
-        this->free_data = *(page+3);
+        this->slot_int_size = record_int_size;
         bitmap->setBitmap(page);
     }
-    //  分配出新页时初始化每一页
-    void setPage(BufType page){
+    /**
+     * 分配出新页时初始化数据页信息（设置页头信息和清零位图）
+     * @param page
+     * @param pid
+     * @param record_int_size
+     */
+    void allocateFreePage(BufType page, int pid, int record_int_size){
         this->page = page;
-        *(page+2) = PAGE_SIZE-PAGE_HEADER_SIZE;
-        *(page+3) = PAGE_HEADER_SIZE;
+        this->slot_int_size = record_int_size;
+        //初始化数据页，设置所有位图为0
+        char* buf = (char*) page;
+        buf = buf + PAGE_SIZE - RECORD_BITMAP_SIZE;
+        for(int i = 0 ; ++i; i < RECORD_BITMAP_SIZE) {
+            char slot = 0;
+            buf[i] = slot;
+        }
+
+        this->bitmap->setBitmap(this->page);
+        //初始化页头信息
+        this->bitmap->setSlotSize(record_int_size);
+        this->bitmap->page_is_full = 0;
+        this->bitmap->slot_used_number = 0;
+        //写入内存中
+        this->bitmap->writebackHeaderInfo();
     }
 
-    //更新sid槽位的记录为以buf为首地址的记录
+    /**
+     * 更新sid槽位的记录为以buf为首地址的记录
+     * @param sid
+     * @param buf
+     * @return
+     */
     bool updateRecord(int sid, BufType buf) {
-        BufType begin = page + (PAGE_HEADER_SIZE >> 2);
+        BufType begin = page + PAGE_HEADER_INT_SIZE;
         BufType record = begin + sid * slot_int_size;
-        for(int i = 0 ; i < slot_int_size ; ++i) {
+        for(int i = 0 ; i < this->slot_int_size ; ++i) {
             record[i] = buf[i];
         }
         return true;
     }
-    //将记录插入sid槽位
-    bool insertRecord(int sid, BufType buf) {
-        //TODO 判断是否冲突
-        BufType record = page + (PAGE_HEADER_SIZE>>2)+ sid * slot_int_size;
-        for(int i = 0 ; i < slot_int_size ; ++i) {
-            record[i] = buf[i];
+    /**
+     * 将数据buf插入sid槽位，并标记位图为1
+     * @param sid
+     * @param buf
+     * @return
+     */
+    bool insertRecordBySid(int sid, BufType buf) {
+        if(this->bitmap->setSlot(sid)) {
+            //定位到slot首地址
+            BufType record = (this->page + PAGE_HEADER_INT_SIZE) + sid * this->slot_int_size;
+            for(int i = 0 ; i < this->slot_int_size ; ++i) {
+                record[i] = buf[i];
+            }
+            return true;
         }
-        this->bitmap->setSlot(sid);
-        return true;
+        return false;
     }
-    //插入一条记录，存在空闲并成功返回true，否则返回false
+    /**
+     * 插入一条记录，存在空闲并成功返回true，否则返回false
+     * @param buf
+     * @param rid
+     * @return
+     */
     bool insertRecord(BufType buf , RID& rid) {
         int sid = bitmap->findFreeSid();
         rid.sid = sid;
         if(sid == -1) return false;
-        return this->insertRecord(sid, buf);
+        if( this->insertRecord(sid, buf) ) {
+            this->bitmap->slot_used_number ++;
+        }
     }
 
-    //删除一条记录。标记位图为0
+    /**
+     * 删除一条记录。标记位图为0
+     * @param sid
+     * @return
+     */
     bool deleteRecord(int sid) {
-        bitmap->deleteSlot(sid);
-        return true;
-    }
+        if(this->bitmap->deleteSlot(sid)) {
+            this->bitmap->slot_used_number --;
+            return true;
+        }
+        return false;
 
+    }
+    /**
+     * 获取rid定位的数据记录的copy
+     * @param rid
+     * @param rc
+     * @return
+     */
     RC getRecordCopy(RID rid , Record& rc) {
-        if(rid.sid < 0 || rid.sid > this->slot_num) {
+        if(rid.sid < 0 || rid.sid >= this->bitmap->slot_max_number) {
             printf("search sid over page_slot_num\n");
             return RC(-1);
         }
-        BufType begin = page + (PAGE_HEADER_SIZE >> 2);
+        BufType begin = page + (PAGE_HEADER_INT_SIZE);
         BufType data = begin + rid.sid * slot_int_size;
         BufType copy = copyRecord(data);
         rc.setData(copy);
         rc.setRID(rid);
         return RC();
     }
-
+    /**
+     * copy data为首地址的slot_int_size个4字节数据
+     * @param data
+     * @return copy
+     */
     BufType copyRecord(BufType data) {
-        BufType copy = new unsigned int[SLOT_LENGTH];
-        for(int i = 0 ; i < slot_int_size; ++i) {
+        BufType copy = new unsigned int[this->slot_int_size];
+        for(int i = 0 ; i < this->slot_int_size; ++i) {
             copy[i] = data[i];
         }
+        printf("copy record: slot_int_size %d\n",slot_int_size);
         return copy;
     }
-
-    void getSlotNum(int &slot_num) {
-        slot_num = this->slot_num;
+    /**
+     * 获取已经使用的槽位数量
+     * @param slot_used_number
+     */
+    void getSlotNum(int &slot_used_number) {
+        slot_used_numer = this->slot_used_number;
     }
 
     void setFreeCnt(int cnt){
@@ -109,6 +169,9 @@ public:
         *(page+3) = offset;
     }
 
+    bool isPageFull() {
+        return this->bitmap->page_is_full;
+    }
 
 };
 

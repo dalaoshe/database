@@ -30,6 +30,9 @@ public:
     Record() {
         data = NULL;
     }
+    ~Record() {
+
+    }
 
     BufType getData(int offset) const {
         return this->data + offset;

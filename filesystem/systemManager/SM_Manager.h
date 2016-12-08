@@ -67,14 +67,13 @@ class SM_Manager {
         return true;
     }
 public:
-    SM_Manager  (IndexManager* ixm, RecordManager* rmm) {  // Constructor
+    SM_Manager  (IndexManager* ixm, RecordManager* rmm, FileManager* fm, BufPageManager* bpm) {  // Constructor
         //初始化
-        fm = new FileManager();
-        bpm = new BufPageManager(fm);
-        this->ixm = new IndexManager(fm,bpm);
-        this->rmm = new RecordManager(fm,bpm);
-        ixm = this->ixm;
-        rmm = this->rmm;
+        this->fm = fm;
+        this->bpm = bpm;
+        this->ixm = ixm;
+        this->rmm = rmm;
+
         //更换工作目录
         ifstream db_root;
         db_root.open(DBROOT);
@@ -365,7 +364,7 @@ public:
         int attr_offset = 32>>2;
         int attr_count = index[2] ;
         for(int i=0;i<attr_count;++i){
-            int offset = attr_offset*i + ATTR_SIZE;
+            int offset = ATTR_INT_SIZE*i + ATTR_OFFSET;
             if(strcmp(((char*)(index[offset])),attrName)==0){
                 AttrType  type = (AttrType)index[offset+1];
                 int key_size = index[offset+3];

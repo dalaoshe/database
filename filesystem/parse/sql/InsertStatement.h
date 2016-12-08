@@ -3,7 +3,6 @@
 
 #include "SQLStatement.h"
 #include "SelectStatement.h"
-
 namespace hsql {
     /**
      * Represents SQL Insert statements.

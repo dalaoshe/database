@@ -16,6 +16,16 @@ using namespace std;
 /**
  * 解析数据表的字段
  */
+//0 pageID
+//1 record_int_size
+//2 attr_size 字段数
+//.....
+//自32起，每32bytes为一个字段的定义
+//key_name 20byte(//列名最长19byte + '\0'),
+//key_type 4byte,
+//null 4byte,
+//length 4byte,
+
 
 //以记录的粒度管理记录
 class RM_FileHandle {
@@ -25,13 +35,47 @@ class RM_FileHandle {
     FileManager* fm;
     BufPageManager* bpm;
     PageManager* pm;
-    int record_size;
+
+    int record_int_size;
+    int last_pageID;
+    int free_pageID;
+    int attr_count;
+
     int fileID;
     int headIndex;
-    //TODO find free page
+    /**
+     * 获取可以插入数据行的数据页的pid
+     * @return
+     */
     int _findFreePage() {
-        int pageID = 1;
-        return pageID;
+        int index;
+        BufType page = bpm->getPage(fileID,free_pageID,index);
+        pm->resetPage(page,record_int_size);
+
+        //获取可插入页
+        if( pm->isPageFull() ) {//空闲页已经满
+            //查看最后一页
+            page = bpm->getPage(fileID,last_pageID,index);
+            pm->resetPage(page,record_int_size);
+            if (pm->isPageFull()) {//最后一页已经满
+                //新开一页
+                last_pageID ++;
+                page = bpm->getPage(fileID,last_pageID,index);
+                pm->resetPage(page,record_int_size);
+                pm->allocateFreePage(page,last_pageID,record_int_size);
+                //将新开的页标记为脏页
+                bpm->markDirty(index);
+            }
+            //重新定位空闲页
+            free_pageID = last_pageID;
+            //修改了头页
+            bpm->markDirty(headIndex);
+        }
+
+        fileHeader[TABLE_FREE_PAGE_INT_OFFSET] = free_pageID;
+        fileHeader[TABLE_LAST_PAGEID_INT_OFFSET] = last_pageID;
+
+        return free_pageID;
     }
 public:
     RM_FileHandle  () {
@@ -41,20 +85,20 @@ public:
         this->close();
     };// Destructor
 
-    /*
+    /**
      * @函数名getRec
      * @参数rid:记录id，<pid,rid>
      * @参数rec:待赋值的记录实例
      * 功能:将对应位置的数据copy到rec中
      * 返回:成功操作返回RC(0)
      */
-    RC getRec(const RID &rid, Record &rec) {
+    RC getRec(RID rid, Record &rec) {
         int index;
         BufType page = bpm->getPage(fileID,rid.pid,index);
-        pm->resetPage(page,record_size);
+        pm->resetPage(page,this->record_int_size);
         return pm->getRecordCopy(rid,rec);
     };
-    /*
+    /**
      * @函数名insertRec
      * @参数data:待插入数据的首地址
      * @参数rid:待赋值的记录id
@@ -66,14 +110,14 @@ public:
         int pid = this->_findFreePage();
         rid.pid = pid;
         BufType page = bpm->getPage(fileID,pid,index);
-        pm->resetPage(page,record_size);
+        pm->resetPage(page,record_int_size);
         if(pm->insertRecord(data,rid)) {
             bpm->markDirty(index);
             return RC();
         }
         return RC(-1);
     };
-    /*
+    /**
      * @函数名deleteRec
      * @参数rid:待删除的记录id
      * 功能:将相应的槽位的位图标记为0，以完成删除，并标记对应页为脏页
@@ -82,14 +126,14 @@ public:
     RC deleteRec(const RID &rid) {
         int index;
         BufType page = bpm->getPage(fileID,rid.pid,index);
-        pm->resetPage(page,record_size);
+        pm->resetPage(page,this->record_int_size);
         if(pm->deleteRecord(rid.sid)) {
             bpm->markDirty(index);
             return RC();
         }
         return RC(-1);
     };
-    /*
+    /**
      * @函数名updateRec
      * @参数rec:需要更新的记录
      * 功能:将rec的rid指示的槽位的数据更新为rec的数据，以完成更新，并标记对应页为脏页
@@ -98,7 +142,7 @@ public:
     RC updateRec(const Record &rec){
         int index;
         BufType page = bpm->getPage(fileID,rec.getRID().pid,index);
-        pm->resetPage(page,record_size);
+        pm->resetPage(page,record_int_size);
         BufType data = rec.getData();
         RID rid = rec.getRID();
         if(pm->updateRecord(rid.sid,data)) {
@@ -121,7 +165,7 @@ public:
         return this->fileID;
     }
 
-    /*
+    /**
      * @函数名close
      * 功能:关闭缓存和文件管理器
      * 返回:成功操作返回RC(0)
@@ -132,27 +176,32 @@ public:
         return RC();
     }
 
-    /*
+    /**
      * @函数名init
-     * 功能: 初始化，获取对应的文件头页，并标记其为脏页
+     * 功能: 初始化，获取对应的文件头页的信息，并标记其为脏页
      * 返回:成功操作返回RC(0)
      */
     RC init() {
         this->fileHeader = this->bpm->getPage(fileID,0,this->headIndex);
-        this->record_size = fileHeader[1];
-        //printf("fileId: %d, slot_int_size: %d\n",fileID,slot_int_size);
-        printf("fileId: %d\n",fileID);
+
+        this->record_int_size = fileHeader[TABLE_RECORD_INT_SIZE_INT_OFFSET];
+        this->last_pageID = fileHeader[TABLE_LAST_PAGEID_INT_OFFSET];
+        this->free_pageID = fileHeader[TABLE_FREE_PAGE_INT_OFFSET];
+        this->attr_count = fileHeader[TABLE_ATTR_COUNT_INT_OFFSET];
+
+        printf("fileId: %d record_int_size %d\n",fileID,this->record_int_size);
         bpm->markDirty(this->headIndex);
         return RC();
     }
-    /*
+    /**
     * @函数名getPageNum
     * @参数page_num:待赋值的页总数
-    * 功能: 从文件头页读取数据页的总数
+    * 功能: 从文件头页读取已经使用的数据页的总数
     * 返回:成功操作返回RC(0)
     */
     RC getPageNum(int &page_num) {
-        page_num = fileHeader[0];
+
+        page_num = this->last_pageID + 1;
         /*
         pm->resetPage(fileHeader);
         RID rid;
@@ -163,43 +212,42 @@ public:
         */
         return RC();
     }
-    /*
-    * @函数名getSlotNum
+    /**
+    * @函数名getSlotUsedNumner
     * @参数pid:待查询的页id
     * @参数slot_num:待赋值的槽总数
-    * 功能:获取pid页的槽位总数
+    * 功能:获取pid页的使用的槽位总数
     * 返回:成功操作返回RC(0)
     */
-    RC getSlotNum(int pid, int &slot_num) {
-        BufType page = bpm->getPage(fileID,pid,this->headIndex);
-        pm->resetPage(page,record_size);
-        pm->getSlotNum(slot_num);
+    RC getSlotUsedNumber(int pid, int &slot_used_number) {
+        int index;
+        BufType page = bpm->getPage(fileID,pid,index);
+        pm->resetPage(page,this->record_int_size);
+        pm->getSlotNum(slot_used_number);
         return RC();
     }
-
+    /**
+     * 打印数据表的信息
+     * @return
+     */
     RC ShowSchema(){
         int index;
         BufType page_header = bpm->getPage(fileID,0,index);
-        printf("page_ID: %d\n",page_header[0]);
-        printf("record_size: %d\n",page_header[1]);
-        int attr_offset = 32>>2;
-        int attr_count = page_header[2];
-        for(int i=0;i<attr_count;++i){
-            int offset = attr_offset*i + ATTR_SIZE;
-            page_header+=offset;
-            printf("attr_name: %s \t",(char*)(page_header));
-            /*printf("%s",(char*)(page_header+1));
-            printf("%s",(char*)(page_header+2));
-            printf("%s\t",(char*)(page_header+3));*/
-            printf("attr_type: %d\t ",page_header[5]) ;
-            printf("attr_length: %d\t ",page_header[6]) ;
-            printf("attr_not_null: %d\t\n ",page_header[7]) ;
-        }
+        RM_FileAttr* attr = new RM_FileAttr();
+        attr->getFileAttrFromPageHeader(page_header);
+        attr->showFileAttrInfo();
+        delete attr;
+    }
+    /**
+     * 获取该文件的首页
+     * @return
+     */
+    BufType getFileHeader() {
+        return this->fileHeader;
     }
 };
 
 class RecordManager{
-    PageManager *pm;
     //负责文件头的读取
     FileManager *fm;
     BufPageManager *bpm;
@@ -208,7 +256,6 @@ public:
     RecordManager(FileManager *fm, BufPageManager* bpm) {
         this->fm = fm;
         this->bpm = bpm;
-        pm = new PageManager();
     }
     /*
     * @函数名createFile
@@ -219,42 +266,19 @@ public:
     */
     RC createFile(const char* name ,int record_int_size, RM_FileAttr* attr) {
         if(this->fm->createFile(name)) {
+            //建立文件成功
             int fileID;
             fm->openFile(name,fileID);
             int index;
-//            int findex;
+            //获取头页
             BufType page_header = bpm->getPage(fileID,0,index);
-//            BufType page_first = bpm->getPage(fileID,1,findex);
-            //TODO: code to edit root_page
-            //0 pageID
-            //1 record_init_size
-            //2 attr_size 字段数
-            //.....
-            //自32起，每32bytes为一个字段的定义
-            //key_name 20,key_type 4,null 4,length 4
             printf("index:%d\n",index);
-            page_header[0] = 0;
-            page_header[1] = record_int_size;
-            int attr_offset = 32>>2;
-            int attr_count = attr->key_type.size();
-            page_header[2] = attr_count;
-            for(int i=0;i<attr_count;++i){
-                int offset = attr_offset*i + ATTR_SIZE;
-                page_header += offset;
-                const char* name = attr->key_name[i].c_str();
-                for(int j=0;j<attr->key_name[i].length();++j){
-                    *((char*)(page_header)+j) = *(name+j);
-                }
-                *((char*)(page_header)+attr->key_name[i].length()) = '\0';
-                page_header[5] = attr->key_type[i];
-                page_header[6] = attr->value_length[i];
-                page_header[7] = attr->not_null[i];
-            }
-
-//            page_header[2] = fix_col_num;
-//            page_header[3] = var_col_num;
-            //....
+            //TODO: code to edit root_page
+            //将该表的信息写入头页
+            attr->setFileAttrToPageHeader(page_header,record_int_size);
+            //标记为脏页
             bpm->markDirty(index);
+            //写回
             bpm->writeBack(index);
             printf("create! record_int_size: %d\n",record_int_size);
             return RC();
