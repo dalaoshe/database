@@ -32,6 +32,7 @@
 //最后32个byte为位图
 #define RECORD_BITMAP_SIZE 32
 //页头大小 8*4 = 32 byte
+#define PAGE_HEADER_SIZE 32
 #define PAGE_HEADER_INT_SIZE 8
 #define PAGE_INT_SIZE 2048
 #define PAGE_HEADER_ATTR_CNT 4
@@ -45,6 +46,8 @@
 #define TABLE_LAST_PAGEID_INT_OFFSET 4
 //列数据类型信息偏移
 #define ATTR_VALUE_TYPE_INT_OFFSET 5
+//每一列名的最大长度
+#define ATTR_NAME_MAX_SIZE 20
 //列数据长度信息偏移
 #define ATTR_VALUE_LENGTH_INT_OFFSET 6
 //列是否可为空信息偏移
@@ -67,6 +70,7 @@
 #define RECORD_TAG_B 1
 #define RECORD_FIX_LENGTH 2
 #define RECORD_FIX_DATA 8
+#define RECORD_MIN_FREE_NUMBER 10
 //最小数据行INT长度
 #define RECORD_MIN_INT_SIZE 8
 

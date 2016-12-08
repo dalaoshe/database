@@ -50,18 +50,18 @@ class RM_FileHandle {
     int _findFreePage() {
         int index;
         BufType page = bpm->getPage(fileID,free_pageID,index);
-        pm->resetPage(page,record_int_size);
+        pm->resetPage(page);
 
         //获取可插入页
         if( pm->isPageFull() ) {//空闲页已经满
             //查看最后一页
             page = bpm->getPage(fileID,last_pageID,index);
-            pm->resetPage(page,record_int_size);
+            pm->resetPage(page);
             if (pm->isPageFull()) {//最后一页已经满
                 //新开一页
                 last_pageID ++;
                 page = bpm->getPage(fileID,last_pageID,index);
-                pm->resetPage(page,record_int_size);
+                pm->resetPage(page);
                 pm->allocateFreePage(page,last_pageID,record_int_size);
                 //将新开的页标记为脏页
                 bpm->markDirty(index);
@@ -95,7 +95,7 @@ public:
     RC getRec(RID rid, Record &rec) {
         int index;
         BufType page = bpm->getPage(fileID,rid.pid,index);
-        pm->resetPage(page,this->record_int_size);
+        pm->resetPage(page);
         return pm->getRecordCopy(rid,rec);
     };
     /**
@@ -110,8 +110,9 @@ public:
         int pid = this->_findFreePage();
         rid.pid = pid;
         BufType page = bpm->getPage(fileID,pid,index);
-        pm->resetPage(page,record_int_size);
+        pm->resetPage(page);
         if(pm->insertRecord(data,rid)) {
+
             bpm->markDirty(index);
             return RC();
         }
@@ -126,9 +127,15 @@ public:
     RC deleteRec(const RID &rid) {
         int index;
         BufType page = bpm->getPage(fileID,rid.pid,index);
-        pm->resetPage(page,this->record_int_size);
+        pm->resetPage(page);
         if(pm->deleteRecord(rid.sid)) {
             bpm->markDirty(index);
+            //由于该行删除，该数据页空闲,若空闲行大于最小值则认为该页空闲
+            if(pm->getFreeSlotNumber() > RECORD_MIN_FREE_NUMBER) {
+                this->free_pageID = rid.pid;
+                fileHeader[TABLE_FREE_PAGE_INT_OFFSET] = free_pageID;
+                bpm->markDirty(headIndex);
+            }
             return RC();
         }
         return RC(-1);
@@ -142,7 +149,7 @@ public:
     RC updateRec(const Record &rec){
         int index;
         BufType page = bpm->getPage(fileID,rec.getRID().pid,index);
-        pm->resetPage(page,record_int_size);
+        pm->resetPage(page);
         BufType data = rec.getData();
         RID rid = rec.getRID();
         if(pm->updateRecord(rid.sid,data)) {
@@ -222,8 +229,8 @@ public:
     RC getSlotUsedNumber(int pid, int &slot_used_number) {
         int index;
         BufType page = bpm->getPage(fileID,pid,index);
-        pm->resetPage(page,this->record_int_size);
-        pm->getSlotNum(slot_used_number);
+        pm->resetPage(page);
+        slot_used_number = pm->getSlotNum();
         return RC();
     }
     /**
@@ -264,7 +271,13 @@ public:
     * 功能:新建一个文件，并初始化文件头页对应的信息写入文件
     * 返回:成功操作返回RC(0)
     */
-    RC createFile(const char* name ,int record_int_size, RM_FileAttr* attr) {
+    /**
+     *
+     * @param name 表名
+     * @param attr 表参数（各个列对应的属性信息）
+     * @return
+     */
+    RC createFile(const char* name , RM_FileAttr* attr) {
         if(this->fm->createFile(name)) {
             //建立文件成功
             int fileID;
@@ -272,14 +285,24 @@ public:
             int index;
             //获取头页
             BufType page_header = bpm->getPage(fileID,0,index);
-            printf("index:%d\n",index);
-            //TODO: code to edit root_page
             //将该表的信息写入头页
-            attr->setFileAttrToPageHeader(page_header,record_int_size);
+            attr->setFileAttrToPageHeader(page_header);
             //标记为脏页
             bpm->markDirty(index);
-            //写回
+            //写回数据头页
             bpm->writeBack(index);
+
+            //获取数据行长度
+            int record_int_size = page_header[TABLE_RECORD_INT_SIZE_INT_OFFSET];
+            printf("init header! record_int_size: %d\n",record_int_size);
+            //初始化第一个数据页信息（pid=1）
+            BufType first_data_page = bpm->getPage(fileID,1,index);
+            PageManager* pm = new PageManager();
+            pm->allocateFreePage(first_data_page,1,record_int_size);
+            bpm->markDirty(index);
+            bpm->writeBack(index);
+            printf("allocate first page! record_int_size: %d\n",record_int_size);
+            delete pm;
             printf("create! record_int_size: %d\n",record_int_size);
             return RC();
         }

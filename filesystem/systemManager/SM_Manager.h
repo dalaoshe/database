@@ -297,7 +297,7 @@ public:
         for(int i=0;i<attributes->value_length.size();++i){
             size += attributes->value_length[i];
         }
-        rmm->createFile(relName,size,attributes);
+        rmm->createFile(relName,attributes);
 
         TableList.push_back(string(relName));
         ifstream fin(TABLELIST);
@@ -364,7 +364,7 @@ public:
         int attr_offset = 32>>2;
         int attr_count = index[2] ;
         for(int i=0;i<attr_count;++i){
-            int offset = ATTR_INT_SIZE*i + ATTR_OFFSET;
+            int offset = ATTR_INT_SIZE*i + ATTR_INT_OFFSET;
             if(strcmp(((char*)(index[offset])),attrName)==0){
                 AttrType  type = (AttrType)index[offset+1];
                 int key_size = index[offset+3];

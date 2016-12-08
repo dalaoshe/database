@@ -14,13 +14,7 @@
 
 //对内存中page数据块进行读取修改操作
 class PageManager {
-    //4 * 2048byte
-    int slot_num;
     int slot_int_size;//一个槽中的数据长度
-    int slot_max_number;//最多可以存储的槽位数量
-    int slot_used_number;//已经使用的槽位数
-    int free_cnt;//空闲4字节数目
-    int  free_data;//第一个空闲空间的4字节偏移
     BufType page; //缓存在bfm中的页的首地址
     PageBitmap *bitmap; //该页的位图管理器
 public:
@@ -32,9 +26,9 @@ public:
         this->page = NULL;
         bitmap = new PageBitmap(page);
     }
-    void resetPage(BufType page,int record_int_size) {
+    void resetPage(BufType page) {
         this->page = page;
-        this->slot_int_size = record_int_size;
+        this->slot_int_size = page[PAGE_SLOT_INT_SIZE_INT_OFFSET];
         bitmap->setBitmap(page);
     }
     /**
@@ -49,10 +43,11 @@ public:
         //初始化数据页，设置所有位图为0
         char* buf = (char*) page;
         buf = buf + PAGE_SIZE - RECORD_BITMAP_SIZE;
-        for(int i = 0 ; ++i; i < RECORD_BITMAP_SIZE) {
+        for(int i = 0 ; i < RECORD_BITMAP_SIZE ; ++i) {
             char slot = 0;
             buf[i] = slot;
         }
+        printf("clean bitmap ok\n");
 
         this->bitmap->setBitmap(this->page);
         //初始化页头信息
@@ -104,8 +99,11 @@ public:
         int sid = bitmap->findFreeSid();
         rid.sid = sid;
         if(sid == -1) return false;
-        if( this->insertRecord(sid, buf) ) {
+        if( this->insertRecordBySid(sid, buf) ) {
             this->bitmap->slot_used_number ++;
+            if(this->bitmap->slot_used_number >= this->bitmap->slot_max_number)
+                this->bitmap->page_is_full = 1;
+            this->bitmap->writebackHeaderInfo();
         }
     }
 
@@ -117,6 +115,7 @@ public:
     bool deleteRecord(int sid) {
         if(this->bitmap->deleteSlot(sid)) {
             this->bitmap->slot_used_number --;
+            this->bitmap->writebackHeaderInfo();
             return true;
         }
         return false;
@@ -155,18 +154,18 @@ public:
     }
     /**
      * 获取已经使用的槽位数量
-     * @param slot_used_number
+     * @return slot_used_number
      */
-    void getSlotNum(int &slot_used_number) {
-        slot_used_numer = this->slot_used_number;
+    int getSlotNum() {
+        return this->bitmap->slot_used_number;
     }
 
-    void setFreeCnt(int cnt){
-        *(page+2) = cnt;
-    }
-
-    void setFreeData(int offset){
-        *(page+3) = offset;
+    /**
+     * 获取已经使用的槽位数量
+     * @return slot_free_number
+     */
+    int getFreeSlotNumber() {
+        return this->bitmap->slot_max_number - this->bitmap->slot_used_number;
     }
 
     bool isPageFull() {

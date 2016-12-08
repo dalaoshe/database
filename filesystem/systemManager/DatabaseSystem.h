@@ -143,8 +143,10 @@ public:
                 RM_FileAttr* fileAttr = new RM_FileAttr();
                 fileAttr->getFileAttrFromPageHeader(fileHeader);
                 //获取要插入的数据块data
-                BufType data;
+                BufType data = new unsigned int[fileHandle.getFileHeader()[TABLE_RECORD_INT_SIZE_INT_OFFSET]];
                 fileAttr->buildValidInsertData(insertStmt,data);
+                //打印记录
+                //fileAttr->printRecordInfo(data);
                 //插入槽
                 RID rid;
                 fileHandle.insertRec(data,rid);
@@ -170,7 +172,7 @@ public:
 
                 //获取记录
                 Record record;
-                RID rid; rid.pid=1; rid.sid=0;
+                RID rid; rid.pid=1; rid.sid=6;
                 fileHandle.getRec(rid,record);
 
                 //打印记录

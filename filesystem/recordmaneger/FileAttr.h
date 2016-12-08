@@ -58,10 +58,13 @@ public:
         this->attr_count = this->key_name.size();
         //计算每条记录的长度（INT长度）
         this->record_int_size = 0;
+        //所有数据列的长度和
         for(int i = 0 ; i < this->attr_count ; ++i) {
             this->record_int_size += this->value_length[i];
         }
+        //数据行状态位长度
         this->record_int_size += RECORD_FIX_DATA;
+        //转成int长度
         this->record_int_size = (this->record_int_size >> 2) + 1;
         //保证每条记录的长度不小于最小长度
         if(this->record_int_size < RECORD_MIN_INT_SIZE) this->record_int_size = RECORD_MIN_INT_SIZE;
@@ -150,7 +153,7 @@ public:
         for(int i=0; i < this->attr_count; ++i) {
 
 
-            printf("attr_name: %s \t",this->key_name[i]);
+            printf("attr_name: %s \t",this->key_name[i].c_str());
             printf("attr_type: %d\t ",this->key_type[i]) ;
             printf("attr_length: %d\t ",this->value_length[i]) ;
             printf("attr_not_null: %d\t\n ",this->not_null[i]) ;
@@ -165,8 +168,6 @@ public:
      * @return
      */
     string buildValidInsertData(InsertStatement* stmt, BufType data) {
-        data = new unsigned int[this->record_int_size];
-
         if (stmt->columns != NULL) { //insert into table(c1,c2,c3...) values(v1,v2,v3...)
             //总共要插入的列数
             int num = (*stmt->columns).size();
@@ -181,7 +182,7 @@ public:
                 //该列数据的写入首地址
                 char* begin = ((char*)data) + RECORD_FIX_DATA;
                 //获取该列属性信息
-                BufType attr = this->page_header + ATTR_OFFSET;
+                BufType attr = this->page_header + ATTR_INT_OFFSET;
                 int attr_type, not_null, attr_len;
                 for(int j = 0 ; j < attr_count ; ++j) {//查询是否存在对应的列
                     char* attr_name = (char*)attr;
@@ -249,10 +250,12 @@ public:
                 attr_type = attr[ATTR_VALUE_TYPE_INT_OFFSET];
                 not_null = attr[ATTR_NOT_NULL_INT_OFFSET];
                 attr_len = attr[ATTR_VALUE_LENGTH_INT_OFFSET];
+                printf("insert coluns: %s\n",attr_name);
                 switch (expr->type) {
                     case kExprLiteralFloat:
                         if (attr_type == 1) {
                             *((float *) begin) = expr->fval;
+                            printf("insert float: %f\n",*((float *) begin));
                         } else {
                             return "float type error\n";
                         }
@@ -260,6 +263,7 @@ public:
                     case kExprLiteralInt:
                         if (attr_type == 0) {
                             *((int *) begin) = expr->ival;
+                            printf("insert int: %d\n",*((int *) begin));
                         } else {
                             return "int type error\n";
                         }
@@ -267,6 +271,7 @@ public:
                     case kExprLiteralString:
                         if (attr_type == 2) {
                             strcpy(begin, expr->name);
+                            printf("insert string: %s\n",begin);
                         } else {
                             return "str type error\n";
                         }
@@ -295,23 +300,23 @@ public:
         for(int i = 0 ; i < this->attr_count ; ++i) {
             //获取该列的所有属性信息
             char* attr_name = (char*)attr;
-            attr_type = (AttrType)attr[ATTR_TYPE_INT_OFFSET];
+            attr_type = (AttrType)attr[ATTR_VALUE_TYPE_INT_OFFSET];
             not_null = attr[ATTR_NOT_NULL_INT_OFFSET];
             attr_len = attr[ATTR_VALUE_LENGTH_INT_OFFSET];
             printf("columns name: %s\t",attr_name);
             switch (attr_type) {
                 case INT: {//int
-                    int val = (*(int *) begin);
-                    printf("%d\n", val);
+                    int val = (*((int *) begin));
+                    printf("int %d %d\n",attr_type,val);
                     break;
                 }
                 case FLOAT: {//float
-                    float val = (*(float *) begin);
-                    printf("%f\n", val);
+                    float val = (*((float *) begin));
+                    printf("float %d %f\n",attr_type,val);
                     break;
                 }
                 case STRING: {//string
-                    printf("%s\n", begin);
+                    printf("string %d %s\n",attr_type, begin);
                     break;
                 }
                 default: {

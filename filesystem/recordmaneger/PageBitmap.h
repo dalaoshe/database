@@ -77,20 +77,6 @@ struct PageBitmap{
         if((this->slot_max_number - (this->slot_int_num << 5) > 0)) this->slot_int_num ++;
     }
 
-    //设置数据页的页头,传递时需要给出页头中需要的参数
-    void setPageHeader(unsigned int* page_header,int length){
-        if(length>32)printf("the page %d header overflows!",*(this->page_header));
-        for(int i=0;i<length;++i){
-            *(this->page_header+i) = *(page_header+i);
-        }
-    }
-
-    void setPageHeader(int pid, int slot_num,int free_cnt,int free_data_offset){
-        *(this->page_header) = pid;
-        *(this->page_header+1) = slot_num;
-        *(this->page_header+2) = free_cnt;
-        *(this->page_header+3) = free_data_offset;
-    }
 
     void writebackHeaderInfo() {
         this->page_header[PAGE_SLOT_USED_NUMBER_INT_OFFSET] = this->slot_used_number;

@@ -428,7 +428,7 @@ public:
                     key_offset = 4,
                     //索引长度为 状态位长度+索引码长度+指针长度+索引指向的类型长度
                     index_byte_size = key_offset + key_byte_size + 8 + 4,
-                    page_header_size = PAGE_HEADER_SIZE;//TODO page_header_size definition where?
+                    page_header_size = INDEX_PAGE_HEADER_SIZE;//TODO page_header_size definition where?
                 //每页能存的最多索引数为页大小-页头大小-3个预留索引长度 / 索引长度
                 max_num = (PAGE_SIZE - page_header_size - index_byte_size * 3) / index_byte_size;
                 //最少为最多的一半

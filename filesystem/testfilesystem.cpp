@@ -106,7 +106,7 @@ void test2() {
     RecordManager* rm = new RecordManager(fm,bpm);
     char a[] = "test25.txt";
     RM_FileAttr * attrType = new RM_FileAttr();
-    rm->createFile(a,24,attrType);
+    rm->createFile(a,attrType);
     RM_FileHandle handle;
     rm->openFile(a,handle);
     printf("open file: %s ok \n",a);
