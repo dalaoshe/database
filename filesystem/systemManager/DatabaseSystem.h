@@ -13,6 +13,7 @@
 #include "../parse/sqlhelper.h"
 #include <iostream>
 #include <cstring>
+#include <map>
 using namespace std;
 using namespace hsql;
 
@@ -170,13 +171,30 @@ public:
                 RM_FileAttr* fileAttr = new RM_FileAttr();
                 fileAttr->getFileAttrFromPageHeader(fileHeader);
 
-                //获取记录
-                Record record;
-                RID rid; rid.pid=1; rid.sid=6;
-                fileHandle.getRec(rid,record);
+
+                map<RID,int>rid_list;
+                this->searchRIDListByWhereClause(selectStatement->whereClause,rid_list,fileHandle,0);
+                printf("rid size %d\n",rid_list.size());
+//                //获取记录
+//                Record record;
+//                RID rid; rid.pid=1; rid.sid=6;
+//                fileHandle.getRec(rid,record);
 
                 //打印记录
-                fileAttr->printRecordInfo(record.getData());
+                map<RID, int>::iterator it;
+                //循环遍历左边表达式选取的项在右边表达式是否存在
+                for (it = rid_list.begin(); it != rid_list.end(); ++it) {
+                    //判断在右边是否存在
+
+                    RID rid = it->first;
+                    printf("rid<%d,%d> \t",rid.pid,rid.sid);
+                    Record record;
+                    fileHandle.getRec(rid,record);
+                    //不存在则下一个
+
+                    fileAttr->printRecordInfo(record.getData());
+                }
+
 
 
                 return "";
@@ -220,6 +238,124 @@ public:
         }
         fin.close();
         return  "";
+    }
+
+    RC searchRIDListByWhereClause(Expr* whereclause, map<RID,int> & rid_list , RM_FileHandle &fileHandle , int numIndent) {
+        //whereclause type is kExprOperator
+        if (whereclause == NULL) {
+            printf("null\n", numIndent);
+
+            return RC(-1);
+        }
+        map<RID,int> left;
+        map<RID,int> right;
+        CompOp op;
+        switch (whereclause->op_type) {
+            case Expr::LESS_EQ: {// <=
+                op = LE_OP;
+            }
+            case Expr::GREATER_EQ: {// >=
+                op = GE_OP;
+            }
+            case Expr::NOT_EQUALS: {// <>
+                op = NE_OP;
+            }
+            case Expr::SIMPLE_OP: {
+                //= < >
+                //递归基，符号两边为列名和属性值，进行查找
+                char *col_name = whereclause->expr->name;
+                RM_FileAttr *fileAttr = new RM_FileAttr();
+                fileAttr->getFileAttrFromPageHeader(fileHandle.getFileHeader());
+                //数据行的偏移量
+                int offset = fileAttr->getColValueOffset(col_name);
+                //数据列对应数据长度
+                int value_size = fileAttr->getColValueSize(col_name);
+                //数据类型
+                AttrType value_type = fileAttr->getColValueType(col_name);
+                char op_char = whereclause->op_char;
+                if (op_char == '<') {
+                    op = LT_OP;
+                } else if (op_char == '>') {
+                    op = GT_OP;
+                } else if (op_char == '=') {
+                    op = EQ_OP;
+                }
+                //比较数据
+                char *col_values = new char[value_size];
+                //whereclause->expr2 为属性值
+                switch (whereclause->expr2->type) {
+                    case kExprLiteralFloat:
+                        *((float *) col_values) = whereclause->expr2->fval;
+                        //print(expr->fval, numIndent);
+                        break;
+                    case kExprLiteralInt:
+                        *((int *) col_values) = whereclause->expr2->ival;
+                        //inprint(expr->ival, numIndent);
+                        break;
+                    case kExprLiteralString:
+                        strcpy(col_values, whereclause->expr2->name);
+                        //inprint(expr->name, numIndent);
+                        break;
+                    default:
+                        //fprintf(stderr, "Unrecognized expression type %d\n", expr->type);
+                        return RC(-1);
+                }
+                RM_FileScan *fileScan = new RM_FileScan();
+                fileScan->openScan(&fileHandle, value_type, value_size, offset, op, col_values);
+                printf("base search\n");
+                printf("op %c\n", whereclause->op_char, numIndent);
+                fileScan->getAllRecord(rid_list);
+                printf("base search ok %c\n", whereclause->op_char, numIndent);
+                delete fileAttr;
+                delete fileScan;
+                printf("delete ok %c size %d \n", whereclause->op_char, rid_list.size());
+                break;
+            }
+             //符号两边为表达式，继续递归根据符号取交、并、补
+            case Expr::AND: {
+                RC l_rc = searchRIDListByWhereClause(whereclause->expr, left, fileHandle, numIndent + 1);
+                RC r_rc = searchRIDListByWhereClause(whereclause->expr2, right, fileHandle, numIndent + 1);
+                map<RID, int>::iterator it;
+                //循环遍历左边表达式选取的项在右边表达式是否存在
+                for (it = left.begin(); it != left.end(); ++it) {
+                    //判断在右边是否存在
+                    map<RID, int>::iterator r_it = right.find(it->first);
+                    //不存在则下一个
+                    if (r_it == right.end()) continue;
+                    rid_list.insert(pair<RID, int>(it->first, 1));
+                }
+                printf("AND", numIndent);
+                return RC();
+            }
+            case Expr::OR: {
+                RC l_rc = searchRIDListByWhereClause(whereclause->expr, left, fileHandle, numIndent + 1);
+                RC r_rc = searchRIDListByWhereClause(whereclause->expr2, right, fileHandle, numIndent + 1);
+                map<RID, int>::iterator it;
+                //将右边表达式选取的记录插入
+                for (it = right.begin(); it != right.end(); ++it) {
+                    rid_list.insert(pair<RID, int>(it->first, 1));
+                }
+
+                //循环遍历左边的记录是否存在右边，若存在则剔除
+                for (it = left.begin(); it != left.end(); ++it) {
+                    //判断在右边是否存在
+                    map<RID, int>::iterator r_it = right.find(it->first);
+                    //若右边存在则剔除
+                    if (r_it != right.end()) continue;
+                    rid_list.insert(pair<RID, int>(it->first, 1));
+                }
+                printf("OR", numIndent);
+                return RC();
+            }
+            case Expr::NOT: {
+                printf("NOT", numIndent);
+                break;
+            }
+            default: {
+                printf("%d\n", whereclause->op_type, numIndent);
+                break;
+            }
+        }
     }
 };
 

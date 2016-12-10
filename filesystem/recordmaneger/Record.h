@@ -10,6 +10,9 @@ struct RID{
     int pid;
     int sid;
 };
+bool operator < (const RID l, const RID r) {
+    return l.pid < r.pid || ((l.pid == r.pid) && l.sid < r.sid);
+}
 class Record{
     RID rid;
     //记录的copy的首地址
@@ -34,8 +37,8 @@ public:
 
     }
 
-    BufType getData(int offset) const {
-        return this->data + offset;
+    char* getData(int offset) {
+        return ((char*)(this->data)) + offset;
     }
 
     int getHeaderSlotSize() {

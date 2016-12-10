@@ -331,5 +331,39 @@ public:
         printf("over\n");
         return "";
     }
+
+    /**
+     * 获取col_name 的数据列 数据类型
+     * @param col_name
+     * @return
+     */
+    AttrType getColValueType(string col_name) {
+        for(int i = 0 ; i < this->attr_count ; ++i) {
+            if(col_name == this->key_name[i]) return this->key_type[i];
+        }
+    }
+
+    /**
+     * 获取col_name 的数据列 数据长度
+     * @param col_name
+     * @return
+     */
+    int getColValueSize(string col_name) {
+        for(int i = 0 ; i < this->attr_count ; ++i) {
+            if(col_name == this->key_name[i]) return this->value_length[i];
+        }
+    }
+    /**
+     * 获取col_name 的数据列的数据在数据槽的偏移
+     * @param col_name
+     * @return
+     */
+    int getColValueOffset(string col_name) {
+        int offset = RECORD_FIX_DATA;
+        for(int i = 0 ; i < this->attr_count ; ++i) {
+            if(col_name == this->key_name[i]) return offset;
+            offset += this->value_length[i];
+        }
+    }
 };
 #endif //DATABASE_FILEATTR_H

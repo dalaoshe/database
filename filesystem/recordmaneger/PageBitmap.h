@@ -186,5 +186,26 @@ struct PageBitmap{
         return *(page_header+3);
     }
 
+    bool isSlotUsed(int sid) {
+        if(sid >= this->slot_max_number || sid < 0){
+            printf("set slot error; sid overflows!");
+            return true;
+        }
+        //bitmap_index = sid / 32 定位槽位号所在的4字节位图index
+        int bitmap_index = sid >> 5;
+        //pos 定位所在4字节位图的第几位
+        int pos = sid - (bitmap_index << 5);
+        unsigned int p = 1 << pos;
+        unsigned int slot = *(bitmap-bitmap_index);
+
+        //判断原来是否是1
+        unsigned int old = slot & p;
+        if(old > 0) {
+            printf("is used!\n");
+            return true;
+        }
+        return false;
+    }
+
 };
 #endif //PAGE_BITMAP_H

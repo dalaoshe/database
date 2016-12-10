@@ -37,6 +37,7 @@ class RM_FileHandle {
     PageManager* pm;
 
     int record_int_size;
+    int max_slot_number;
     int last_pageID;
     int free_pageID;
     int attr_count;
@@ -195,6 +196,10 @@ public:
         this->last_pageID = fileHeader[TABLE_LAST_PAGEID_INT_OFFSET];
         this->free_pageID = fileHeader[TABLE_FREE_PAGE_INT_OFFSET];
         this->attr_count = fileHeader[TABLE_ATTR_COUNT_INT_OFFSET];
+        //pm默认打开第一页
+        int index;
+        BufType page = this->bpm->getPage(fileID,1,index);
+        pm->resetPage(page);
 
         printf("fileId: %d record_int_size %d\n",fileID,this->record_int_size);
         bpm->markDirty(this->headIndex);
@@ -251,6 +256,13 @@ public:
      */
     BufType getFileHeader() {
         return this->fileHeader;
+    }
+
+    int getLastPageID() {
+        return  this->last_pageID;
+    }
+    int getMaxSlotNumber() {
+        return this->pm->getMaxSlotNumber();
     }
 };
 
@@ -356,13 +368,13 @@ public:
 /*
  * 按属性查找器，尚未测试
  */
+#include <map>
 class RM_FileScan {
     AttrType attrType;
     CompOp op;
     int attrLength;
     int attrOffset;
-    ClientHint hit;
-    void* value;
+    char* value;
     int pid;
     int sid;
     int page_num;
@@ -374,12 +386,126 @@ public:
                      AttrType      attrType,
                      int           attrLength,
                      int           attrOffset,
-                     CompOp        compOp,
-                     void          *value,
-                     ClientHint    pinHint = NO_HINT);
+                     CompOp          compOp,
+                     char          *value
+                    ) {
+        this->fileHandle = fileHandle;
+        this->attrType = attrType;
+        this->attrLength = attrLength;
+        this->attrOffset = attrOffset;
+        this->op    = compOp;
+        this->value = value;
+        this->pid = 1;
+        this->sid = 0;
+    }
     RC getNextRec   (Record &rec);                  // Get next matching record
     RC closeScan    ();                                // Terminate file scan
-    bool checkRecord(Record &rec) const ;
+
+    bool checkRecord(Record &rec) {
+        char* target_v = this->value;
+        char* rec_v = rec.getData(this->attrOffset);
+        if(attrType == AttrType::FLOAT) {
+            switch (op) {
+                case EQ_OP: {
+                    return (*(float*)rec_v) == (*(float*)target_v);
+                }
+                case LT_OP: {
+                    return (*(float*)rec_v) < (*(float*)target_v);
+                }
+                case GT_OP: {
+                    return (*(float*)rec_v) > (*(float*)target_v);
+                }
+                case LE_OP: {
+                    return (*(float*)rec_v) <= (*(float*)target_v);
+                }
+                case GE_OP: {
+                    return (*(float*)rec_v) >= (*(float*)target_v);
+                }
+                case NE_OP: {
+                    return (*(float*)rec_v) < (*(float*)target_v) || (*(float*)rec_v) > (*(float*)target_v);;
+                }
+                case NO_OP: {
+                    return target_v == NULL;
+                }
+            }
+        }
+        else if(attrType == AttrType::INT) {
+            switch (op) {
+                case EQ_OP: {
+                    return (*(int*)rec_v) == (*(int*)target_v);
+                }
+                case LT_OP: {
+                    return (*(int*)rec_v) < (*(int*)target_v);
+                }
+                case GT_OP: {
+                    return (*(int*)rec_v) > (*(int*)target_v);
+                }
+                case LE_OP: {
+                    return (*(int*)rec_v) <= (*(int*)target_v);
+                }
+                case GE_OP: {
+                    return (*(int*)rec_v) >= (*(int*)target_v);
+                }
+                case NE_OP: {
+                    return (*(int*)rec_v) < (*(int*)target_v) || (*(int*)rec_v) > (*(int*)target_v);;
+                }
+                case NO_OP: {
+                    return target_v == NULL;
+                }
+            }
+        }
+        else if(attrType == AttrType::STRING) {
+            switch (op) {
+                case EQ_OP: {
+
+                    return strcmp(rec_v,target_v) == 0;
+                }
+                case LT_OP: {
+                    return strcmp(rec_v,target_v) < 0;
+                }
+                case GT_OP: {
+                    return strcmp(rec_v,target_v) > 0;
+                }
+                case LE_OP: {
+                    return strcmp(rec_v,target_v) <= 0;
+                }
+                case GE_OP: {
+                    return strcmp(rec_v,target_v) >= 0;
+                }
+                case NE_OP: {
+                    return strcmp(rec_v,target_v) != 0;
+                }
+                case NO_OP: {
+                    return target_v == NULL;
+                }
+            }
+        }
+    }
+
+    RC getAllRecord(map<RID,int> & rid_list) {
+        int slot_max_number = fileHandle->getMaxSlotNumber();
+        int last_page_id = fileHandle->getLastPageID();
+        int pid = 1, sid = 0;
+        printf("slot_max: %d last_pid: %d \n",slot_max_number,last_page_id);
+        for(pid = 1 ; pid <= last_page_id ; ++pid) {
+
+            for(sid = 0 ; sid < slot_max_number; ++sid) {
+                RID rid;
+                rid.pid = pid; rid.sid = sid;
+                Record record;
+                if( this->fileHandle->getRec(rid,record).equal(RC(0)) ) {
+                    //存在这条记录，判断是否符合要求
+                    printf("check rid<%d,%d>\n",rid.pid,rid.sid);
+                    if(this->checkRecord(record)) {
+                        //该记录符合要求
+
+                        rid_list.insert(pair<RID, int>(rid, 1));
+                    }
+                }
+            }
+        }
+        return RC();
+    }
 };
 
 #endif

@@ -128,16 +128,21 @@ public:
      * @return
      */
     RC getRecordCopy(RID rid , Record& rc) {
-        if(rid.sid < 0 || rid.sid >= this->bitmap->slot_max_number) {
+        if(rid.sid < 0 || rid.sid >= this->bitmap->slot_max_number ) {
             printf("search sid over page_slot_num\n");
             return RC(-1);
         }
+        if(!this->bitmap->isSlotUsed(rid.sid)) {
+            printf("sid not used\n");
+            return RC(-1);
+        }
+
         BufType begin = page + (PAGE_HEADER_INT_SIZE);
         BufType data = begin + rid.sid * slot_int_size;
         BufType copy = copyRecord(data);
         rc.setData(copy);
         rc.setRID(rid);
-        return RC();
+        return RC(0);
     }
     /**
      * copy data为首地址的slot_int_size个4字节数据
@@ -170,6 +175,10 @@ public:
 
     bool isPageFull() {
         return this->bitmap->page_is_full;
+    }
+
+    int getMaxSlotNumber() {
+        return this->bitmap->slot_max_number;
     }
 
 };
