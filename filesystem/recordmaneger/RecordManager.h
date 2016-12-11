@@ -299,7 +299,7 @@ public:
             //获取头页
             BufType page_header = bpm->getPage(fileID,0,index);
             //将该表的信息写入头页
-            attr->setFileAttrToPageHeader(page_header);
+            attr->initFileAttrToPageHeader(page_header);
             //标记为脏页
             bpm->markDirty(index);
             //写回数据头页

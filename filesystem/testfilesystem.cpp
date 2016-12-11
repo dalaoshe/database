@@ -90,7 +90,7 @@ void only_test_index(){
     char key2 = 32;
 //    indexManager-> CreateIndex(a,0,INT,4);
 
-    indexManager-> OpenIndex(a,0,ixIndexHandle);
+    indexManager-> OpenIndex(a,ixIndexHandle);
     ixIndexHandle.InsertEntry(&key1,rid);
     ixIndexHandle.InsertEntry(&key2,rid);
     Node node;

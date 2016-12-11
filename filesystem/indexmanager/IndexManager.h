@@ -112,6 +112,14 @@ public:
                     return RC();
                 }
                 else if(index_type == IndexType::id){
+                    //如果是无效id项则重置为有效
+                    if(index_tag == IndexType::invalid) {
+                        node.setPointerTag(i,IndexType::valid);
+                        node.writeback();
+                        this->bpm->markDirty(index);
+                        return RC(0);
+                    }
+
                     int bucket_index;
                     Pointer bucket_pointer(page_num,page_header_size);
                     BufType bucket_page = this->bpm->allocPage(fileID, page_num, bucket_index);
@@ -241,6 +249,7 @@ public:
 
             if(node.exist(k)) {
                 int i = node.search(k);
+                --i;
                 int index_type = node.getPointerType(i+1);
                 /*
                  * 根据指针为指针桶还是行定位器进行不同的插入操作
@@ -340,9 +349,12 @@ public:
         vector<Pointer> path;
         Key k = Key((char*)key);
         Node node;
+
         if(!searchEntryLeaf(k.key,node,temp,path).equal(RC())) {
             printf("search leaf error\n");
+            return RC(-1);
         }
+
         if(node.exist(k)) {
             int i = node.search(k);
             printf("i:%d \n", i);
@@ -351,6 +363,7 @@ public:
             tag = node.getTag(i-1);
             return RC();
         }
+
         printf("no exist index! %d\n",*(int*)key);
         return RC(-1);
     };
@@ -524,7 +537,6 @@ public:
     };
 
     RC OpenIndex    (const char *fileName,          // Open index
-                     int        indexNo,
                      IX_IndexHandle &indexHandle) {
         FileManager *fm = new FileManager();
         int fileID;

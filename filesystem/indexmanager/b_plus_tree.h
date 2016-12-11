@@ -97,22 +97,26 @@ struct Node
      */
     int search(Key key)
     {
-        printf("index num : %d\n",index_num);
+        printf("before search, index num : %d\n",index_num);
         if(this->index_num == 0) {
             return 1;
         }
-        if(key.less(this->getKey(1),key_byte_size,key_type))
+        if(key.less(this->getKey(1),key_byte_size,key_type)) {
             return 1;
-        else if(key.greater(this->getKey(this->index_num),key_byte_size,key_type))
-            return this->index_num+1;
-        else if(key.equal(this->getKey(this->index_num),key_byte_size)) {
+        }
+        else if(key.greater(this->getKey(this->index_num),key_byte_size,key_type)) {
+            printf("greater\n");
+            return this->index_num + 1;
+        }
+        else if(key.equal(this->getKey(this->index_num),key_byte_size,key_type)) {
+            printf("equal\n");
             return this->index_num+1;
         }
         else {
             for (int i = 2; i <= index_num; ++i) {
                 Key k1 = this->getKey(i - 1);
                 Key k2 = this->getKey(i);
-                if ((k1.less(key,key_byte_size,key_type) || k1.equal(key,key_byte_size))
+                if ((k1.less(key,key_byte_size,key_type) || k1.equal(key,key_byte_size,key_type))
                     && key.less(k2,key_byte_size,key_type)) {
                     return i;
                 }
@@ -232,7 +236,7 @@ struct Node
         Key key = this->getKey(i-1);
         printf("node pid %d ,offset %d\n",this->pointer.pid,this->pointer.offset);
         printf("index num %d key %d i %d\n",index_num,*(int*)key.key,i);
-        return k.equal(key,key_byte_size);
+        return k.equal(key,key_byte_size,key_type);
     }
 
 

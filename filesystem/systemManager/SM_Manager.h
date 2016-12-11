@@ -350,7 +350,8 @@ public:
     }
 
     RC CreateIndex (const char *relName,                // Create index
-                    const char *attrName){
+                    const char *attrName,
+                    ColType colType = ColType::INDEX){
         //TODO 已经创建了索引（索引文件存在）
         //检查表是否存在
         if(!checkFileExist(relName)){
@@ -380,7 +381,7 @@ public:
         //建立索引
         if(ixm->CreateIndex(indexName.c_str(),0,key_type,key_size).equal(RC())) {
             //建立索引文件成功，修改头页对应列的列类型
-            fileAttr->setColType(attrName,ColType::INDEX);
+            fileAttr->setColType(attrName,colType);
             //获取索引列的信息
             int offset = fileAttr->getColValueOffset(attrName);
             //数据列对应数据长度
@@ -394,7 +395,7 @@ public:
             fileScan->getAllIndexPairOfFile(rid_list);
 
             IX_IndexHandle indexHandle;
-            this->ixm->OpenIndex(indexName.c_str(),1,indexHandle);
+            this->ixm->OpenIndex(indexName.c_str(),indexHandle);
             //插入索引
             map<RID, char*>::iterator it;
             for (it = rid_list.begin(); it != rid_list.end(); ++it) {

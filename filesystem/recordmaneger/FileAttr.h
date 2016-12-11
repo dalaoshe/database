@@ -56,7 +56,7 @@ public:
     /**
      *
      */
-    int setFileAttrToPageHeader(unsigned int* page_header) {
+    int initFileAttrToPageHeader(unsigned int* page_header) {
         this->page_header = page_header;
         this->attr_count = this->key_name.size();
         //计算每条记录的长度（INT长度）
@@ -109,7 +109,7 @@ public:
             //7 列是否为空
             page_header[ATTR_NOT_NULL_INT_OFFSET] = this->not_null[i];
             //8 列为列的类型
-            page_header[ATTR_TYPE_INT_OFFSET] = ColType::NORMAL;//this->col_type[i];
+            page_header[ATTR_TYPE_INT_OFFSET] = this->col_type[i];
             //定位到下一个列属性信息的起始位置
             page_header += ATTR_INT_SIZE;
         }
@@ -172,7 +172,7 @@ public:
      * 根据插入语句 stmt 构造数据行 data
      * @param stmt
      * @param data
-     * @return
+     * @return 报错信息，""表示无错误
      */
     string buildValidInsertData(InsertStatement* stmt, BufType data) {
         if (stmt->columns != NULL) { //insert into table(c1,c2,c3...) values(v1,v2,v3...)
@@ -208,27 +208,27 @@ public:
                     //判断属性是否合法，若合法则插入相应属性值
                     switch (expr->type) {
                         case kExprLiteralFloat:
-                            if(attr_type == 1) {
+                            if(attr_type == AttrType::FLOAT) {
                                 *((float*)begin) = expr->fval;
                             }
                             else {
-                                return "float type error\n";
+                                return string("insert type error, ") + string(target_col_name) + " need " + this->getColValTypeName((AttrType)attr_type) + " type\n";
                             }
                             break;
                         case kExprLiteralInt:
-                            if(attr_type == 0) {
+                            if(attr_type == AttrType::INT) {
                                 *((int *)begin) = expr->ival;
                             }
                             else {
-                                return "int type error\n";
+                                return string("insert type error, ") + string(target_col_name) + " need " + this->getColValTypeName((AttrType)attr_type) + " type\n";
                             }
                             break;
                         case kExprLiteralString:
-                            if(attr_type == 2) {
+                            if(attr_type == AttrType::STRING) {
                                 strcpy(begin,expr->name);
                             }
                             else {
-                                return "str type error\n";
+                                return string("insert type error, ") + string(target_col_name) + " need " + this->getColValTypeName((AttrType)attr_type) + " type\n";
                             }
                             break;
                         default:
@@ -257,34 +257,34 @@ public:
                 attr_type = attr[ATTR_VALUE_TYPE_INT_OFFSET];
                 not_null = attr[ATTR_NOT_NULL_INT_OFFSET];
                 attr_len = attr[ATTR_VALUE_LENGTH_INT_OFFSET];
-                printf("insert coluns: %s\n",attr_name);
+                //printf("insert coluns: %s\n",attr_name);
                 switch (expr->type) {
                     case kExprLiteralFloat:
-                        if (attr_type == 1) {
+                        if (attr_type == AttrType::FLOAT) {
                             *((float *) begin) = expr->fval;
-                            printf("insert float: %f\n",*((float *) begin));
+                            //printf("insert float: %f\n",*((float *) begin));
                         } else {
-                            return "float type error\n";
+                            return string("insert type error, ") + string(attr_name) + " need " + this->getColValTypeName((AttrType)attr_type) + " type\n";
                         }
                         break;
                     case kExprLiteralInt:
-                        if (attr_type == 0) {
+                        if (attr_type == AttrType::INT) {
                             *((int *) begin) = expr->ival;
-                            printf("insert int: %d\n",*((int *) begin));
+                           // printf("insert int: %d\n",*((int *) begin));
                         } else {
-                            return "int type error\n";
+                            return string("insert type error, ") + string(attr_name) + " need " + this->getColValTypeName((AttrType)attr_type) + " type\n";
                         }
                         break;
                     case kExprLiteralString:
-                        if (attr_type == 2) {
+                        if (attr_type == AttrType::STRING) {
                             strcpy(begin, expr->name);
-                            printf("insert string: %s\n",begin);
+                  //          printf("insert string: %s\n",begin);
                         } else {
-                            return "str type error\n";
+                            return string("insert type error, ") + string(attr_name) + " need " + this->getColValTypeName((AttrType)attr_type) + " type\n";
                         }
                         break;
                     default:
-                        return "type\n";
+                        return "type error\n";
                 }
                 //下一列
                 begin += attr_len;
@@ -439,6 +439,31 @@ public:
                 return "INT";
             }
         }
+    }
+    /**
+     * 获取Primary列的列名
+     * @return
+     */
+    string getPrimaryKeyName() {
+        for(int i = 0 ; i < this->attr_count ; ++i) {
+            if(this->col_type[i] == ColType::PRIMARY) {
+                return this->key_name[i];
+            }
+        }
+        return "";
+    }
+    /**
+     * 
+     * @return
+     */
+    vector<string> getIndexKeyNameList() {
+        vector<string> list;
+        for(int i = 0 ; i < this->attr_count ; ++i) {
+            if(this->col_type[i] == ColType::PRIMARY || this->col_type[i] == ColType::INDEX || this->col_type[i] == ColType::UNIQUE) {
+                list.push_back(this->key_name[i]);
+            }
+        }
+        return list;
     }
 };
 #endif //DATABASE_FILEATTR_H

@@ -25,12 +25,23 @@ struct Key{
             *(page+i) = *(key+i);
         }
     }
-    bool equal(Key target, int len) {
+    bool equal(Key target, int len, int key_type) {
         char* t = target.key;
-        for(int i = 0 ; i < len ; ++i) {
-            char a = *(key+i);
-            char b = *(t+i);
-            if(a != b) return false;
+        switch(key_type){
+            case INT:{
+                return *(int*)key == *(int*) t;
+            }
+            case FLOAT:{
+                return *(float *)key == *(float *) t;
+            }
+            case STRING:{
+                for(int i = 0 ; i < len ; ++i) {
+                    char a = *(key+i);
+                    char b = *(t+i);
+                    if(a != b) return false;
+                }
+                return true;
+            }
         }
         return true;
     }
@@ -59,24 +70,10 @@ struct Key{
         char* t = target.key;
         switch(key_type){
             case INT:{
-//                len = (len>>2);
-//                for(int i = 0 ; i < len  ; ++i) {
-//                    int a = *(int*)(key+i*4);
-//                    int b = *(int*)(t+i*4);
-//                    if(a <= b) return false;
-//                }
-                printf("key type: INT, target: %d, key: %d\n",*(int*) t,*(int*)key);
                 return *(int*)key > *(int*) t;
                // return true;
             }
             case FLOAT:{
-//                len = (len>>3);
-//                for(int i = 0 ; i < len  ; ++i) {
-//                    float a = *(float*)(key+i*8);
-//                    float b = *(float*)(t+i*8);
-//                    if(a <= b) return false;
-//                }
-                printf("key type: FLOAT\n");
                 return *(float *)key > *(float *) t;
                 //return true;
             }

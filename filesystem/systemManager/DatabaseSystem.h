@@ -105,12 +105,19 @@ public:
             }
             case kStmtCreate:{
                 CreateStatement* createStatement = (CreateStatement*)stmt;
+                printCreateStatementInfo(createStatement,0);
                 int attrCount = createStatement->columns->size();
                 for(int i=0;i<attrCount;++i){
                     printf("attr_name: %s \t  ",(*(createStatement->columns))[i]->name);
                     printf("attr_type: %d \t  ",(*(createStatement->columns))[i]->type);
                     printf("attr_size: %d \t  ",(*(createStatement->columns))[i]->size);
-                    printf("attr_not_null: %d\t\n",(*(createStatement->columns))[i]->not_null);
+                    printf("attr_not_null: %d\t",(*(createStatement->columns))[i]->not_null);
+                    if(strcmp((*(createStatement->columns))[i]->name,createStatement->primary_key) == 0) {
+                        printf("attr_col_type: %s\t\n","PRIMARY");
+                    }
+                    else{
+                        printf("attr_col_type: %s\t\n","NORMAL");
+                    }
                 }
                 RM_FileAttr* attr = new RM_FileAttr[1];
                 for(int i=0;i<attrCount;++i){
@@ -119,8 +126,22 @@ public:
                     attr->value_length.push_back((*(createStatement->columns))[i]->size);
                     int k = (*(createStatement->columns))[i]->not_null;
                     attr->not_null.push_back(k);
+
+                    if(strcmp((*(createStatement->columns))[i]->name,createStatement->primary_key) == 0) {
+                        attr->col_type.push_back(ColType::PRIMARY);
+//                        printf("attr_col_type: %s\t\n","PRIMARY");
+                    }
+                    else{
+                        attr->col_type.push_back(ColType::NORMAL);
+                        //printf("attr_col_type: %s\t\n","NORMAL");
+                    }
                 }
                 system_manager->CreateTable(createStatement->tableName,attrCount,attr);
+                printf("create table ok\n");
+                if(createStatement->primary_key != NULL) {
+                    system_manager->CreateIndex(createStatement->tableName, createStatement->primary_key,
+                                                ColType::PRIMARY);
+                }
                 return "";
             }
             case kStmtDrop:{
@@ -145,13 +166,44 @@ public:
                 fileAttr->getFileAttrFromPageHeader(fileHeader);
                 //获取要插入的数据块data
                 BufType data = new unsigned int[fileHandle.getFileHeader()[TABLE_RECORD_INT_SIZE_INT_OFFSET]];
-                fileAttr->buildValidInsertData(insertStmt,data);
-                //打印记录
-                //fileAttr->printRecordInfo(data);
-                //插入槽
-                RID rid;
-                fileHandle.insertRec(data,rid);
-                printf("rid pid %d sid %d\n",rid.pid,rid.sid);
+                string info = fileAttr->buildValidInsertData(insertStmt,data);
+                if(info != "") {
+                    printf("%s",info.c_str());
+                    delete fileAttr;
+                    return "";
+                }
+
+                //检查是否有主键约束
+                if(fileAttr->getPrimaryKeyName() != "") {
+                    //获取主键约束的列名
+                    string primary_col_name = fileAttr->getPrimaryKeyName();
+                    string indexName = fileAttr->getIndexName(insertStmt->tableName,primary_col_name);
+                    IX_IndexHandle indexHandle;
+                    this->indexManager->OpenIndex(indexName.c_str(),indexHandle);
+                    //获取待插入的主键值
+                    int offset = fileAttr->getColValueOffset(primary_col_name.c_str());
+
+                    char* key = ((char*)(data)) + offset;
+                    int type,tag;
+                    Pointer p;
+                    //检查是否存在
+                    if(indexHandle.searchEntry(key,p,type,tag).equal(RC()) && tag == IndexType::valid) {//如果存在,报错。
+                        printf("primary key: %s, dumplicate\n",fileAttr->getPrimaryKeyName().c_str());
+                    }
+                    else {//插入数据，并插入索引
+                        RID rid;
+                        fileHandle.insertRec(data, rid);
+                        printf("rid pid %d sid %d\n", rid.pid, rid.sid);
+                        indexHandle.InsertEntry(key,rid);
+                    }
+                    indexHandle.close();
+                }
+                else {//没有主键约束，直接插入数据
+                    RID rid;
+                    fileHandle.insertRec(data, rid);
+                    printf("rid pid %d sid %d\n", rid.pid, rid.sid);
+                }
+
                 delete fileAttr;
                 return "";
             }
@@ -205,8 +257,59 @@ public:
                 return "";
             }
             case kStmtDelete:{
-                //printDeleteStatementInfo((DeleteStatement*)stmt, 0);
+                printf("delete options\n");
+                DeleteStatement* deleteStatement = (DeleteStatement*)stmt;
+                //获取要选取的表名
+                string filename = deleteStatement->tableName;
+                RM_FileHandle fileHandle;
 
+                //获取rm handle
+                recordManager->openFile(filename.c_str(),fileHandle);
+                BufType fileHeader = fileHandle.getFileHeader();
+                //获取表头信息
+                RM_FileAttr* fileAttr = new RM_FileAttr();
+                fileAttr->getFileAttrFromPageHeader(fileHeader);
+                //获取所有的索引项列名
+                vector<string> list = fileAttr->getIndexKeyNameList();
+
+                map<RID,int>rid_list;
+                this->searchRIDListByWhereClause(deleteStatement->expr,rid_list,fileHandle,0,deleteStatement->tableName);
+                printf("delete rid size %d\n",rid_list.size());
+                //删除记录
+                map<RID, int>::iterator it;
+                for (it = rid_list.begin(); it != rid_list.end(); ++it) {
+                    RID rid = it->first;
+                    Record record;
+                    //获取要删除的数据项数据
+                    fileHandle.getRec(rid,record);
+                    //删除数据项记录
+                    if(fileHandle.deleteRec(rid).equal(RC())) {
+                        printf("delete data rid<%d,%d> \n", rid.pid, rid.sid);
+                        //删除对应的索引项
+                        int index_entry_numbers = list.size();
+                        for (int i = 0; i < index_entry_numbers; ++i) {
+                            //获取索引的列名
+                            string index_col_name = list[i];
+                            //创建handle
+                            string indexName = fileAttr->getIndexName(deleteStatement->tableName, index_col_name);
+                            IX_IndexHandle indexHandle;
+                            this->indexManager->OpenIndex(indexName.c_str(), indexHandle);
+                            //获取待删除的索引码值
+                            int offset = fileAttr->getColValueOffset(index_col_name.c_str());
+                            char *key = record.getData(offset);
+                            if(indexHandle.DeleteEntry(key, rid).equal(RC())) {
+                                printf("delete index %s rid<%d,%d> ok\n",indexName.c_str(),rid.pid,rid.sid);
+                                indexHandle.close();
+                            }
+                            else {
+                                printf("delete index %s rid<%d,%d> fail\n",indexName.c_str(),rid.pid,rid.sid);
+                            }
+                        }
+                    }
+                    else {
+                        printf("delete data rid<%d,%d> fail \n", rid.pid, rid.sid);
+                    }
+                }
                 printf("delete \n  ");
                 return "";
             }
@@ -303,13 +406,14 @@ public:
                         //fprintf(stderr, "Unrecognized expression type %d\n", expr->type);
                         return RC(-1);
                 }
-                if(col_type == ColType::INDEX || col_type == ColType::UNIQUE) {
+                //如果查找列是索引列，并且是等号查找
+                if((col_type == ColType::INDEX || col_type == ColType::UNIQUE || col_type == ColType::PRIMARY) && op == CompOp::EQ_OP) {
                     printf("index search\n");
                     IX_IndexScan* indexScan = new IX_IndexScan();
                     string indexName = fileAttr->getIndexName(tableName,col_name);
                     IX_IndexHandle indexHandle;
                     printf("index filename %s\n",indexName.c_str());
-                    this->indexManager->OpenIndex(indexName.c_str(),1,indexHandle);
+                    this->indexManager->OpenIndex(indexName.c_str(),indexHandle);
                     indexScan->OpenScan(&indexHandle,op,col_values);
                     indexScan->getAllRecord(rid_list);
                     delete indexScan;
