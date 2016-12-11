@@ -179,6 +179,7 @@ public:
      * 返回:成功操作返回RC(0)
      */
     RC close() {
+        bpm->markDirty(headIndex);
         bpm->close();
         delete fm;
         return RC();
@@ -501,6 +502,47 @@ public:
 
                         rid_list.insert(pair<RID, int>(rid, 1));
                     }
+                }
+            }
+        }
+        return RC();
+    }
+
+    RC getAllRecordOfFile(map<RID,int> & rid_list) {
+        int slot_max_number = fileHandle->getMaxSlotNumber();
+        int last_page_id = fileHandle->getLastPageID();
+        int pid = 1, sid = 0;
+        printf("slot_max: %d last_pid: %d \n",slot_max_number,last_page_id);
+        for(pid = 1 ; pid <= last_page_id ; ++pid) {
+            for(sid = 0 ; sid < slot_max_number; ++sid) {
+                RID rid;
+                rid.pid = pid; rid.sid = sid;
+                Record record;
+                if( this->fileHandle->getRec(rid,record).equal(RC(0)) ) {
+                    //存在这条记录，判断是否符合要求
+                    printf("check rid<%d,%d>\n",rid.pid,rid.sid);
+                    rid_list.insert(pair<RID, int>(rid, 1));
+                }
+            }
+        }
+        return RC();
+    }
+
+    RC getAllIndexPairOfFile(map<RID,char*> & rid_list) {
+        int slot_max_number = fileHandle->getMaxSlotNumber();
+        int last_page_id = fileHandle->getLastPageID();
+        int pid = 1, sid = 0;
+        printf("slot_max: %d last_pid: %d \n",slot_max_number,last_page_id);
+        for(pid = 1 ; pid <= last_page_id ; ++pid) {
+            for(sid = 0 ; sid < slot_max_number; ++sid) {
+                RID rid;
+                rid.pid = pid; rid.sid = sid;
+                Record record;
+                if( this->fileHandle->getRec(rid,record).equal(RC(0)) ) {
+                    //存在这条记录，判断是否符合要求
+                    printf("check rid<%d,%d>\n",rid.pid,rid.sid);
+                    char* key = record.getData(this->attrOffset);
+                    rid_list.insert(pair<RID, char*>(rid, key));
                 }
             }
         }

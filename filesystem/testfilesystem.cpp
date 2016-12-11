@@ -95,7 +95,8 @@ void only_test_index(){
     ixIndexHandle.InsertEntry(&key2,rid);
     Node node;
     Pointer pointer;
-    ixIndexHandle.searchEntry(&key1,pointer);
+    int type,tag;
+    ixIndexHandle.searchEntry(&key1,pointer,type,tag);
     ixIndexHandle.close();
     printf("search node info: pid:%d ; offset:%d\n",pointer.pid,pointer.offset);
 }

@@ -78,13 +78,13 @@ public:
                     Pointer bucket_pointer = node.getPointer(i+1);
                     int bucket_index;
                     int bucket_pid = bucket_pointer.pid;
-                    BufType bucket_page = this->bpm->getPage(fileID,bucket_pointer.pid,bucket_index);
+                    BufType bucket_page = this->bpm->getPage(fileID,bucket_pid,bucket_index);
                     BucketPageManager bucket = BucketPageManager(bucket_page,key_offset,key_byte_size,index_byte_size,
                                                                  page_header_size,key_type,max_num,min_num,bucket_pointer);
                     //定位到最后一个指针桶页
                     while(bucket.hasNextBucket()) {
                         bucket_pid = bucket.getNextPid();
-                        bucket_page = this->bpm->getPage(fileID,bucket_pointer.pid,bucket_index);
+                        bucket_page = this->bpm->getPage(fileID,bucket_pid,bucket_index);
                         bucket.reset(bucket_page,Pointer(bucket_pid,page_header_size));
                     }
                     if(bucket.canInsert()) {
@@ -260,13 +260,13 @@ public:
                     Pointer target = Pointer(rid.pid,rid.sid);
                     int bucket_index;
                     int bucket_pid = bucket_pointer.pid;
-                    BufType bucket_page = this->bpm->getPage(fileID,bucket_pointer.pid,bucket_index);
+                    BufType bucket_page = this->bpm->getPage(fileID,bucket_pid,bucket_index);
                     BucketPageManager bucket = BucketPageManager(bucket_page,key_offset,key_byte_size,index_byte_size,
                                                                  page_header_size,key_type,max_num,min_num,bucket_pointer);
                     int pos = bucket.searchPointer(target);
                     while (pos == -1 && bucket.hasNextBucket()) {
                         bucket_pid = bucket.getNextPid();
-                        bucket_page = this->bpm->getPage(fileID,bucket_pointer.pid,bucket_index);
+                        bucket_page = this->bpm->getPage(fileID,bucket_pid,bucket_index);
                         bucket.reset(bucket_page,Pointer(bucket_pid,page_header_size));
                         pos = bucket.searchPointer(target);
                     }
@@ -335,15 +335,24 @@ public:
      * key 索引码； node 索引码所在的页级节点
      * 根据key索引码查询索引所在的页
      */
-    RC searchEntry(void *key, Pointer& pointer){
+    RC searchEntry(void *key, Pointer& pointer, int& type, int& tag){
         int temp =0 ;
         vector<Pointer> path;
+        Key k = Key((char*)key);
         Node node;
-        searchEntryLeaf(key,node,temp,path);
-        int i = node.search((char*)key);
-        printf("i:%d \n",i);
-        pointer = node.getPointer(i);
-        return RC();
+        if(!searchEntryLeaf(k.key,node,temp,path).equal(RC())) {
+            printf("search leaf error\n");
+        }
+        if(node.exist(k)) {
+            int i = node.search(k);
+            printf("i:%d \n", i);
+            pointer = node.getPointer(i);
+            type = node.getPointerType(i);
+            tag = node.getTag(i-1);
+            return RC();
+        }
+        printf("no exist index! %d\n",*(int*)key);
+        return RC(-1);
     };
 
     /*
@@ -399,6 +408,23 @@ public:
     void setFileManager(FileManager* fm) {
         this->fm = fm;
     }
+
+    BucketPageManager* getBucketPageManager(BufType bucket_page, Pointer bucket_pointer) {
+        BucketPageManager* bucket = new BucketPageManager(bucket_page,key_offset,key_byte_size,index_byte_size,
+                                                     page_header_size,key_type,max_num,min_num,bucket_pointer);
+    }
+
+    BufPageManager* getBpm() {
+        return this->bpm;
+    }
+
+    int getPageHeaderSize() {
+        return this->page_header_size;
+    }
+
+    int getFileID() {
+        return this->fileID;
+    }
 };
 
 class IndexManager {
@@ -441,7 +467,7 @@ public:
                 //获取第一个根页，初始化信息
                 int index;
                 BufType rootPage = this->bpm->getPage(fileID, 1, index);
-                this->setIndexPage(rootPage, true, -1, indexNo, IndexType::index);//0 -> indexNO
+                this->setIndexPage(rootPage, true, -1, 0, IndexType::index);//0 -> indexNO
                 this->bpm->markDirty(index);
                 this->bpm->writeBack(index);
                 fm->closeFile(fileID);
@@ -521,14 +547,89 @@ public:
 };
 
 class IX_IndexScan {
+    IX_IndexHandle* indexHandle;
+    CompOp op;
+    AttrType attrType;
+    char* key;
+    BufPageManager* bpm;
 public:
-    IX_IndexScan  ();                                 // Constructor
-    ~IX_IndexScan ();                                 // Destructor
-    RC OpenScan      (const IX_IndexHandle &indexHandle, // Initialize index scan
+    IX_IndexScan  (){};                                 // Constructor
+    ~IX_IndexScan (){};                                 // Destructor
+    RC OpenScan      (IX_IndexHandle *indexHandle, // Initialize index scan
                       CompOp      compOp,
-                      void        *value,
-                      ClientHint  pinHint = NO_HINT);
-    RC GetNextEntry  (RID &rid);                         // Get next matching entry
-    RC CloseScan     ();                                 // Terminate index scan
+                      char       *key
+                      ) {
+        this->indexHandle =indexHandle;
+        this->op = compOp;
+        this->key = key;
+        this->bpm = indexHandle->getBpm();
+    }
+
+    RC getAllRecord(map<RID,int> & rid_list) {
+        Pointer leafPointer;
+        int type;
+        int tag;
+        if(indexHandle->searchEntry(key,leafPointer,type,tag).equal(RC())) {
+            if(tag == IndexType::invalid) return RC();
+            switch(type) {
+                case IndexType::id: {
+
+                    RID rid;
+                    rid.pid = leafPointer.pid;
+                    rid.sid = leafPointer.offset;
+                    rid_list.insert(pair<RID, int>(rid, 1));
+                    break;
+                }
+                case IndexType::bucket: {
+
+                    Pointer bucket_pointer = leafPointer;
+                    int bucket_index;
+                    int bucket_pid = bucket_pointer.pid;
+                    int fileID = this->indexHandle->getFileID();
+                    BufType bucket_page = this->bpm->getPage(fileID, bucket_pid, bucket_index);
+                    BucketPageManager *bucket = this->indexHandle->getBucketPageManager(bucket_page, bucket_pointer);
+
+                    vector <Pointer> list;
+                    //获取该桶内所有指针RID
+                    bucket->getAllValidPointer(list);
+
+                    int size = list.size();
+                    for (int i = 0; i < size; ++i) {
+                        RID rid;
+                        Pointer p = list[i];
+                        rid.pid = p.pid;
+                        rid.sid = p.offset;
+                        rid_list.insert(pair<RID, int>(rid, 1));
+                    }
+
+                    while (bucket->hasNextBucket()) {
+                        bucket_pid = bucket->getNextPid();
+                        bucket_page = this->bpm->getPage(fileID, bucket_pid, bucket_index);
+                        bucket->reset(bucket_page, Pointer(bucket_pid, this->indexHandle->getPageHeaderSize()));
+                        bucket->getAllValidPointer(list);
+                        int size = list.size();
+                        for (int i = 0; i < size; ++i) {
+                            RID rid;
+                            Pointer p = list[i];
+                            rid.pid = p.pid;
+                            rid.sid = p.offset;
+                            rid_list.insert(pair<RID, int>(rid, 1));
+                        }
+                    }
+                    break;
+                }
+                default: {
+                    RID rid;
+                    rid.pid = leafPointer.pid;
+                    rid.sid = leafPointer.offset;
+                    rid_list.insert(pair<RID, int>(rid, 1));
+                }
+            }
+        }
+        return RC();
+    }
+
+    RC GetNextEntry  (RID &rid){};                         // Get next matching entry
+    RC CloseScan     (){};                                 // Terminate index scan
 };
 #endif //FILESYSTEM_INDEXMANAGER_H

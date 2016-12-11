@@ -20,9 +20,12 @@ using namespace std;
 class RM_FileAttr{
 public:
     vector<string> key_name;
+    //列的数据类型
     vector<AttrType> key_type;
     vector<int> value_length;
     vector<int> not_null;
+    //列的类型 索引列、unique、primary
+    vector<ColType> col_type;
     unsigned int* page_header;
     int page_ID;
     int record_int_size;
@@ -105,6 +108,8 @@ public:
             page_header[ATTR_VALUE_LENGTH_INT_OFFSET] = this->value_length[i];
             //7 列是否为空
             page_header[ATTR_NOT_NULL_INT_OFFSET] = this->not_null[i];
+            //8 列为列的类型
+            page_header[ATTR_TYPE_INT_OFFSET] = ColType::NORMAL;//this->col_type[i];
             //定位到下一个列属性信息的起始位置
             page_header += ATTR_INT_SIZE;
         }
@@ -134,11 +139,13 @@ public:
             AttrType attr_type = (AttrType)(page_header[ATTR_VALUE_TYPE_INT_OFFSET]);
             int attr_length = page_header[ATTR_VALUE_LENGTH_INT_OFFSET];
             int attr_not_null = page_header[ATTR_NOT_NULL_INT_OFFSET];
+            ColType coltype = (ColType)page_header[ATTR_TYPE_INT_OFFSET];
 
             this->key_name.push_back(attr_name);
             this->key_type.push_back(attr_type);
             this->value_length.push_back(attr_length);
             this->not_null.push_back(attr_not_null);
+            this->col_type.push_back(coltype);
 
             page_header += ATTR_INT_SIZE;
         }
@@ -154,10 +161,10 @@ public:
 
 
             printf("attr_name: %s \t",this->key_name[i].c_str());
-            printf("attr_type: %d\t ",this->key_type[i]) ;
+            printf("attr_type: %s\t ",this->getColValTypeName(this->key_type[i]).c_str()) ;
             printf("attr_length: %d\t ",this->value_length[i]) ;
-            printf("attr_not_null: %d\t\n ",this->not_null[i]) ;
-
+            printf("attr_not_null: %d\t ",this->not_null[i]) ;
+            printf("col_type: %s\t\n ",this->getColTypeName(this->col_type[i]).c_str());
 
         }
     }
@@ -363,6 +370,74 @@ public:
         for(int i = 0 ; i < this->attr_count ; ++i) {
             if(col_name == this->key_name[i]) return offset;
             offset += this->value_length[i];
+        }
+    }
+    /**
+     * 获取col_name 的数据列 列类型
+     * @param col_name
+     * @return
+     */
+    ColType getColType(string col_name) {
+        for(int i = 0 ; i < this->attr_count ; ++i) {
+            if(col_name == this->key_name[i]) return this->col_type[i];
+        }
+    }
+    /**
+     * 修改头页对应列的列类型，保存到内存中
+     * @param col_name
+     * @param type
+     */
+    void setColType(string col_name, ColType type) {
+        BufType page_header = this->page_header;
+        page_header += ATTR_INT_OFFSET;
+        for(int i = 0 ; i < this->attr_count ; ++i) {
+            if(col_name == this->key_name[i]) {
+                page_header[ATTR_TYPE_INT_OFFSET] = type;
+                return;
+            }
+            //定位到下一个列属性信息的起始位置
+            page_header += ATTR_INT_SIZE;
+        }
+    }
+
+    string getIndexName(string table_name, string col_name) {
+        string indexName = table_name + "." + col_name;
+        return indexName;
+    }
+
+    string getColTypeName(ColType type) {
+        switch(type) {
+            case ColType::INDEX:{
+                return "INDEX";
+            }
+            case ColType::NORMAL: {
+                return "NORMAL";
+            }
+            case ColType::PRIMARY: {
+                return "PRIMARY";
+            }
+            case ColType::UNIQUE: {
+                return "UNIQUE";
+            }
+            default: {
+                return "NORMAL";
+            }
+        }
+    }
+    string getColValTypeName(AttrType type) {
+        switch(type) {
+            case AttrType::INT:{
+                return "INT";
+            }
+            case AttrType::FLOAT: {
+                return "FLOAT";
+            }
+            case AttrType::STRING: {
+                return "VARCHAR";
+            }
+            default: {
+                return "INT";
+            }
         }
     }
 };

@@ -7,6 +7,7 @@
 
 #include "../utils/pagedef.h"
 #include "index_util.h"
+#include <vector>
 /*
  * 指针桶页管理器
  */
@@ -96,6 +97,23 @@ public:
         p += 8;
         *(int *)p = IndexType::id;
         this->index_num += 1;
+    }
+
+    void getAllValidPointer(vector<Pointer>& list) {
+        list.clear();
+        for(int i = 0 ; i < index_num ; ++i) {
+            char *p = (char*)page;
+            p = p + page_header_size + i * index_byte_size;
+            //判断是否有效
+            int tag = (*(int*)p);
+            if(tag == IndexType::invalid) continue;
+
+            p += key_offset + key_byte_size;
+            Pointer pointer;
+            pointer.pid = *((int *)p);
+            pointer.offset = *((int *)p+1);
+            list.push_back(pointer);
+        }
     }
 
     bool canInsert() {

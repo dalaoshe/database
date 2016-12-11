@@ -173,7 +173,7 @@ public:
 
 
                 map<RID,int>rid_list;
-                this->searchRIDListByWhereClause(selectStatement->whereClause,rid_list,fileHandle,0);
+                this->searchRIDListByWhereClause(selectStatement->whereClause,rid_list,fileHandle,0,selectStatement->fromTable->getName());
                 printf("rid size %d\n",rid_list.size());
 //                //获取记录
 //                Record record;
@@ -240,7 +240,7 @@ public:
         return  "";
     }
 
-    RC searchRIDListByWhereClause(Expr* whereclause, map<RID,int> & rid_list , RM_FileHandle &fileHandle , int numIndent) {
+    RC searchRIDListByWhereClause(Expr* whereclause, map<RID,int> & rid_list , RM_FileHandle &fileHandle , int numIndent, char* tableName) {
         //whereclause type is kExprOperator
         if (whereclause == NULL) {
             printf("null\n", numIndent);
@@ -272,6 +272,9 @@ public:
                 int value_size = fileAttr->getColValueSize(col_name);
                 //数据类型
                 AttrType value_type = fileAttr->getColValueType(col_name);
+                //列类型
+                ColType col_type = fileAttr->getColType(col_name);
+
                 char op_char = whereclause->op_char;
                 if (op_char == '<') {
                     op = LT_OP;
@@ -300,21 +303,35 @@ public:
                         //fprintf(stderr, "Unrecognized expression type %d\n", expr->type);
                         return RC(-1);
                 }
-                RM_FileScan *fileScan = new RM_FileScan();
-                fileScan->openScan(&fileHandle, value_type, value_size, offset, op, col_values);
-                printf("base search\n");
-                printf("op %c\n", whereclause->op_char, numIndent);
-                fileScan->getAllRecord(rid_list);
-                printf("base search ok %c\n", whereclause->op_char, numIndent);
+                if(col_type == ColType::INDEX || col_type == ColType::UNIQUE) {
+                    printf("index search\n");
+                    IX_IndexScan* indexScan = new IX_IndexScan();
+                    string indexName = fileAttr->getIndexName(tableName,col_name);
+                    IX_IndexHandle indexHandle;
+                    printf("index filename %s\n",indexName.c_str());
+                    this->indexManager->OpenIndex(indexName.c_str(),1,indexHandle);
+                    indexScan->OpenScan(&indexHandle,op,col_values);
+                    indexScan->getAllRecord(rid_list);
+                    delete indexScan;
+                }
+                else {
+                    RM_FileScan *fileScan = new RM_FileScan();
+                    fileScan->openScan(&fileHandle, value_type, value_size, offset, op, col_values);
+                    printf("base search\n");
+                    printf("op %c\n", whereclause->op_char, numIndent);
+                    fileScan->getAllRecord(rid_list);
+                    printf("base search ok %c\n", whereclause->op_char, numIndent);
+                    delete fileScan;
+                }
                 delete fileAttr;
-                delete fileScan;
+
                 printf("delete ok %c size %d \n", whereclause->op_char, rid_list.size());
                 break;
             }
              //符号两边为表达式，继续递归根据符号取交、并、补
             case Expr::AND: {
-                RC l_rc = searchRIDListByWhereClause(whereclause->expr, left, fileHandle, numIndent + 1);
-                RC r_rc = searchRIDListByWhereClause(whereclause->expr2, right, fileHandle, numIndent + 1);
+                RC l_rc = searchRIDListByWhereClause(whereclause->expr, left, fileHandle, numIndent + 1,tableName);
+                RC r_rc = searchRIDListByWhereClause(whereclause->expr2, right, fileHandle, numIndent + 1,tableName);
                 map<RID, int>::iterator it;
                 //循环遍历左边表达式选取的项在右边表达式是否存在
                 for (it = left.begin(); it != left.end(); ++it) {
@@ -328,8 +345,8 @@ public:
                 return RC();
             }
             case Expr::OR: {
-                RC l_rc = searchRIDListByWhereClause(whereclause->expr, left, fileHandle, numIndent + 1);
-                RC r_rc = searchRIDListByWhereClause(whereclause->expr2, right, fileHandle, numIndent + 1);
+                RC l_rc = searchRIDListByWhereClause(whereclause->expr, left, fileHandle, numIndent + 1,tableName);
+                RC r_rc = searchRIDListByWhereClause(whereclause->expr2, right, fileHandle, numIndent + 1,tableName);
                 map<RID, int>::iterator it;
                 //将右边表达式选取的记录插入
                 for (it = right.begin(); it != right.end(); ++it) {

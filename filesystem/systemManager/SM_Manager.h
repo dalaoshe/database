@@ -352,26 +352,63 @@ public:
     RC CreateIndex (const char *relName,                // Create index
                     const char *attrName){
         //TODO 已经创建了索引（索引文件存在）
+        //检查表是否存在
         if(!checkFileExist(relName)){
             printf("the table %s doesn't exist",relName);
+            return RC(-1);
         }
 
-        //search for the size and type accroding to name
+
+
+
         RM_FileHandle fileHandle;
         rmm->openFile(relName,fileHandle);
-        int i = 0;
-        BufType index = bpm->getPage(fileHandle.getFileID(),0,i);
-        int attr_offset = 32>>2;
-        int attr_count = index[2] ;
-        for(int i=0;i<attr_count;++i){
-            int offset = ATTR_INT_SIZE*i + ATTR_INT_OFFSET;
-            if(strcmp(((char*)(index[offset])),attrName)==0){
-                AttrType  type = (AttrType)index[offset+1];
-                int key_size = index[offset+3];
-                ixm->CreateIndex(relName,1,type,key_size);
-            }
+        BufType fileHeader = fileHandle.getFileHeader();
+        RM_FileAttr* fileAttr = new RM_FileAttr();
+        //获取头页信息
+        fileAttr->getFileAttrFromPageHeader(fileHeader);
+        //检查索引文件是否已经建立
+        string indexName = fileAttr->getIndexName(relName,attrName);
+        if(checkFileExist(indexName.c_str())){
+            printf("the indexFile %s has exist",indexName);
+            delete fileAttr;
+            return RC(-1);
         }
-        printf("Error create index %s ",attrName);
+        //获取要建立为索引的列的信息
+        AttrType key_type = fileAttr->getColValueType(attrName);
+        int key_size = fileAttr->getColValueSize(attrName);
+        //建立索引
+        if(ixm->CreateIndex(indexName.c_str(),0,key_type,key_size).equal(RC())) {
+            //建立索引文件成功，修改头页对应列的列类型
+            fileAttr->setColType(attrName,ColType::INDEX);
+            //获取索引列的信息
+            int offset = fileAttr->getColValueOffset(attrName);
+            //数据列对应数据长度
+            int value_size = fileAttr->getColValueSize(attrName);
+            //数据类型
+            AttrType value_type = fileAttr->getColValueType(attrName);
+            //获取所有记录，为其建立索引
+            RM_FileScan* fileScan = new RM_FileScan();
+            fileScan->openScan(&fileHandle, value_type, value_size, offset, CompOp::EQ_OP, NULL);
+            map<RID,char*>rid_list;
+            fileScan->getAllIndexPairOfFile(rid_list);
+
+            IX_IndexHandle indexHandle;
+            this->ixm->OpenIndex(indexName.c_str(),1,indexHandle);
+            //插入索引
+            map<RID, char*>::iterator it;
+            for (it = rid_list.begin(); it != rid_list.end(); ++it) {
+                RID rid = it->first;
+                printf("insert rid<%d,%d> id %d\t\n",rid.pid,rid.sid,*((int*)(it->second)));
+                indexHandle.InsertEntry(it->second,rid);
+            }
+            indexHandle.close();
+
+            delete fileScan;
+            delete fileAttr;
+            return RC();
+        }
+
         return RC(-1);
     }
     RC DropIndex   (const char *relName,                // Destroy index

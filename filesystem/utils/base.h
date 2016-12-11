@@ -58,6 +58,13 @@ enum AttrType {
     STRING,//2
 };
 
+enum ColType {
+    PRIMARY ,//0
+    UNIQUE,//1
+    INDEX,//2
+    NORMAL,//3
+};
+
 //
 // Comparison operators
 //
