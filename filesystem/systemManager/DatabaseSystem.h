@@ -166,45 +166,84 @@ public:
                 fileAttr->getFileAttrFromPageHeader(fileHeader);
                 //获取要插入的数据块data
                 BufType data = new unsigned int[fileHandle.getFileHeader()[TABLE_RECORD_INT_SIZE_INT_OFFSET]];
-                string info = fileAttr->buildValidInsertData(insertStmt,data);
-                if(info != "") {
-                    printf("%s",info.c_str());
-                    delete fileAttr;
-                    return "";
-                }
 
-                //获取所有的索引项列名
-                vector<string> list = fileAttr->getIndexKeyNameList();
-
-
-                //检查是否有主键约束
-                if(fileAttr->getPrimaryKeyName() != "") {
-                    //获取主键约束的列名
-                    string primary_col_name = fileAttr->getPrimaryKeyName();
-                    string indexName = fileAttr->getIndexName(insertStmt->tableName,primary_col_name);
-                    IX_IndexHandle indexHandle;
-                    this->indexManager->OpenIndex(indexName.c_str(),indexHandle);
-                    //获取待插入的主键值
-                    int offset = fileAttr->getColValueOffset(primary_col_name.c_str());
-
-                    char* key = ((char*)(data)) + offset;
-                    int type,tag;
-                    Pointer p;
-                    //检查是否存在
-                    if(indexHandle.searchEntry(key,p,type,tag).equal(RC()) && tag == IndexType::valid) {//如果存在,报错。
-                        printf("primary key: %s, dumplicate\n",fileAttr->getPrimaryKeyName().c_str());
+                std::vector<std::vector<Expr*>*>* values = insertStmt->values;
+                int entry_size = values->size();
+                for(int s = 0 ; s < entry_size; ++s) {
+                    string info = fileAttr->buildValidInsertData(insertStmt, data, (*values)[s]);
+                    if (info != "") {
+                        printf("%s", info.c_str());
+                        delete fileAttr;
+                        return "";
                     }
-                    else {//插入数据，并插入索引
+
+                    //获取所有的索引项列名
+                    vector <string> list = fileAttr->getIndexKeyNameList();
+
+
+                    //检查是否有主键约束
+                    if (fileAttr->getPrimaryKeyName() != "") {
+                        //获取主键约束的列名
+                        string primary_col_name = fileAttr->getPrimaryKeyName();
+                        string indexName = fileAttr->getIndexName(insertStmt->tableName, primary_col_name);
+                        IX_IndexHandle indexHandle;
+                        this->indexManager->OpenIndex(indexName.c_str(), indexHandle);
+                        //获取待插入的主键值
+                        int offset = fileAttr->getColValueOffset(primary_col_name.c_str());
+
+                        char *key = ((char *) (data)) + offset;
+                        int type, tag;
+                        Pointer p;
+                        //检查是否存在
+                        if (indexHandle.searchEntry(key, p, type, tag).equal(RC()) &&
+                            tag == IndexType::valid) {//如果存在,报错。
+                            printf("primary key: %s, dumplicate\n", fileAttr->getPrimaryKeyName().c_str());
+                        } else {//插入数据，并插入索引
+                            RID rid;
+                            fileHandle.insertRec(data, rid);
+                            printf("rid pid %d sid %d\n", rid.pid, rid.sid);
+                            //插入主键索引
+                            indexHandle.InsertEntry(key, rid);
+                            indexHandle.close();
+                            //插入其余索引
+                            Record record;
+                            record.setData(data);
+                            record.setRID(rid);
+                            int index_entry_numbers = list.size();
+                            for (int i = 0; i < index_entry_numbers; ++i) {
+
+                                //获取索引的列名
+                                string index_col_name = list[i];
+                                //创建handle
+                                string indexName = fileAttr->getIndexName(insertStmt->tableName, index_col_name);
+                                IX_IndexHandle indexHandle;
+                                this->indexManager->OpenIndex(indexName.c_str(), indexHandle);
+                                //获取待插入的索引码值
+                                int offset = fileAttr->getColValueOffset(index_col_name.c_str());
+
+                                ColType colType = fileAttr->getColType(index_col_name);
+                                if (colType == ColType::UNIQUE || colType == ColType::PRIMARY) continue;
+
+                                char *key = record.getData(offset);
+                                if (indexHandle.InsertEntry(key, record.getRID()).equal(RC())) {
+                                    printf("insert index %s rid<%d,%d> ok\n", indexName.c_str(), record.getRID().pid,
+                                           record.getRID().sid);
+                                    indexHandle.close();
+                                } else {
+                                    printf("insert index %s rid<%d,%d> fail\n", indexName.c_str(), record.getRID().pid,
+                                           record.getRID().sid);
+                                }
+                            }
+                        }
+                    } else {//没有主键和UNIQUE约束，直接插入数据项和索引项
                         RID rid;
+                        //插入数据项
                         fileHandle.insertRec(data, rid);
-                        printf("rid pid %d sid %d\n", rid.pid, rid.sid);
-                        //插入主键索引
-                        indexHandle.InsertEntry(key,rid);
-                        indexHandle.close();
-                        //插入其余索引
                         Record record;
                         record.setData(data);
                         record.setRID(rid);
+                        printf("rid pid %d sid %d\n", rid.pid, rid.sid);
+                        //插入索引项
                         int index_entry_numbers = list.size();
                         for (int i = 0; i < index_entry_numbers; ++i) {
 
@@ -232,41 +271,6 @@ public:
                         }
                     }
                 }
-                else {//没有主键和UNIQUE约束，直接插入数据项和索引项
-                    RID rid;
-                    //插入数据项
-                    fileHandle.insertRec(data, rid);
-                    Record record;
-                    record.setData(data);
-                    record.setRID(rid);
-                    printf("rid pid %d sid %d\n", rid.pid, rid.sid);
-                    //插入索引项
-                    int index_entry_numbers = list.size();
-                    for (int i = 0; i < index_entry_numbers; ++i) {
-
-                        //获取索引的列名
-                        string index_col_name = list[i];
-                        //创建handle
-                        string indexName = fileAttr->getIndexName(insertStmt->tableName, index_col_name);
-                        IX_IndexHandle indexHandle;
-                        this->indexManager->OpenIndex(indexName.c_str(), indexHandle);
-                        //获取待插入的索引码值
-                        int offset = fileAttr->getColValueOffset(index_col_name.c_str());
-
-                        ColType colType = fileAttr->getColType(index_col_name);
-                        if(colType == ColType::UNIQUE || colType == ColType::PRIMARY) continue;
-
-                        char *key = record.getData(offset);
-                        if(indexHandle.InsertEntry(key, record.getRID()).equal(RC())) {
-                            printf("insert index %s rid<%d,%d> ok\n",indexName.c_str(),record.getRID().pid,record.getRID().sid);
-                            indexHandle.close();
-                        }
-                        else {
-                            printf("insert index %s rid<%d,%d> fail\n",indexName.c_str(),record.getRID().pid,record.getRID().sid);
-                        }
-                    }
-                }
-
                 delete fileAttr;
                 return "";
             }

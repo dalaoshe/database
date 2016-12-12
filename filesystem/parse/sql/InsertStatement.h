@@ -3,6 +3,7 @@
 
 #include "SQLStatement.h"
 #include "SelectStatement.h"
+
 namespace hsql {
     /**
      * Represents SQL Insert statements.
@@ -15,12 +16,12 @@ namespace hsql {
         };
 
         InsertStatement(InsertType type) :
-            SQLStatement(kStmtInsert),
-            type(type),
-            tableName(NULL),
-            columns(NULL),
-            values(NULL),
-            select(NULL) {}
+                SQLStatement(kStmtInsert),
+                type(type),
+                tableName(NULL),
+                columns(NULL),
+                values(NULL),
+                select(NULL) {}
 
         virtual ~InsertStatement() {
             delete tableName;
@@ -32,7 +33,7 @@ namespace hsql {
         InsertType type;
         const char* tableName;
         std::vector<char*>* columns;
-        std::vector<Expr*>* values;
+        std::vector< std::vector<Expr*>* >* values;
         SelectStatement* select;
     };
 

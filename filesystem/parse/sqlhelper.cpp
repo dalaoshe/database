@@ -31,24 +31,24 @@ namespace hsql {
 
     void printTableRefInfo(TableRef* table, uint numIndent) {
         switch (table->type) {
-        case kTableName:
-            inprint(table->name, numIndent);
-            break;
-        case kTableSelect:
-            printSelectStatementInfo(table->select, numIndent);
-            break;
-        case kTableJoin:
-            inprint("Join Table", numIndent);
-            inprint("Left", numIndent+1);
-            printTableRefInfo(table->join->left, numIndent+2);
-            inprint("Right", numIndent+1);
-            printTableRefInfo(table->join->right, numIndent+2);
-            inprint("Join Condition", numIndent+1);
-            printExpression(table->join->condition, numIndent+2);
-            break;
-        case kTableCrossProduct:
-            for (TableRef* tbl : *table->list) printTableRefInfo(tbl, numIndent);
-            break;
+            case kTableName:
+                inprint(table->name, numIndent);
+                break;
+            case kTableSelect:
+                printSelectStatementInfo(table->select, numIndent);
+                break;
+            case kTableJoin:
+                inprint("Join Table", numIndent);
+                inprint("Left", numIndent+1);
+                printTableRefInfo(table->join->left, numIndent+2);
+                inprint("Right", numIndent+1);
+                printTableRefInfo(table->join->right, numIndent+2);
+                inprint("Join Condition", numIndent+1);
+                printExpression(table->join->condition, numIndent+2);
+                break;
+            case kTableCrossProduct:
+                for (TableRef* tbl : *table->list) printTableRefInfo(tbl, numIndent);
+                break;
         }
         if (table->alias != NULL) {
             inprint("Alias", numIndent+1);
@@ -63,21 +63,21 @@ namespace hsql {
         }
 
         switch (expr->op_type) {
-        case Expr::SIMPLE_OP:
-            inprintC(expr->op_char, numIndent);
-            break;
-        case Expr::AND:
-            inprint("AND", numIndent);
-            break;
-        case Expr::OR:
-            inprint("OR", numIndent);
-            break;
-        case Expr::NOT:
-            inprint("NOT", numIndent);
-            break;
-        default:
-            inprintU(expr->op_type, numIndent);
-            break;
+            case Expr::SIMPLE_OP:
+                inprintC(expr->op_char, numIndent);
+                break;
+            case Expr::AND:
+                inprint("AND", numIndent);
+                break;
+            case Expr::OR:
+                inprint("OR", numIndent);
+                break;
+            case Expr::NOT:
+                inprint("NOT", numIndent);
+                break;
+            default:
+                inprintU(expr->op_type, numIndent);
+                break;
         }
         printExpression(expr->expr, numIndent+1);
         if (expr->expr2 != NULL) printExpression(expr->expr2, numIndent+1);
@@ -85,32 +85,32 @@ namespace hsql {
 
     void printExpression(Expr* expr, uint numIndent) {
         switch (expr->type) {
-        case kExprStar:
-            inprint("*", numIndent);
-            break;
-        case kExprColumnRef:
-            inprint(expr->name, numIndent);
-            break;
-        // case kExprTableColumnRef: inprint(expr->table, expr->name, numIndent); break;
-        case kExprLiteralFloat:
-            inprint(expr->fval, numIndent);
-            break;
-        case kExprLiteralInt:
-            inprint(expr->ival, numIndent);
-            break;
-        case kExprLiteralString:
-            inprint(expr->name, numIndent);
-            break;
-        case kExprFunctionRef:
-            inprint(expr->name, numIndent);
-            inprint(expr->expr->name, numIndent+1);
-            break;
-        case kExprOperator:
-            printOperatorExpression(expr, numIndent);
-            break;
-        default:
-            fprintf(stderr, "Unrecognized expression type %d\n", expr->type);
-            return;
+            case kExprStar:
+                inprint("*", numIndent);
+                break;
+            case kExprColumnRef:
+                inprint(expr->name, numIndent);
+                break;
+                // case kExprTableColumnRef: inprint(expr->table, expr->name, numIndent); break;
+            case kExprLiteralFloat:
+                inprint(expr->fval, numIndent);
+                break;
+            case kExprLiteralInt:
+                inprint(expr->ival, numIndent);
+                break;
+            case kExprLiteralString:
+                inprint(expr->name, numIndent);
+                break;
+            case kExprFunctionRef:
+                inprint(expr->name, numIndent);
+                inprint(expr->expr->name, numIndent+1);
+                break;
+            case kExprOperator:
+                printOperatorExpression(expr, numIndent);
+                break;
+            default:
+                fprintf(stderr, "Unrecognized expression type %d\n", expr->type);
+                return;
         }
         if (expr->alias != NULL) {
             inprint("Alias", numIndent+1);
@@ -174,34 +174,36 @@ namespace hsql {
             }
         }
         switch (stmt->type) {
-        case InsertStatement::kInsertValues:
-            inprint("Values", numIndent+1);
-            for (Expr* expr : *stmt->values) {
-                printExpression(expr, numIndent+2);
-            }
-            break;
-        case InsertStatement::kInsertSelect:
-            printSelectStatementInfo(stmt->select, numIndent+1);
-            break;
+            case InsertStatement::kInsertValues:
+                inprint("Values", numIndent+1);
+                for (std::vector<Expr*>* expr1 : *stmt->values) {
+                    for(Expr* expr : *expr1){
+                        printExpression(expr, numIndent+2);
+                    }
+                }
+                break;
+            case InsertStatement::kInsertSelect:
+                printSelectStatementInfo(stmt->select, numIndent+1);
+                break;
         }
     }
 
     void printStatementInfo(SQLStatement* stmt) {
         switch (stmt->type()) {
-        case kStmtSelect:
-            printSelectStatementInfo((SelectStatement*) stmt, 0);
-            break;
-        case kStmtInsert:
-            printInsertStatementInfo((InsertStatement*) stmt, 0);
-            break;
-        case kStmtCreate:
-            printCreateStatementInfo((CreateStatement*) stmt, 0);
-            break;
-        case kStmtImport:
-            printImportStatementInfo((ImportStatement*) stmt, 0);
-            break;
-        default:
-            break;
+            case kStmtSelect:
+                printSelectStatementInfo((SelectStatement*) stmt, 0);
+                break;
+            case kStmtInsert:
+                printInsertStatementInfo((InsertStatement*) stmt, 0);
+                break;
+            case kStmtCreate:
+                printCreateStatementInfo((CreateStatement*) stmt, 0);
+                break;
+            case kStmtImport:
+                printImportStatementInfo((ImportStatement*) stmt, 0);
+                break;
+            default:
+                break;
         }
     }
 

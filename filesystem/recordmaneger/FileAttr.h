@@ -174,7 +174,7 @@ public:
      * @param data
      * @return 报错信息，""表示无错误
      */
-    string buildValidInsertData(InsertStatement* stmt, BufType data) {
+    string buildValidInsertData(InsertStatement* stmt, BufType data, std::vector<Expr*> *values) {
         if (stmt->columns != NULL) { //insert into table(c1,c2,c3...) values(v1,v2,v3...)
             //总共要插入的列数
             int num = (*stmt->columns).size();
@@ -183,7 +183,7 @@ public:
                 //获取要插入的列名
                 char* target_col_name = (*stmt->columns)[i];
                 //获取要插入的数据的表达式
-                Expr* expr = (*stmt->values)[i];
+                Expr* expr = (*values)[i];
                 //判断是否命中
                 bool exist = false;
                 //该列数据的写入首地址
@@ -243,7 +243,7 @@ public:
             }
         }
         else {//没有列名，一一对应插入
-            int num = (*stmt->values).size();
+            int num = (*values).size();
             int attr_type, not_null, attr_len;
             //获取写入数据的写入首地址
             char* begin = ((char*)data) + RECORD_FIX_DATA;
@@ -252,7 +252,7 @@ public:
             //插入每一个数据列
             for(int i = 0 ; i < num ; ++i) {
                 //获取要插入的数据的表达式
-                Expr* expr = (*stmt->values)[i];
+                Expr* expr = (*values)[i];
                 char* attr_name = (char*)attr;
                 attr_type = attr[ATTR_VALUE_TYPE_INT_OFFSET];
                 not_null = attr[ATTR_NOT_NULL_INT_OFFSET];

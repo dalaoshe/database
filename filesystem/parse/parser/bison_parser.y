@@ -142,6 +142,7 @@ int yyerror(YYLTYPE* llocp, SQLParserResult** result, yyscan_t scanner, const ch
 	std::vector<hsql::ColumnDefinition*>* column_vec;
 	std::vector<hsql::UpdateClause*>* update_vec;
 	std::vector<hsql::Expr*>* expr_vec;
+	std::vector<std::vector<hsql::Expr*>*>* expr_vec_in_vec;
 }
 
 
@@ -211,7 +212,7 @@ int yyerror(YYLTYPE* llocp, SQLParserResult** result, yyscan_t scanner, const ch
 %type <column_t>	column_def
 %type <update_t>	update_clause
 %type <group_t>		opt_group
-
+%type <expr_vec_in_vec> value_lists
 %type <str_vec>		ident_commalist opt_column_list
 %type <expr_vec> 	expr_list select_list literal_list
 %type <table_vec> 	table_ref_commalist
@@ -449,11 +450,11 @@ truncate_statement:
  * INSERT INTO employees SELECT * FROM stundents
  ******************************/
 insert_statement:
-		INSERT INTO table_name opt_column_list VALUES '(' literal_list ')' {
+		INSERT INTO table_name opt_column_list VALUES value_lists {
 			$$ = new InsertStatement(InsertStatement::kInsertValues);
 			$$->tableName = $3;
 			$$->columns = $4;
-			$$->values = $7;
+			$$->values = $6;
 		}
 	|	INSERT INTO table_name opt_column_list select_no_paren {
 			$$ = new InsertStatement(InsertStatement::kInsertSelect);
@@ -463,6 +464,16 @@ insert_statement:
 		}
 	;
 
+value_lists: value_lists ',' '(' literal_list ')'{
+            $1->push_back($4);
+            $$ = $1;
+        }
+
+    |   '(' literal_list ')'{
+             $$ = new std::vector<std::vector<Expr*>*>();
+             $$->push_back($2);
+        }
+    ;
 
 opt_column_list:
 		'(' ident_commalist ')' { $$ = $2; }
@@ -597,7 +608,7 @@ opt_limit:
 	;
 
 /******************************
- * Expressions 
+ * Expressions
  ******************************/
 expr_list:
 		expr_alias { $$ = new std::vector<Expr*>(); $$->push_back($1); }
@@ -633,6 +644,10 @@ scalar_expr:
 unary_expr:
 		'-' expr { $$ = Expr::makeOpUnary(Expr::UMINUS, $2); }
 	|	NOT expr { $$ = Expr::makeOpUnary(Expr::NOT, $2); }
+	|	SUM '(' column_name ')' { $$ = Expr::makeOpUnary(Expr::SUM, $3); }
+	|	AVG '(' column_name ')' { $$ = Expr::makeOpUnary(Expr::AVG, $3); }
+	|	MAX '(' column_name ')' { $$ = Expr::makeOpUnary(Expr::MAX, $3); }
+	|	MIN '(' column_name ')' { $$ = Expr::makeOpUnary(Expr::MIN, $3); }
 	;
 
 binary_expr:
@@ -704,7 +719,7 @@ placeholder_expr:
 
 
 /******************************
- * Table 
+ * Table
  ******************************/
 table_ref:
 		table_ref_atomic
@@ -759,7 +774,7 @@ table_name:
 	;
 
 
-alias:	
+alias:
 		AS IDENTIFIER { $$ = $2; }
 	|	IDENTIFIER
 	;
@@ -775,7 +790,7 @@ opt_alias:
 
 join_clause:
 		join_table opt_join_type JOIN join_table ON join_condition
-		{ 
+		{
 			$$ = new TableRef(kTableJoin);
 			$$->join = new JoinDefinition();
 			$$->join->type = (JoinType) $2;
