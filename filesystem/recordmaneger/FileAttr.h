@@ -314,16 +314,16 @@ public:
             switch (attr_type) {
                 case INT: {//int
                     int val = (*((int *) begin));
-                    printf("int %d %d\n",attr_type,val);
+                    printf("int  %d\n",val);
                     break;
                 }
                 case FLOAT: {//float
                     float val = (*((float *) begin));
-                    printf("float %d %f\n",attr_type,val);
+                    printf("float  %f\n",val);
                     break;
                 }
                 case STRING: {//string
-                    printf("string %d %s\n",attr_type, begin);
+                    printf("string  %s\n", begin);
                     break;
                 }
                 default: {

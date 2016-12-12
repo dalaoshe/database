@@ -35,12 +35,8 @@ struct Key{
                 return *(float *)key == *(float *) t;
             }
             case STRING:{
-                for(int i = 0 ; i < len ; ++i) {
-                    char a = *(key+i);
-                    char b = *(t+i);
-                    if(a != b) return false;
-                }
-                return true;
+                printf("equal target %s\n",t);
+                return strcmp(t,key) == 0;
             }
         }
         return true;
@@ -56,12 +52,8 @@ struct Key{
                 return *(float *)key < *(float *) t;
             }
             case STRING:{
-                for(int i = 0 ; i < len ; ++i) {
-                    char a = *(key+i);
-                    char b = *(t+i);
-                    if((int)a >= (int)b) return false;
-                }
-                return true;
+                printf("less target %s\n",t);
+                return strcmp(key,t) < 0;
             }
         }
         return true;
@@ -78,12 +70,8 @@ struct Key{
                 //return true;
             }
             case STRING:{
-                for(int i = 0 ; i < len ; ++i) {
-                    char a = *(key+i);
-                    char b = *(t+i);
-                    if((int)a <= (int)b) return false;
-                }
-                return true;
+                printf("greater target %s\n",t);
+                return strcmp(key,t) > 0;
             }
         }
         return true;

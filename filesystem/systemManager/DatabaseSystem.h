@@ -173,6 +173,10 @@ public:
                     return "";
                 }
 
+                //获取所有的索引项列名
+                vector<string> list = fileAttr->getIndexKeyNameList();
+
+
                 //检查是否有主键约束
                 if(fileAttr->getPrimaryKeyName() != "") {
                     //获取主键约束的列名
@@ -194,14 +198,73 @@ public:
                         RID rid;
                         fileHandle.insertRec(data, rid);
                         printf("rid pid %d sid %d\n", rid.pid, rid.sid);
+                        //插入主键索引
                         indexHandle.InsertEntry(key,rid);
+                        indexHandle.close();
+                        //插入其余索引
+                        Record record;
+                        record.setData(data);
+                        record.setRID(rid);
+                        int index_entry_numbers = list.size();
+                        for (int i = 0; i < index_entry_numbers; ++i) {
+
+                            //获取索引的列名
+                            string index_col_name = list[i];
+                            //创建handle
+                            string indexName = fileAttr->getIndexName(insertStmt->tableName, index_col_name);
+                            IX_IndexHandle indexHandle;
+                            this->indexManager->OpenIndex(indexName.c_str(), indexHandle);
+                            //获取待插入的索引码值
+                            int offset = fileAttr->getColValueOffset(index_col_name.c_str());
+
+                            ColType colType = fileAttr->getColType(index_col_name);
+                            if (colType == ColType::UNIQUE || colType == ColType::PRIMARY) continue;
+
+                            char *key = record.getData(offset);
+                            if (indexHandle.InsertEntry(key, record.getRID()).equal(RC())) {
+                                printf("insert index %s rid<%d,%d> ok\n", indexName.c_str(), record.getRID().pid,
+                                       record.getRID().sid);
+                                indexHandle.close();
+                            } else {
+                                printf("insert index %s rid<%d,%d> fail\n", indexName.c_str(), record.getRID().pid,
+                                       record.getRID().sid);
+                            }
+                        }
                     }
-                    indexHandle.close();
                 }
-                else {//没有主键约束，直接插入数据
+                else {//没有主键和UNIQUE约束，直接插入数据项和索引项
                     RID rid;
+                    //插入数据项
                     fileHandle.insertRec(data, rid);
+                    Record record;
+                    record.setData(data);
+                    record.setRID(rid);
                     printf("rid pid %d sid %d\n", rid.pid, rid.sid);
+                    //插入索引项
+                    int index_entry_numbers = list.size();
+                    for (int i = 0; i < index_entry_numbers; ++i) {
+
+                        //获取索引的列名
+                        string index_col_name = list[i];
+                        //创建handle
+                        string indexName = fileAttr->getIndexName(insertStmt->tableName, index_col_name);
+                        IX_IndexHandle indexHandle;
+                        this->indexManager->OpenIndex(indexName.c_str(), indexHandle);
+                        //获取待插入的索引码值
+                        int offset = fileAttr->getColValueOffset(index_col_name.c_str());
+
+                        ColType colType = fileAttr->getColType(index_col_name);
+                        if(colType == ColType::UNIQUE || colType == ColType::PRIMARY) continue;
+
+                        char *key = record.getData(offset);
+                        if(indexHandle.InsertEntry(key, record.getRID()).equal(RC())) {
+                            printf("insert index %s rid<%d,%d> ok\n",indexName.c_str(),record.getRID().pid,record.getRID().sid);
+                            indexHandle.close();
+                        }
+                        else {
+                            printf("insert index %s rid<%d,%d> fail\n",indexName.c_str(),record.getRID().pid,record.getRID().sid);
+                        }
+                    }
                 }
 
                 delete fileAttr;
@@ -247,12 +310,114 @@ public:
                     fileAttr->printRecordInfo(record.getData());
                 }
 
-
+                delete fileAttr;
 
                 return "";
             }
             case kStmtUpdate:{
-                //printUpdateStatementInfo((UpdateStatement*)stmt, 0);
+                printf("update options\n");
+                UpdateStatement* updateStatement = (UpdateStatement*)stmt;
+
+                //获取要选取的表名
+                string filename = updateStatement->table->name;
+                RM_FileHandle fileHandle;
+
+                //获取rm handle
+                recordManager->openFile(filename.c_str(),fileHandle);
+                BufType fileHeader = fileHandle.getFileHeader();
+                //获取表头信息
+                RM_FileAttr* fileAttr = new RM_FileAttr();
+                fileAttr->getFileAttrFromPageHeader(fileHeader);
+                //获取所有要更新的记录
+                map<RID,int>rid_list;
+                this->searchRIDListByWhereClause(updateStatement->where,rid_list,fileHandle,0,updateStatement->table->name);
+                printf("update rid size %d\n",rid_list.size());
+                //更新记录
+                map<RID, int>::iterator it;
+
+                for (it = rid_list.begin(); it != rid_list.end(); ++it) {
+                    RID rid = it->first;
+                    Record record;
+                    //获取要修改的数据项数据
+                    fileHandle.getRec(rid,record);
+                    //修改数据项
+                    for(int i = 0 ; i < updateStatement->updates->size(); ++i) {
+
+                        //要更新的列名
+                        char* col_name = ((*updateStatement->updates)[i])->column;
+                        //要更新的新值
+                        Expr* value = ((*updateStatement->updates)[i])->value;
+                        printf("update col name %s\n",col_name);
+                        AttrType value_type = fileAttr->getColValueType(col_name);
+                        int offset = fileAttr->getColValueOffset(col_name);
+                        int value_size = fileAttr->getColValueSize(col_name);
+                        ColType col_type = fileAttr->getColType(col_name);
+
+                        char* data = record.getData(offset);
+                        //缓存修改前的值，以删除索引
+                        char* old_data = new char[value_size];
+                        for(int j = 0 ; j < value_size; ++j) {
+                            old_data[j] = data[j];
+                        }
+                        //获取新的值
+                        switch(value_type) {
+                            case AttrType::INT: {
+                                *(int*)data = value->ival;
+                                printf("new INT  %d %d\n",value->ival,*(int*)data);
+                                break;
+                            }
+                            case AttrType::FLOAT: {
+                                *(float*)data = value->fval;
+                                printf("new FLOAT  %f %f\n",value->fval,*(float *)data);
+                                break;
+                            }
+                            case AttrType::STRING: {
+                                strcpy(data, value->name);
+                                printf("update string %s %s\n",value->name,data);
+                                break;
+                            }
+                            default: {
+                                printf("type error %s %s\n",value->name,data);
+                            }
+                        }
+
+                        //如果修改的是索引项则删除旧索引建立新的索引
+                        if(col_type == ColType::INDEX || col_type == ColType::PRIMARY || col_type == ColType::UNIQUE) {
+                            //创建handle
+                            string indexName = fileAttr->getIndexName(updateStatement->table->name, col_name);
+                            IX_IndexHandle indexHandle;
+                            this->indexManager->OpenIndex(indexName.c_str(), indexHandle);
+                            char *key = old_data;
+                            int type,tag;
+                            Pointer p;
+                            //如果是PRIMARY和UNIQUE，需要确保新值不存在
+                            if((col_type == ColType::UNIQUE || col_type == ColType::PRIMARY) &&
+                                indexHandle.searchEntry(data,p,type,tag).equal(RC()) && tag == IndexType::valid) {//如果存在,报错。
+                                printf("primary key: %s, dumplicate, update fail\n",fileAttr->getPrimaryKeyName().c_str());
+                                return "";
+                            }
+                            //否则删除索引并插入新的索引
+                            if(indexHandle.DeleteEntry(key, rid).equal(RC())) {
+                                printf("delete index %s rid<%d,%d> ok\n",indexName.c_str(),rid.pid,rid.sid);
+                                //插入新的索引项
+                                if(indexHandle.InsertEntry(data,rid).equal(RC())) {
+                                    printf("insert index %s %s rid<%d,%d> ok\n",indexName.c_str(),data,rid.pid,rid.sid);
+                                } else {
+                                    printf("insert index %s rid<%d,%d> fail\n",indexName.c_str(),rid.pid,rid.sid);
+                                    return "";
+                                }
+                            }
+                            else {
+                                printf("delete index %s rid<%d,%d> fail\n",indexName.c_str(),rid.pid,rid.sid);
+                                return "";
+                            }
+                            indexHandle.close();
+                        }
+                    }
+                    //所有列的修改完成后修改数据项
+                    fileHandle.updateRec(record);
+                }
+                delete fileAttr;
                 printf("update \n  ");
                 return "";
             }
@@ -310,6 +475,7 @@ public:
                         printf("delete data rid<%d,%d> fail \n", rid.pid, rid.sid);
                     }
                 }
+                delete fileAttr;
                 printf("delete \n  ");
                 return "";
             }
@@ -346,8 +512,11 @@ public:
     RC searchRIDListByWhereClause(Expr* whereclause, map<RID,int> & rid_list , RM_FileHandle &fileHandle , int numIndent, char* tableName) {
         //whereclause type is kExprOperator
         if (whereclause == NULL) {
-            printf("null\n", numIndent);
-
+            printf("null where get all record\n", numIndent);
+            RM_FileScan *fileScan = new RM_FileScan();
+            fileScan->openScan(&fileHandle, AttrType::FLOAT, 0, 0, CompOp::EQ_OP, NULL);
+            fileScan->getAllRecordOfFile(rid_list);
+            delete fileScan;
             return RC(-1);
         }
         map<RID,int> left;
@@ -392,21 +561,17 @@ public:
                 switch (whereclause->expr2->type) {
                     case kExprLiteralFloat:
                         *((float *) col_values) = whereclause->expr2->fval;
-                        //print(expr->fval, numIndent);
                         break;
                     case kExprLiteralInt:
                         *((int *) col_values) = whereclause->expr2->ival;
-                        //inprint(expr->ival, numIndent);
                         break;
                     case kExprLiteralString:
                         strcpy(col_values, whereclause->expr2->name);
-                        //inprint(expr->name, numIndent);
                         break;
                     default:
-                        //fprintf(stderr, "Unrecognized expression type %d\n", expr->type);
                         return RC(-1);
                 }
-                //如果查找列是索引列，并且是等号查找
+                //如果查找列是索引列，并且是等号查找，则按索引查找
                 if((col_type == ColType::INDEX || col_type == ColType::UNIQUE || col_type == ColType::PRIMARY) && op == CompOp::EQ_OP) {
                     printf("index search\n");
                     IX_IndexScan* indexScan = new IX_IndexScan();
@@ -428,8 +593,6 @@ public:
                     delete fileScan;
                 }
                 delete fileAttr;
-
-                printf("delete ok %c size %d \n", whereclause->op_char, rid_list.size());
                 break;
             }
              //符号两边为表达式，继续递归根据符号取交、并、补

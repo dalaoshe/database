@@ -201,7 +201,7 @@ struct PageBitmap{
         //判断原来是否是1
         unsigned int old = slot & p;
         if(old > 0) {
-            printf("is used!\n");
+            //printf("is used!\n");
             return true;
         }
         return false;

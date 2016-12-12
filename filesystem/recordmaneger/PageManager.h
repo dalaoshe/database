@@ -133,7 +133,7 @@ public:
             return RC(-1);
         }
         if(!this->bitmap->isSlotUsed(rid.sid)) {
-            printf("sid not used\n");
+            //printf("sid not used\n");
             return RC(-1);
         }
 
@@ -154,7 +154,7 @@ public:
         for(int i = 0 ; i < this->slot_int_size; ++i) {
             copy[i] = data[i];
         }
-        printf("copy record: slot_int_size %d\n",slot_int_size);
+        //printf("copy record: slot_int_size %d\n",slot_int_size);
         return copy;
     }
     /**

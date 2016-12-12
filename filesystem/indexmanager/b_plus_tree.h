@@ -97,11 +97,12 @@ struct Node
      */
     int search(Key key)
     {
-        printf("before search, index num : %d\n",index_num);
+       // printf("before search, index num : %d\n",index_num);
         if(this->index_num == 0) {
             return 1;
         }
         if(key.less(this->getKey(1),key_byte_size,key_type)) {
+            printf("less\n");
             return 1;
         }
         else if(key.greater(this->getKey(this->index_num),key_byte_size,key_type)) {
@@ -154,7 +155,7 @@ struct Node
         int i = this->search(key);
         int j = this->index_num;
         for(int k = j ; k >= i ; --k) {
-            printf("k:%d; i:%d; j:%d\n",k,i,j);
+         //   printf("k:%d; i:%d; j:%d\n",k,i,j);
 
             copyIndex(k,k+1);
         }
@@ -235,7 +236,7 @@ struct Node
         int i = this->search(k);
         Key key = this->getKey(i-1);
         printf("node pid %d ,offset %d\n",this->pointer.pid,this->pointer.offset);
-        printf("index num %d key %d i %d\n",index_num,*(int*)key.key,i);
+        printf("index num %d key %d i %d key %s k %s\n",index_num,*(int*)key.key,i,key.key,k.key);
         return k.equal(key,key_byte_size,key_type);
     }
 

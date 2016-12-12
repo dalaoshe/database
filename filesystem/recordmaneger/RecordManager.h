@@ -487,7 +487,7 @@ public:
         int slot_max_number = fileHandle->getMaxSlotNumber();
         int last_page_id = fileHandle->getLastPageID();
         int pid = 1, sid = 0;
-        printf("slot_max: %d last_pid: %d \n",slot_max_number,last_page_id);
+       // printf("slot_max: %d last_pid: %d \n",slot_max_number,last_page_id);
         for(pid = 1 ; pid <= last_page_id ; ++pid) {
 
             for(sid = 0 ; sid < slot_max_number; ++sid) {
@@ -496,10 +496,9 @@ public:
                 Record record;
                 if( this->fileHandle->getRec(rid,record).equal(RC(0)) ) {
                     //存在这条记录，判断是否符合要求
-                    printf("check rid<%d,%d>\n",rid.pid,rid.sid);
+                   // printf("check rid<%d,%d>\n",rid.pid,rid.sid);
                     if(this->checkRecord(record)) {
                         //该记录符合要求
-
                         rid_list.insert(pair<RID, int>(rid, 1));
                     }
                 }
@@ -507,20 +506,22 @@ public:
         }
         return RC();
     }
-
+    /**
+     * 获取文件中所有页的所有槽（包括没有使用的槽）
+     * @param rid_list
+     * @return
+     */
     RC getAllRecordOfFile(map<RID,int> & rid_list) {
         int slot_max_number = fileHandle->getMaxSlotNumber();
         int last_page_id = fileHandle->getLastPageID();
         int pid = 1, sid = 0;
-        printf("slot_max: %d last_pid: %d \n",slot_max_number,last_page_id);
+       // printf("slot_max: %d last_pid: %d \n",slot_max_number,last_page_id);
         for(pid = 1 ; pid <= last_page_id ; ++pid) {
             for(sid = 0 ; sid < slot_max_number; ++sid) {
                 RID rid;
                 rid.pid = pid; rid.sid = sid;
                 Record record;
                 if( this->fileHandle->getRec(rid,record).equal(RC(0)) ) {
-                    //存在这条记录，判断是否符合要求
-                    printf("check rid<%d,%d>\n",rid.pid,rid.sid);
                     rid_list.insert(pair<RID, int>(rid, 1));
                 }
             }
@@ -532,15 +533,13 @@ public:
         int slot_max_number = fileHandle->getMaxSlotNumber();
         int last_page_id = fileHandle->getLastPageID();
         int pid = 1, sid = 0;
-        printf("slot_max: %d last_pid: %d \n",slot_max_number,last_page_id);
+        //printf("slot_max: %d last_pid: %d \n",slot_max_number,last_page_id);
         for(pid = 1 ; pid <= last_page_id ; ++pid) {
             for(sid = 0 ; sid < slot_max_number; ++sid) {
                 RID rid;
                 rid.pid = pid; rid.sid = sid;
                 Record record;
                 if( this->fileHandle->getRec(rid,record).equal(RC(0)) ) {
-                    //存在这条记录，判断是否符合要求
-                    printf("check rid<%d,%d>\n",rid.pid,rid.sid);
                     char* key = record.getData(this->attrOffset);
                     rid_list.insert(pair<RID, char*>(rid, key));
                 }
