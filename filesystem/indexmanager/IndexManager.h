@@ -531,7 +531,7 @@ public:
 
 
     RC DestroyIndex (const char *fileName,          // Destroy index
-                     int        indexNo) {          //TODO indexNo in destroy function？
+                     int        indexNo = 0) {          //TODO indexNo in destroy function？
         this->fm->destroyFile(fileName);
         return RC(0);
     };

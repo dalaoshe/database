@@ -371,7 +371,7 @@ public:
         //检查索引文件是否已经建立
         string indexName = fileAttr->getIndexName(relName,attrName);
         if(checkFileExist(indexName.c_str())){
-            printf("the indexFile %s has exist",indexName);
+            printf("the indexFile %s has exist",indexName.c_str());
             delete fileAttr;
             return RC(-1);
         }
@@ -413,9 +413,48 @@ public:
         return RC(-1);
     }
     RC DropIndex   (const char *relName,                // Destroy index
-                    const char *attrName){
+                    const char *attrName,
+                    ColType colType = ColType::NORMAL){
         //TODO more than drop index file
-        remove(attrName);
+        //TODO 已经创建了索引（索引文件存在）
+        //检查表是否存在
+        if(!checkFileExist(relName)){
+            printf("the table %s doesn't exist\n",relName);
+            return RC(-1);
+        }
+
+
+
+
+        RM_FileHandle fileHandle;
+        rmm->openFile(relName,fileHandle);
+        BufType fileHeader = fileHandle.getFileHeader();
+        RM_FileAttr* fileAttr = new RM_FileAttr();
+        //获取头页信息
+        fileAttr->getFileAttrFromPageHeader(fileHeader);
+        //检查索引文件是否已经建立
+        string indexName = fileAttr->getIndexName(relName,attrName);
+        if(!checkFileExist(indexName.c_str())){
+            printf("indexFile %s not exist, cannot destroy\n",indexName.c_str());
+            delete fileAttr;
+            return RC(-1);
+        }
+        ColType old_type = fileAttr->getColType(attrName);
+        if(!(old_type == ColType::INDEX)) {
+            printf("cannot destroy %s \n",fileAttr->getColTypeName(old_type).c_str());
+            delete fileAttr;
+            return RC(-1);
+        }
+        //获取要删除的索引的列的信息
+        AttrType key_type = fileAttr->getColValueType(attrName);
+        int key_size = fileAttr->getColValueSize(attrName);
+        //删除索引
+        if(ixm->DestroyIndex(indexName.c_str()).equal(RC())) {
+            //删除索引文件成功，修改头页对应列的列类型
+            fileAttr->setColType(attrName,colType);
+            delete fileAttr;
+            return RC();
+        }
     }
 
     //TODO 列出表的模式(schema)信息
