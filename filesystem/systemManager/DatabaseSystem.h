@@ -536,6 +536,9 @@ public:
             case Expr::NOT_EQUALS: {// <>
                 op = NE_OP;
             }
+            case Expr::LIKE: {
+                op = LIKE_OP;
+            }
             case Expr::SIMPLE_OP: {
                 //= < >
                 //递归基，符号两边为列名和属性值，进行查找
@@ -575,7 +578,7 @@ public:
                     default:
                         return RC(-1);
                 }
-                //如果查找列是索引列，并且是等号查找，则按索引查找
+                //如果查找列是索引列，并且是等号查找，并且不是模糊查找，则按索引查找
                 if((col_type == ColType::INDEX || col_type == ColType::UNIQUE || col_type == ColType::PRIMARY) && op == CompOp::EQ_OP) {
                     printf("index search\n");
                     IX_IndexScan* indexScan = new IX_IndexScan();

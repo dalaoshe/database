@@ -9,6 +9,8 @@
 #include "../utils/pagedef.h"
 #include "../utils/rc.h"
 #include "../utils/base.h"
+#include <cstring>
+#include <string>
 #include <iostream>
 #include <vector>
 
@@ -478,6 +480,13 @@ public:
                 }
                 case NO_OP: {
                     return target_v == NULL;
+                }
+                case LIKE_OP: {
+                    int len = strlen(target_v);
+                    string pattern = string(target_v).substr(1,len-2);
+                    string rec = string(rec_v);
+                    if(rec.find(pattern) == string::npos) return false;
+                    return true;
                 }
             }
         }
