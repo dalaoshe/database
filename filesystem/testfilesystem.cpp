@@ -35,16 +35,28 @@ using namespace hsql;
 
 int test_parse(int argc, char **argv){
     DatabaseSystem myDB;
+
     if(argv[1][0]=='0') {
-        while (true) {
-            char sql[1000];
-            cin.getline(sql, 1000);
-            string sqlStmt(sql);
-            if (sqlStmt == string("quit"))
+        string sqlStmt;
+        while(true)
+        {
+            char sql[4096];
+            cin.getline(sql, 4096);
+            string temp_sqlStmt = string(sql);
+
+            if(temp_sqlStmt.substr(0,4) == string("quit")) {
                 break;
+            }
+            else if(temp_sqlStmt[temp_sqlStmt.length()-1] != ';'){
+                sqlStmt += " "+temp_sqlStmt;
+                continue;
+            }
             else{
-                myDB.readSQL(sqlStmt);
-                cout << endl <<endl;
+                sqlStmt += " "+temp_sqlStmt;
+                printf("sql: %s\n",sqlStmt.c_str());
+                cout<<myDB.readSQL(sqlStmt);
+                cout<<endl<<endl;
+                sqlStmt = "";
             }
         }
     }
@@ -57,13 +69,19 @@ int test_parse(int argc, char **argv){
 //        cout<<myDB.readSQLfile("test_example/customer.sql");
 //        cout<<myDB.readSQLfile("test_example/book.sql");
 //        cout<<myDB.readSQLfile("test_example/orders.sql");
+        string sqlStmt;
         while(true)
         {
             char sql[1000];
             cin.getline(sql, 1000);
-            string sqlStmt(sql);
-            if(sqlStmt == string("quit"))
+            string temp_sqlStmt = string(sql);
+
+            if(sqlStmt.substr(0,4) == string("quit"))
                 break;
+            else if(temp_sqlStmt[temp_sqlStmt.length()-1] != ';'){
+                sqlStmt += temp_sqlStmt;
+                continue;
+            }
             else{
                 cout<<myDB.readSQL(sqlStmt);
                 cout<<endl<<endl;

@@ -18,23 +18,6 @@
 #define DBLIST "DBList.txt"
 #define DBROOT "../DatabaseRoot"
 #define TABLELIST "TableList.txt"
-// Used by SM_Manager::CreateTable
-struct AttrInfo {
-    char     *attrName;           // Attribute name
-    AttrType attrType;            // Type of attribute
-    int      attrLength;          // Length of attribute
-};
-
-// Used by Printer class
-struct DataAttrInfo {
-    char     relName[MAXNAME+1];  // Relation name
-    char     attrName[MAXNAME+1]; // Attribute name
-    int      offset;              // Offset of attribute
-    AttrType attrType;            // Type of attribute
-    int      attrLength;          // Length of attribute
-    int      indexNo;             // Attribute index number
-};
-
 
 class SM_Manager {
     FileManager* fm;

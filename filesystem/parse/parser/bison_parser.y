@@ -648,6 +648,7 @@ unary_expr:
 	|	AVG '(' column_name ')' { $$ = Expr::makeOpUnary(Expr::AVG, $3); }
 	|	MAX '(' column_name ')' { $$ = Expr::makeOpUnary(Expr::MAX, $3); }
 	|	MIN '(' column_name ')' { $$ = Expr::makeOpUnary(Expr::MIN, $3); }
+	|   column_name IS  NULL    { $$ = Expr::makeOpUnary(Expr::ISNULL,$1);}
 	;
 
 binary_expr:

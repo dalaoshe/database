@@ -276,15 +276,43 @@ public:
             }
             case kStmtSelect:{
                 //打印语句信息
-                printSelectStatementInfo((SelectStatement*)stmt, 0);
+//                printSelectStatementInfo((SelectStatement*)stmt, 0);
                 printf("select options\n");
                 SelectStatement* selectStatement = (SelectStatement*)stmt;
-                //获取要选取的表名
-                string filename = selectStatement->fromTable->getName();
+                //获取要选取的列名(表名.列名 形式需要添加)
+                vector<string> columns;
+                for (Expr* expr : *selectStatement->selectList){
+                    switch (expr->type) {
+                        case kExprStar:
+                            printf("*");
+                            columns.push_back(string("*"));
+                            break;
+                        case kExprColumnRef:
+                            printf("%s %s\n",expr->table,expr->name);
+                            columns.push_back(string(expr->name));
+                            break;
+                            // case kExprTableColumnRef: inprint(expr->table, expr->name, numIndent); break;
+                        default:
+                            fprintf(stderr, "Unrecognized expression type %d\n", expr->type);
+                            return "error";
+                    }
+                }
+//                获取要选取的表名
+                vector<string> filenames;
+                if(selectStatement->fromTable->list == NULL)
+                    filenames.push_back(selectStatement->fromTable->getName());
+                else{
+                    int size = (*selectStatement->fromTable->list).size();
+                    for(int i=0;i<size;++i){
+                        filenames.push_back((*selectStatement->fromTable->list)[i]->getName());
+                    }
+                }
+//                string filename = selectStatement->fromTable->getName();
                 RM_FileHandle fileHandle;
-
+                //TODO 多表
+                printf("filename: %s   size: %lu\n",filenames[0].c_str(),filenames.size());
                 //获取rm handle
-                recordManager->openFile(filename.c_str(),fileHandle);
+                recordManager->openFile(filenames[0].c_str(),fileHandle);
                 BufType fileHeader = fileHandle.getFileHeader();
                 //获取表头信息
                 RM_FileAttr* fileAttr = new RM_FileAttr();
@@ -300,6 +328,10 @@ public:
 //                fileHandle.getRec(rid,record);
 
                 //打印记录
+                for(int i=0;i<columns.size();++i){
+                    printf("%s   \t ",columns[i].c_str());
+                }
+                printf("\n");
                 map<RID, int>::iterator it;
                 //循环遍历左边表达式选取的项在右边表达式是否存在
                 for (it = rid_list.begin(); it != rid_list.end(); ++it) {
@@ -311,7 +343,7 @@ public:
                     fileHandle.getRec(rid,record);
                     //不存在则下一个
 
-                    fileAttr->printRecordInfo(record.getData());
+                    fileAttr->printRecordInfo(record.getData(),columns);
                 }
 
                 delete fileAttr;
@@ -500,12 +532,16 @@ public:
         ifstream fin(filename.c_str());
         string sql_stmt;
         if(fin){
-            while (getline(fin,sql_stmt)){
-                if(sql_stmt=="")
+            string temp;
+            while (getline(fin,temp)){
+                sql_stmt += " "+temp;
+                if(temp=="")
                     continue;
-                cout<<sql_stmt<<endl;
-                string result = readSQL(sql_stmt);
-                printf("\n");
+                if(temp[temp.length()-1]==';') {
+                    cout<<sql_stmt<<endl;
+                    string result = readSQL(sql_stmt);
+                    printf("\n");
+                }
 //                printf("%s",result.c_str());
             }
         }
@@ -516,7 +552,7 @@ public:
     RC searchRIDListByWhereClause(Expr* whereclause, map<RID,int> & rid_list , RM_FileHandle &fileHandle , int numIndent, char* tableName) {
         //whereclause type is kExprOperator
         if (whereclause == NULL) {
-            printf("null where get all record\n", numIndent);
+            printf("null where get all record\n");
             RM_FileScan *fileScan = new RM_FileScan();
             fileScan->openScan(&fileHandle, AttrType::FLOAT, 0, 0, CompOp::EQ_OP, NULL);
             fileScan->getAllRecordOfFile(rid_list);
