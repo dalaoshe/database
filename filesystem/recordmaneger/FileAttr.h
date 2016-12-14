@@ -8,6 +8,7 @@
 #include <string.h>
 #include "../utils/base.h"
 #include <vector>
+#include <map>
 #include "../utils/pagedef.h"
 #include "../utils/rc.h"
 #include "../parse/sql/InsertStatement.h"
@@ -294,8 +295,9 @@ public:
         //成功
         return "";
     }
+
     //打印一个槽记录信息
-    string printRecordInfo(BufType data,vector<string> columns) {
+    string printRecordInfo(BufType data, vector<string>& columns) {
         char* begin = (char*)data;
         //定位到定长数据首地址
         begin += RECORD_FIX_DATA;
@@ -307,38 +309,38 @@ public:
         int column_size = columns.size();
         for(int i = 0 ; i < this->attr_count ; ++i) {
             //获取该列的所有属性信息
-            char* attr_name = (char*)attr;
+            char *attr_name = (char *) attr;
             attr_len = attr[ATTR_VALUE_LENGTH_INT_OFFSET];
-            if(columns[0]!="*"){
+            if (columns[0] != "*") {
                 bool need = false;
-                for(int j=0;j<column_size;++j){
-                    if(string(attr_name)==columns[j]){
+                for (int j = 0; j < column_size; ++j) {
+                    if (string(attr_name) == columns[j]) {
                         need = true;
                         break;
                     }
                 }
-                if(!need){
+                if (!need) {
                     begin += attr_len;
                     attr += ATTR_INT_SIZE;
                     continue;
                 }
             }
-            attr_type = (AttrType)attr[ATTR_VALUE_TYPE_INT_OFFSET];
+            attr_type = (AttrType) attr[ATTR_VALUE_TYPE_INT_OFFSET];
             not_null = attr[ATTR_NOT_NULL_INT_OFFSET];
 //            printf("columns name: %s\t",attr_name);
             switch (attr_type) {
                 case INT: {//int
                     int val = (*((int *) begin));
-                    printf("int  %d\n",val);
+                    printf("%d  \t", val);
                     break;
                 }
                 case FLOAT: {//float
                     float val = (*((float *) begin));
-                    printf("float  %f\n",val);
+                    printf("%f  \t", val);
                     break;
                 }
                 case STRING: {//string
-                    printf("string  %s\n", begin);
+                    printf("%s   \t", begin);
                     break;
                 }
                 default: {
@@ -350,8 +352,7 @@ public:
             begin += attr_len;
             attr += ATTR_INT_SIZE;
         }
-
-        printf("over\n");
+        printf("\n");
         return "";
     }
 
@@ -482,4 +483,6 @@ public:
         return list;
     }
 };
+
+
 #endif //DATABASE_FILEATTR_H

@@ -58,7 +58,8 @@ namespace hsql {
             AVG,
             MAX,
             MIN,
-            IN
+            IN,
+            NO
         } OperatorType;
 
 
