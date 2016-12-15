@@ -6,7 +6,7 @@
 #define RECORD_H
 
 #include <cstdio>
-#include ""
+#include "../utils/pagedef.h"
 struct RID{
     int pid;
     int sid;
@@ -62,23 +62,45 @@ public:
         }
         printf("pid: %d sid: %d data[0]: %d\n",rid.pid,rid.sid,data[0]);
     }
-    //设置第i列为null标记
+    //设置第i列为null标记(0)
     void setNULL(int i) {
-        char* null_map = ((char*)data)+RECORD_
+        char* null_map = ((char*)data) + RECORD_NULL_BITMAP;
         //第几个byte
         int byte_pos = i >> 3;
         //该byte的第几位
         int index = i % 8;
-        uint_8 a = ;
+        uint_8 a = null_map[byte_pos];
         uint_8 b = 1;
         b = b << index;
-
-        memset(a,0, sizeof(a));
-
+        b = ~b;
+        a = b & a;
+        null_map[byte_pos] = a;
     }
-    //设置第i列为非null标记
+    //设置第i列为非null标记(1)
     void setNotNULL(int i) {
+        char* null_map = ((char*)data) + RECORD_NULL_BITMAP;
+        //第几个byte
+        int byte_pos = i >> 3;
+        //该byte的第几位
+        int index = i % 8;
+        uint_8 a = null_map[byte_pos];
+        uint_8 b = 1;
+        b = b << index;
+        a = b | a;
+        null_map[byte_pos] = a;
+    }
 
+    bool isNULL(int i) {
+        char* null_map = ((char*)data) + RECORD_NULL_BITMAP;
+        //第几个byte
+        int byte_pos = i >> 3;
+        //该byte的第几位
+        int index = i % 8;
+        uint_8 a = null_map[byte_pos];
+        uint_8 b = 1;
+        b = b << index;
+        a = b & a;
+        return a == 0;
     }
 };
 
