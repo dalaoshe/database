@@ -276,8 +276,8 @@ public:
             }
             case kStmtSelect:{
                 //打印语句信息
-//                printSelectStatementInfo((SelectStatement*)stmt, 0);
-                printf("select options\n");
+            //   printSelectStatementInfo((SelectStatement*)stmt, 0);
+             //   printf("select options\n");
                 vector<Expr::OperatorType> operates;
                 vector<string> ope_columns;
                 vector<string> no_columns;
@@ -397,24 +397,32 @@ public:
                             attr_type = fileAttr->getColValueType(no_columns[i]);
                             offset = fileAttr->getColValueOffset(no_columns[i]);
                             data = record.getData(offset);
-                            switch (attr_type) {
-                                case INT: {//int
-                                    int val = (*((int *) data));
-                                    printf("%d  \t", val);
-                                    break;
-                                }
-                                case FLOAT: {//float
-                                    float val = (*((float *) data));
-                                    printf("%f  \t", val);
-                                    break;
-                                }
-                                case STRING: {//string
-                                    printf("%s   \t", data);
-                                    break;
-                                }
-                                default: {
-                                    printf("error%s\n");
-                                    return "type\n";
+                            int col_index = fileAttr->getColIndex(no_columns[i]);
+
+                            // printf("%d\n",col_index);
+                            if(record.isNULL(col_index)) {
+                                printf("null  \t");
+                            }
+                            else {
+                                switch (attr_type) {
+                                    case INT: {//int
+                                        int val = (*((int *) data));
+                                        printf("%d  \t", val);
+                                        break;
+                                    }
+                                    case FLOAT: {//float
+                                        float val = (*((float *) data));
+                                        printf("%f  \t", val);
+                                        break;
+                                    }
+                                    case STRING: {//string
+                                        printf("%s   \t", data);
+                                        break;
+                                    }
+                                    default: {
+                                        printf("error%s\n");
+                                        return "type\n";
+                                    }
                                 }
                             }
                         }
@@ -570,7 +578,7 @@ public:
                         int offset = fileAttr->getColValueOffset(col_name);
                         int value_size = fileAttr->getColValueSize(col_name);
                         ColType col_type = fileAttr->getColType(col_name);
-
+                        int col_index = fileAttr->getColIndex(col_name);
                         char* data = record.getData(offset);
                         //缓存修改前的值，以删除索引
                         char* old_data = new char[value_size];
@@ -631,6 +639,7 @@ public:
                             }
                             indexHandle.close();
                         }
+                        record.setNotNULL(col_index);
                     }
                     //所有列的修改完成后修改数据项
                     fileHandle.updateRec(record);
@@ -736,7 +745,7 @@ public:
         if (whereclause == NULL) {
             printf("null where get all record\n");
             RM_FileScan *fileScan = new RM_FileScan();
-            fileScan->openScan(&fileHandle, AttrType::FLOAT, 0, 0, CompOp::EQ_OP, NULL);
+            fileScan->openScan(&fileHandle, AttrType::FLOAT, 0, 0, CompOp::EQ_OP, NULL, 0);
             fileScan->getAllRecordOfFile(rid_list);
             delete fileScan;
             return RC(-1);
@@ -746,13 +755,25 @@ public:
         CompOp op = EQ_OP;
         switch (whereclause->op_type) {
             case Expr::LESS_EQ: {// <=
-                op = LE_OP;
+                if(whereclause->op_type == Expr::LESS_EQ) op = LE_OP;
             }
             case Expr::GREATER_EQ: {// >=
+                if(whereclause->op_type == Expr::GREATER_EQ)
                 op = GE_OP;
             }
             case Expr::NOT_EQUALS: {// <>
+                if(whereclause->op_type == Expr::NOT_EQUALS)
                 op = NE_OP;
+            }
+            case Expr::LIKE: {
+                if(whereclause->op_type == Expr::LIKE)
+                op = LIKE_OP;
+            }
+            case Expr::ISNULL: {
+                if(whereclause->op_type == Expr::ISNULL) {
+               //     printf("select null\n");
+                    op = ISNULL_OP;
+                }
             }
             case Expr::SIMPLE_OP: {
                 //= < >
@@ -768,7 +789,9 @@ public:
                 AttrType value_type = fileAttr->getColValueType(col_name);
                 //列类型
                 ColType col_type = fileAttr->getColType(col_name);
-
+                //数据列位置
+                int col_index = fileAttr->getColIndex(col_name);
+               // printf("col_index %d\n",col_index);
                 char op_char = whereclause->op_char;
                 if (op_char == '<') {
                     op = LT_OP;
@@ -779,27 +802,30 @@ public:
                 }
                 //比较数据
                 char *col_values = new char[value_size];
-                //whereclause->expr2 为属性值
-                switch (whereclause->expr2->type) {
-                    case kExprLiteralFloat:
-                        *((float *) col_values) = whereclause->expr2->fval;
-                        break;
-                    case kExprLiteralInt:
-                        *((int *) col_values) = whereclause->expr2->ival;
-                        break;
-                    case kExprLiteralString:
-                        strcpy(col_values, whereclause->expr2->name);
-                        break;
-                    default:
-                        return RC(-1);
+                //whereclause->expr2 为目标属性值
+                if(!(op == CompOp::ISNULL_OP)) {
+                    switch (whereclause->expr2->type) {
+                        case kExprLiteralFloat:
+                            *((float *) col_values) = whereclause->expr2->fval;
+                            break;
+                        case kExprLiteralInt:
+                            *((int *) col_values) = whereclause->expr2->ival;
+                            break;
+                        case kExprLiteralString:
+                           // printf("taget %s\n", whereclause->expr2->name);
+                            strcpy(col_values, whereclause->expr2->name);
+                            break;
+                        default:
+                            return RC(-1);
+                    }
                 }
-                //如果查找列是索引列，并且是等号查找，则按索引查找
+                //如果查找列是索引列，并且是等号查找，并且不是模糊查找，则按索引查找
                 if((col_type == ColType::INDEX || col_type == ColType::UNIQUE || col_type == ColType::PRIMARY) && op == CompOp::EQ_OP) {
-                    printf("index search\n");
+                   // printf("index search\n");
                     IX_IndexScan* indexScan = new IX_IndexScan();
                     string indexName = fileAttr->getIndexName(tableName,col_name);
                     IX_IndexHandle indexHandle;
-                    printf("index filename %s\n",indexName.c_str());
+                   // printf("index filename %s\n",indexName.c_str());
                     this->indexManager->OpenIndex(indexName.c_str(),indexHandle);
                     indexScan->OpenScan(&indexHandle,op,col_values);
                     indexScan->getAllRecord(rid_list);
@@ -807,11 +833,11 @@ public:
                 }
                 else {
                     RM_FileScan *fileScan = new RM_FileScan();
-                    fileScan->openScan(&fileHandle, value_type, value_size, offset, op, col_values);
-                    printf("base search\n");
-                    printf("op %c\n", whereclause->op_char);
+                    fileScan->openScan(&fileHandle, value_type, value_size, offset, op, col_values, col_index);
+                  //  printf("base search\n");
+                   // printf("op %c\n", whereclause->op_char);
                     fileScan->getAllRecord(rid_list);
-                    printf("base search ok %c\n", whereclause->op_char);
+                   // printf("base search ok %c\n", whereclause->op_char);
                     delete fileScan;
                 }
                 delete fileAttr;

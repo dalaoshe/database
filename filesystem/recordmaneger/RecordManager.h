@@ -9,6 +9,8 @@
 #include "../utils/pagedef.h"
 #include "../utils/rc.h"
 #include "../utils/base.h"
+#include <cstring>
+#include <string>
 #include <iostream>
 #include <vector>
 
@@ -380,6 +382,7 @@ class RM_FileScan {
     int sid;
     int page_num;
     RM_FileHandle *fileHandle;
+    int col_index;
 public:
     RM_FileScan  (){};                                // Constructor
     ~RM_FileScan (){};                                // Destructor
@@ -388,7 +391,8 @@ public:
                      int           attrLength,
                      int           attrOffset,
                      CompOp          compOp,
-                     char          *value
+                     char          *value,
+                     int col_index
                     ) {
         this->fileHandle = fileHandle;
         this->attrType = attrType;
@@ -398,6 +402,7 @@ public:
         this->value = value;
         this->pid = 1;
         this->sid = 0;
+        this->col_index = col_index;
     }
     RC getNextRec   (Record &rec);                  // Get next matching record
     RC closeScan    ();                                // Terminate file scan
@@ -405,6 +410,11 @@ public:
     bool checkRecord(Record &rec) {
         char* target_v = this->value;
         char* rec_v = rec.getData(this->attrOffset);
+
+        if(op == CompOp::ISNULL_OP) {
+            return rec.isNULL(col_index);
+        }
+
         if(attrType == AttrType::FLOAT) {
             switch (op) {
                 case EQ_OP: {
@@ -478,6 +488,15 @@ public:
                 }
                 case NO_OP: {
                     return target_v == NULL;
+                }
+                case LIKE_OP: {
+                    int len = strlen(target_v);
+                    //printf("pattern %s len %d\n",target_v,len);
+                    string pattern = string(target_v).substr(1,len-2);
+                    string rec = string(rec_v);
+                    //cout<<"rec "<<rec<<" "<<pattern<<endl;
+                    if(rec.find(pattern) == string::npos) return false;
+                    return true;
                 }
             }
         }

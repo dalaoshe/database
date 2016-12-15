@@ -15,6 +15,7 @@
 #include "../parse/sql/UpdateStatement.h"
 #include "../parse/sql/DeleteStatement.h"
 #include "../parse/sql/SelectStatement.h"
+#include "Record.h"
 using namespace hsql;
 using namespace std;
 //管理一个文件（表头）信息
@@ -176,6 +177,11 @@ public:
      * @return 报错信息，""表示无错误
      */
     string buildValidInsertData(InsertStatement* stmt, BufType data, std::vector<Expr*> *values) {
+        //初始化置所有null位图为0
+        char* nullmap = ((char*)data) + RECORD_NULL_BITMAP;
+        memset(nullmap,0,RECORD_BITMAP_SIZE);
+        Record record;
+        record.setData(data);
         if (stmt->columns != NULL) { //insert into table(c1,c2,c3...) values(v1,v2,v3...)
             //总共要插入的列数
             int num = (*stmt->columns).size();
@@ -189,6 +195,8 @@ public:
                 bool exist = false;
                 //该列数据的写入首地址
                 char* begin = ((char*)data) + RECORD_FIX_DATA;
+                //插入列index，标记null
+                int col_index = this->getColIndex(target_col_name);
                 //获取该列属性信息
                 BufType attr = this->page_header + ATTR_INT_OFFSET;
                 int attr_type, not_null, attr_len;
@@ -211,6 +219,7 @@ public:
                         case kExprLiteralFloat:
                             if(attr_type == AttrType::FLOAT) {
                                 *((float*)begin) = expr->fval;
+                                record.setNotNULL(col_index);
                             }
                             else {
                                 return string("insert type error, ") + string(target_col_name) + " need " + this->getColValTypeName((AttrType)attr_type) + " type\n";
@@ -219,6 +228,7 @@ public:
                         case kExprLiteralInt:
                             if(attr_type == AttrType::INT) {
                                 *((int *)begin) = expr->ival;
+                                record.setNotNULL(col_index);
                             }
                             else {
                                 return string("insert type error, ") + string(target_col_name) + " need " + this->getColValTypeName((AttrType)attr_type) + " type\n";
@@ -227,6 +237,7 @@ public:
                         case kExprLiteralString:
                             if(attr_type == AttrType::STRING) {
                                 strcpy(begin,expr->name);
+                                record.setNotNULL(col_index);
                             }
                             else {
                                 return string("insert type error, ") + string(target_col_name) + " need " + this->getColValTypeName((AttrType)attr_type) + " type\n";
@@ -258,11 +269,13 @@ public:
                 attr_type = attr[ATTR_VALUE_TYPE_INT_OFFSET];
                 not_null = attr[ATTR_NOT_NULL_INT_OFFSET];
                 attr_len = attr[ATTR_VALUE_LENGTH_INT_OFFSET];
+                int col_index = this->getColIndex(attr_name);
                 //printf("insert coluns: %s\n",attr_name);
                 switch (expr->type) {
                     case kExprLiteralFloat:
                         if (attr_type == AttrType::FLOAT) {
                             *((float *) begin) = expr->fval;
+                            record.setNotNULL(col_index);
                             //printf("insert float: %f\n",*((float *) begin));
                         } else {
                             return string("insert type error, ") + string(attr_name) + " need " + this->getColValTypeName((AttrType)attr_type) + " type\n";
@@ -271,6 +284,7 @@ public:
                     case kExprLiteralInt:
                         if (attr_type == AttrType::INT) {
                             *((int *) begin) = expr->ival;
+                            record.setNotNULL(col_index);
                            // printf("insert int: %d\n",*((int *) begin));
                         } else {
                             return string("insert type error, ") + string(attr_name) + " need " + this->getColValTypeName((AttrType)attr_type) + " type\n";
@@ -279,6 +293,7 @@ public:
                     case kExprLiteralString:
                         if (attr_type == AttrType::STRING) {
                             strcpy(begin, expr->name);
+                            record.setNotNULL(col_index);
                   //          printf("insert string: %s\n",begin);
                         } else {
                             return string("insert type error, ") + string(attr_name) + " need " + this->getColValTypeName((AttrType)attr_type) + " type\n";
@@ -298,6 +313,8 @@ public:
 
     //打印一个槽记录信息
     string printRecordInfo(BufType data, vector<string>& columns) {
+        Record record;
+        record.setData(data);
         char* begin = (char*)data;
         //定位到定长数据首地址
         begin += RECORD_FIX_DATA;
@@ -328,24 +345,31 @@ public:
             attr_type = (AttrType) attr[ATTR_VALUE_TYPE_INT_OFFSET];
             not_null = attr[ATTR_NOT_NULL_INT_OFFSET];
 //            printf("columns name: %s\t",attr_name);
-            switch (attr_type) {
-                case INT: {//int
-                    int val = (*((int *) begin));
-                    printf("%d  \t", val);
-                    break;
-                }
-                case FLOAT: {//float
-                    float val = (*((float *) begin));
-                    printf("%f  \t", val);
-                    break;
-                }
-                case STRING: {//string
-                    printf("%s   \t", begin);
-                    break;
-                }
-                default: {
-                    printf("error%s\n");
-                    return "type\n";
+            int col_index = this->getColIndex(attr_name);
+            printf("%d\n",col_index);
+            if(record.isNULL(col_index)) {
+                printf("null  \t");
+            }
+            else {
+                switch (attr_type) {
+                    case INT: {//int
+                        int val = (*((int *) begin));
+                        printf("%d  \t", val);
+                        break;
+                    }
+                    case FLOAT: {//float
+                        float val = (*((float *) begin));
+                        printf("%f  \t", val);
+                        break;
+                    }
+                    case STRING: {//string
+                        printf("%s   \t", begin);
+                        break;
+                    }
+                    default: {
+                        printf("error%s\n");
+                        return "type\n";
+                    }
                 }
             }
             //下一列
@@ -375,6 +399,16 @@ public:
     int getColValueSize(string col_name) {
         for(int i = 0 ; i < this->attr_count ; ++i) {
             if(col_name == this->key_name[i]) return this->value_length[i];
+        }
+    }
+    /**
+     * 获取col_name 的数据列 在数据行第几列
+     * @param col_name
+     * @return
+     */
+    int getColIndex(string col_name) {
+        for(int i = 0 ; i < this->attr_count ; ++i) {
+            if(col_name == this->key_name[i]) return i;
         }
     }
     /**
