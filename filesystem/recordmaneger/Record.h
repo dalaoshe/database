@@ -6,6 +6,7 @@
 #define RECORD_H
 
 #include <cstdio>
+#include ""
 struct RID{
     int pid;
     int sid;
@@ -60,6 +61,24 @@ public:
             return;
         }
         printf("pid: %d sid: %d data[0]: %d\n",rid.pid,rid.sid,data[0]);
+    }
+    //设置第i列为null标记
+    void setNULL(int i) {
+        char* null_map = ((char*)data)+RECORD_
+        //第几个byte
+        int byte_pos = i >> 3;
+        //该byte的第几位
+        int index = i % 8;
+        uint_8 a = ;
+        uint_8 b = 1;
+        b = b << index;
+
+        memset(a,0, sizeof(a));
+
+    }
+    //设置第i列为非null标记
+    void setNotNULL(int i) {
+
     }
 };
 

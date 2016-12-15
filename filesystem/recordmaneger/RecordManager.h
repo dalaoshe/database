@@ -407,6 +407,8 @@ public:
     bool checkRecord(Record &rec) {
         char* target_v = this->value;
         char* rec_v = rec.getData(this->attrOffset);
+
+
         if(attrType == AttrType::FLOAT) {
             switch (op) {
                 case EQ_OP: {
@@ -429,6 +431,10 @@ public:
                 }
                 case NO_OP: {
                     return target_v == NULL;
+                }
+                case ISNULL_OP: {
+                    char null_t = "NULL";
+                    return rec_v[0] == 'N' && rec_v[1] == 'U' && rec_v[2] == 'L' && rec_v[3] == 'L';
                 }
             }
         }
@@ -454,6 +460,10 @@ public:
                 }
                 case NO_OP: {
                     return target_v == NULL;
+                }
+                case ISNULL_OP: {
+                    char null_t = "NULL";
+                    return rec_v[0] == 'N' && rec_v[1] == 'U' && rec_v[2] == 'L' && rec_v[3] == 'L';
                 }
             }
         }
@@ -487,6 +497,10 @@ public:
                     string rec = string(rec_v);
                     if(rec.find(pattern) == string::npos) return false;
                     return true;
+                }
+                case ISNULL_OP: {
+                    char null_t = "NULL";
+                    return strcmp(rec_v,null_t) == 0;
                 }
             }
         }
