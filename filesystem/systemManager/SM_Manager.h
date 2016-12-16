@@ -299,8 +299,30 @@ public:
         vector<string>::iterator it = find(TableList.begin(), TableList.end(), string(relName));
         if(it != TableList.end()){
             TableList.erase(it);
-            remove(relName);
-            // TODO 对表的一些操作
+            RM_FileHandle fileHandle;
+            rmm->openFile(relName,fileHandle);
+            BufType fileHeader = fileHandle.getFileHeader();
+            RM_FileAttr* fileAttr = new RM_FileAttr();
+            //获取头页信息
+            fileAttr->getFileAttrFromPageHeader(fileHeader);
+            //删除所有的索引文件
+            for(int i = 0 ; i < fileAttr->attr_count; ++i) {
+                string col_name = fileAttr->key_name[i];
+                string indexName = fileAttr->getIndexName(relName,col_name);
+                if(!checkFileExist(indexName.c_str())){
+                    continue;
+                }
+                //删除索引
+                if(!ixm->DestroyIndex(indexName.c_str()).equal(RC())) {
+                    printf("delete index error\n");
+                    return RC(-1);
+                }
+            }
+            //删除表
+            if(!rmm->destroyFile(relName).equal(RC())) {
+                printf("delete table error\n");
+                return RC(-1);
+            }
         }
         else {
             printf("Error: The table %s doesn't exist.\n",relName);

@@ -44,6 +44,8 @@
 #define TABLE_ATTR_COUNT_INT_OFFSET 2
 #define TABLE_FREE_PAGE_INT_OFFSET 3
 #define TABLE_LAST_PAGEID_INT_OFFSET 4
+//CHECK 段信息的偏移
+#define TABLE_CHECK_INT_OFFSET 512
 //列数据类型信息偏移
 #define ATTR_VALUE_TYPE_INT_OFFSET 5
 //每一列名的最大长度
@@ -59,6 +61,16 @@
 //数据页头页中第一个列的属性信息的开始位置
 #define ATTR_INT_OFFSET 8
 #define PAGE_SIZE_IDX 13
+//数据页头页中CHECK列的字段定义
+//有几个约束选择
+#define ATTR_CHECK_NUMBER_INT_OFFSET 0
+//CHECK的头长度
+#define ATTR_CHECK_RECORD_HEADER_INT_OFFSET 2
+//每个列的CHECK最大长度
+#define ATTR_CHECK_ENTRY_VALUES_INT_OFFSET 1
+#define ATTR_CHECK_ENTRY_OP_INT_OFFSET 0
+//OP(4字节) VALUES（最大长度）
+#define ATTR_CHECK_INT_SIZE 256
 
 #define MAX_FMT_INT_NUM 128
 //#define BUF_PAGE_NUM 65536

@@ -112,6 +112,7 @@ public:
                     printf("attr_type: %d \t  ",(*(createStatement->columns))[i]->type);
                     printf("attr_size: %d \t  ",(*(createStatement->columns))[i]->size);
                     printf("attr_not_null: %d\t",(*(createStatement->columns))[i]->not_null);
+                    if(createStatement->primary_key == NULL) continue;
                     if(strcmp((*(createStatement->columns))[i]->name,createStatement->primary_key) == 0) {
                         printf("attr_col_type: %s\t\n","PRIMARY");
                     }
@@ -127,7 +128,7 @@ public:
                     int k = (*(createStatement->columns))[i]->not_null;
                     attr->not_null.push_back(k);
 
-                    if(strcmp((*(createStatement->columns))[i]->name,createStatement->primary_key) == 0) {
+                    if( createStatement->primary_key != NULL && strcmp((*(createStatement->columns))[i]->name,createStatement->primary_key) == 0) {
                         attr->col_type.push_back(ColType::PRIMARY);
 //                        printf("attr_col_type: %s\t\n","PRIMARY");
                     }

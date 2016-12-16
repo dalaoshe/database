@@ -109,6 +109,7 @@ namespace hsql {
                 printOperatorExpression(expr, numIndent);
                 break;
             default:
+                printf("name: %s\n",expr->name);
                 fprintf(stderr, "Unrecognized expression type %d\n", expr->type);
                 return;
         }
@@ -162,6 +163,15 @@ namespace hsql {
         inprint("CreateStatment", numIndent);
         inprint(stmt->tableName, numIndent+1);
         inprint(stmt->filePath, numIndent+1);
+        int attrCount = stmt->columns->size();
+        for(int i=0;i<attrCount;++i){
+            printf("attr_name: %s \t  \n",(*(stmt->columns))[i]->name);
+
+            printf("check_name: %s\n",((*(stmt->columns))[i])->check_expr->expr->name);
+
+            printf("check_values %s\n",(*(stmt->columns))[i]->check_expr->expr2->name);
+            printf("op: %d \t  \n",((*(stmt->columns))[i]->check_expr)->op_type);
+        }
     }
 
     void printInsertStatementInfo(InsertStatement* stmt, uint numIndent) {
