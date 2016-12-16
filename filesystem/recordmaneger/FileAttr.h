@@ -16,8 +16,12 @@
 #include "../parse/sql/DeleteStatement.h"
 #include "../parse/sql/SelectStatement.h"
 #include "Record.h"
+#include "RecordManager.h"
+
 using namespace hsql;
 using namespace std;
+
+
 //管理一个文件（表头）信息
 class RM_FileAttr{
 public:
@@ -312,7 +316,7 @@ public:
     }
 
     //打印一个槽记录信息
-    string printRecordInfo(BufType data, vector<string>& columns) {
+    string printRecordInfo(BufType data) {
         Record record;
         record.setData(data);
         char* begin = (char*)data;
@@ -323,25 +327,10 @@ public:
         int attr_len,not_null;
         AttrType attr_type;
 //        printf("all columns number %d \n",this->attr_count);
-        int column_size = columns.size();
         for(int i = 0 ; i < this->attr_count ; ++i) {
             //获取该列的所有属性信息
             char *attr_name = (char *) attr;
             attr_len = attr[ATTR_VALUE_LENGTH_INT_OFFSET];
-            if (columns[0] != "*") {
-                bool need = false;
-                for (int j = 0; j < column_size; ++j) {
-                    if (string(attr_name) == columns[j]) {
-                        need = true;
-                        break;
-                    }
-                }
-                if (!need) {
-                    begin += attr_len;
-                    attr += ATTR_INT_SIZE;
-                    continue;
-                }
-            }
             attr_type = (AttrType) attr[ATTR_VALUE_TYPE_INT_OFFSET];
             not_null = attr[ATTR_NOT_NULL_INT_OFFSET];
 //            printf("columns name: %s\t",attr_name);
@@ -367,7 +356,7 @@ public:
                         break;
                     }
                     default: {
-                        printf("error%s\n");
+                        printf("error\n");
                         return "type\n";
                     }
                 }
@@ -379,6 +368,7 @@ public:
         printf("\n");
         return "";
     }
+
 
     /**
      * 获取col_name 的数据列 数据类型

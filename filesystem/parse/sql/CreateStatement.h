@@ -18,7 +18,8 @@ namespace hsql {
             name(name1),
             type(type1),
             size(size1),
-            not_null(not_null1){}
+            not_null(not_null1) ,
+            check_expr(NULL){}
 
         ColumnDefinition(Expr* expr1) :
             check_expr(expr1){}

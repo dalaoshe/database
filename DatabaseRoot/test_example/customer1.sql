@@ -1,0 +1,18 @@
+create database test;
+use test;
+CREATE TABLE customers(id int(10) NOT NULL,name char(25) NOT NULL,age int(5),gender char(1) NOT NULL,PRIMARY KEY(id));
+insert into customers values(0,'lyb1',12,'M');
+insert into customers values(1,'lyb1',12,'M');
+insert into customers values(2,'lyb1',13,'M');
+insert into customers values(3,'lyb1',13,'M');
+insert into customers values(4,'lyb1',14,'W');
+insert into customers values(5,'lyb2',14,'W');
+insert into customers values(6,'lyb2',15,'W');
+insert into customers values(7,'lyb2',15,'W');
+insert into customers values(8,'lyb2',16,'W');
+insert into customers values(9,'lyb2',16,'W');
+insert into customers values(10,'lyb2',16,'W');
+select gender,SUM(id),MIN(age) from customers group by gender;
+select name,SUM(id),AVG(age) from customers group by name;
+select age,MAX(id) from customers group by age;
+select * from book;
