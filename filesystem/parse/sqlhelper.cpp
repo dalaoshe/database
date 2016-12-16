@@ -167,10 +167,10 @@ namespace hsql {
         for(int i=0;i<attrCount;++i){
             printf("attr_name: %s \t  \n",(*(stmt->columns))[i]->name);
 
-            printf("check_name: %s\n",((*(stmt->columns))[i])->check_expr->expr->name);
+          //  printf("check_name: %s\n",((*(stmt->columns))[i])->check_expr->expr->name);
 
-            printf("check_values %s\n",(*(stmt->columns))[i]->check_expr->expr2->name);
-            printf("op: %d \t  \n",((*(stmt->columns))[i]->check_expr)->op_type);
+  //          printf("check_values %s\n",(*(stmt->columns))[i]->check_expr->expr2->name);
+//            printf("op: %d \t  \n",((*(stmt->columns))[i]->check_expr)->op_type);
         }
     }
 

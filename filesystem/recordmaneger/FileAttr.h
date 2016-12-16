@@ -16,8 +16,12 @@
 #include "../parse/sql/DeleteStatement.h"
 #include "../parse/sql/SelectStatement.h"
 #include "Record.h"
+#include "RecordManager.h"
+
 using namespace hsql;
 using namespace std;
+
+
 //管理一个文件（表头）信息
 class RM_FileAttr{
 public:
@@ -116,7 +120,7 @@ public:
             //定位到下一个列属性信息的起始位置
             page_header += ATTR_INT_SIZE;
         }
-
+        initFileAttrCheckToPageHeader(this->page_header);
     }
 
     int initFileAttrCheckToPageHeader(unsigned int* page_header) {
@@ -126,16 +130,108 @@ public:
         for(int i = 0; i < this->attr_count; ++i) {
 
             Expr* check_expr = check_exprs[i];
+            int check_entry_number = 0;
+            vector <CompOp> check_ops;
+            vector<char *> check_values;
 
+            if(check_expr) {
+                //存在列属性约束
+                string colname = string(check_expr->expr->name);
+                printf("colname: %s  \n", check_expr->expr->name);
+                //获取约束操作
+                CompOp operate;
+                char op1 = check_expr->op_char;
+                if (op1 != ' ') {
+                    switch (op1) {
+                        case '>': {
+                            operate = CompOp::GT_OP;
+                            break;
+                        }
+                        case '<': {
+                            operate = CompOp::LT_OP;
+                            break;
+                        }
+                        case '=': {
+                            operate = CompOp::EQ_OP;
+                            break;
+                        }
+                        default: {
+                            printf("error\n");
+                            return 0;
+                        }
+                    }
+                } else {
+                    switch (check_expr->op_type) {
+                        case Expr::NOT_EQUALS: {
+                            operate = CompOp::NE_OP;
+                        }
+                        case Expr::LESS_EQ: {
+                            operate = CompOp::LE_OP;
+                        }
+                        case Expr::GREATER_EQ: {
+                            operate = CompOp::GE_OP;
+                        }
+                        case Expr::IN: {
+                            operate = CompOp::IN_OP;
+                        }
+                    }
+                }
+
+                printf("operate； %d\n", operate);
+                //根据列名获取数据类型
+                AttrType type = this->getColValueType(colname);
+                //建立op-values对
+                if (operate != CompOp::IN_OP) {
+                    switch (type) {
+                        case INT: {
+                            check_values.push_back((char *) &check_expr->ival);
+                            check_ops.push_back(operate);
+                            break;
+                        }
+                        case FLOAT: {
+                            check_values.push_back((char *) &check_expr->fval);
+                            check_ops.push_back(operate);
+                            break;
+                        }
+                        case STRING: {
+                            check_values.push_back(check_expr->name);
+                            check_ops.push_back(operate);
+                            break;
+                        }
+                    }
+                    check_entry_number = 1;
+                } else {//in拆成多个等号
+                    vector < Expr * > in_values = *(check_expr->literal_list);
+                    int check_attr_size = in_values.size();
+                    switch (type) {
+                        case INT: {
+                            for (int k = 0; k < check_attr_size; ++k) {
+                                check_values.push_back((char *) &(in_values[k]->ival));
+                                check_ops.push_back(CompOp::EQ_OP);
+                            }
+                            break;
+                        }
+                        case FLOAT: {
+                            for (int k = 0; k < check_attr_size; ++k) {
+                                check_values.push_back((char *) &(in_values[k]->fval));
+                                check_ops.push_back(CompOp::EQ_OP);
+                            }
+                            break;
+                        }
+                        case STRING: {
+                            for (int k = 0; k < check_attr_size; ++k) {
+                                check_values.push_back(in_values[k]->name);
+                                check_ops.push_back(CompOp::EQ_OP);
+                            }
+                            break;
+                        }
+                    }
+                    check_entry_number = in_values.size();
+                }
+            }
+            printf("check entry before %s %d\n",key_name[i].c_str(),check_entry_number);
             //找到这列的check记录
             BufType check_record = check + i * ATTR_CHECK_INT_SIZE;
-            //TODO 获取可选项数量
-
-            int check_entry_number = 0;
-            //初始化CHECK项数目，默认为0
-            if(check_expr == NULL) {
-                check_entry_number = 0;
-            }
 
             check_record[ATTR_CHECK_NUMBER_INT_OFFSET] = check_entry_number;
             //定位到第一个CHECK项
@@ -146,16 +242,23 @@ public:
             int value_len = this->value_length[i];
             //记录每一项的可能值
             for(int j = 0 ; j < check_entry_number; ++j) {
+//                char* s = (char*)record;
+//                char* temp = (((char*)record) + value_len);
+//                record = ((BufType)temp) + ATTR_CHECK_ENTRY_VALUES_INT_OFFSET;
+//                char* b = (char*)record;
+//                printf("%d\n",b-s);
+
                 //TODO 获取该项的限制方法，默认为EQUAL
-                CompOp op = CompOp::EQ_OP;
+                CompOp op = check_ops[j];
                 //TODO 获取该项的限制值
-                char* target_v;
+                char* target_v = check_values[j];
                 //定位到这一项
-                BufType check_entry = ((BufType)(((char*)check_record) + value_len * j)) + ATTR_CHECK_ENTRY_VALUES_INT_OFFSET * j;
+                char* temp = ((char*)check_record) + (value_len + ATTR_CHECK_ENTRY_PADDING) * j;
+                BufType check_entry = ((BufType)temp) + ATTR_CHECK_ENTRY_VALUES_INT_OFFSET * j;
                 //设置符号
                 check_entry[ATTR_CHECK_ENTRY_OP_INT_OFFSET] = op;
                 //设置限制值
-                char* check_v = (char*)(check_record + ATTR_CHECK_ENTRY_VALUES_INT_OFFSET);
+                char* check_v = (char*)(check_entry + ATTR_CHECK_ENTRY_VALUES_INT_OFFSET);
 
                 switch (value_type) {
                     case AttrType::FLOAT: {
@@ -173,7 +276,10 @@ public:
                     default:
                         return 1;
                 }
+                printf("entry %d %s\n",op,target_v);
+                printf("addr %d\n",check_entry);
             }
+            printf("check entry after %s %d\n",key_name[i].c_str(),(check + i * ATTR_CHECK_INT_SIZE)[ATTR_CHECK_NUMBER_INT_OFFSET]);
         }
     }
 
@@ -227,6 +333,8 @@ public:
             printf("attr_not_null: %d\t ",this->not_null[i]) ;
             printf("col_type: %s\t\n ",this->getColTypeName(this->col_type[i]).c_str());
 
+
+
         }
     }
     /**
@@ -242,7 +350,7 @@ public:
         Record record;
         record.setData(data);
         //check项约束
-        BufType check = data + TABLE_CHECK_INT_OFFSET;
+        BufType check = page_header + TABLE_CHECK_INT_OFFSET;
         if (stmt->columns != NULL) { //insert into table(c1,c2,c3...) values(v1,v2,v3...)
             //总共要插入的列数
             int num = (*stmt->columns).size();
@@ -333,7 +441,7 @@ public:
                 int col_index = this->getColIndex(attr_name);
                 BufType check_record = check + col_index * ATTR_CHECK_INT_SIZE;
                 //printf("insert coluns: %s\n",attr_name);
-
+                printf("col_name: %s \t",key_name[col_index].c_str());
                 switch (expr->type) {
                     case kExprLiteralFloat:
                         if (attr_type == AttrType::FLOAT) {
@@ -342,7 +450,10 @@ public:
                                 record.setNotNULL(col_index);
                                 break;
                             }
-                            //printf("insert float: %f\n",*((float *) begin));
+                            else {
+                                printf("insert float: %f\n",*((float *) begin));
+                                break;
+                            }
                         } else {
                             return string("insert type error, ") + string(attr_name) + " need " + this->getColValTypeName((AttrType)attr_type) + " type\n";
                         }
@@ -353,19 +464,25 @@ public:
                                 record.setNotNULL(col_index);
                                 break;
                             }
-                           // printf("insert int: %d\n",*((int *) begin));
+                            else {
+
+                                printf("insert int: %d\n", *((int *) begin));
+                                break;
+                            }
                         }
                         else {
                             return string("insert type error, ") + string(attr_name) + " need " + this->getColValTypeName((AttrType)attr_type) + " type\n";
                         }
                     case kExprLiteralString:
                         if (attr_type == AttrType::STRING) {
-                            if(this->checkValues(check_record,expr->name,(AttrType)attr_type,attr_len)) {
+                            if(this->checkValues(check_record,expr->name,(AttrType)attr_type,attr_len,col_index)) {
                                 strcpy(begin, expr->name);
                                 record.setNotNULL(col_index);
                                 break;
+                            }else {
+                                printf("insert string: %s\n",begin);
+                                break;
                             }
-                  //          printf("insert string: %s\n",begin);
                         }
                         else {
                             return string("insert type error, ") + string(attr_name) + " need " + this->getColValTypeName((AttrType)attr_type) + " type\n";
@@ -392,42 +509,51 @@ public:
         //成功
         return "";
     }
-    bool checkValues(BufType check_record, char* values, AttrType attrType, int value_len) {
-        return true;
+    bool checkValues(BufType check_record, char* values, AttrType attrType, int value_len, int col_index = 0) {
+       // return true;
         //获取该列的所有check限制项数目
         int check_count = check_record[ATTR_CHECK_NUMBER_INT_OFFSET];
         //定位到第一项
         BufType record = check_record + ATTR_CHECK_RECORD_HEADER_INT_OFFSET;
+
         //只要满足一项即可
-        bool valid = false;
+        bool valid = (check_count == 0);
+        printf("check_count %s %d\n",key_name[col_index].c_str(),check_count);
         for(int i = 0; i < check_count; ++i) {
             CompOp op = (CompOp)record[ATTR_CHECK_ENTRY_OP_INT_OFFSET];
             char* target_v = (char*)(record + ATTR_CHECK_ENTRY_VALUES_INT_OFFSET);
             char* rec_v = values;
 
-
+            printf("check entry %s %s op %d type %s\n",target_v,rec_v,op,this->getColValTypeName(attrType).c_str());
             if(attrType == AttrType::FLOAT) {
                 switch (op) {
                     case EQ_OP: {
                         valid = (*(float*)rec_v) == (*(float*)target_v);
+                        break;
                     }
                     case LT_OP: {
                         valid = (*(float*)rec_v) < (*(float*)target_v);
+                        break;
                     }
                     case GT_OP: {
                         valid = (*(float*)rec_v) > (*(float*)target_v);
+                        break;
                     }
                     case LE_OP: {
                         valid = (*(float*)rec_v) <= (*(float*)target_v);
+                        break;
                     }
                     case GE_OP: {
                         valid = (*(float*)rec_v) >= (*(float*)target_v);
+                        break;
                     }
                     case NE_OP: {
                         valid = (*(float*)rec_v) < (*(float*)target_v) || (*(float*)rec_v) > (*(float*)target_v);;
+                        break;
                     }
                     case NO_OP: {
                         valid = target_v == NULL;
+                        break;
                     }
                 }
             }
@@ -435,24 +561,31 @@ public:
                 switch (op) {
                     case EQ_OP: {
                         valid = (*(int*)rec_v) == (*(int*)target_v);
+                        break;
                     }
                     case LT_OP: {
                         valid = (*(int*)rec_v) < (*(int*)target_v);
+                        break;
                     }
                     case GT_OP: {
                         valid = (*(int*)rec_v) > (*(int*)target_v);
+                        break;
                     }
                     case LE_OP: {
                         valid = (*(int*)rec_v) <= (*(int*)target_v);
+                        break;
                     }
                     case GE_OP: {
                         valid = (*(int*)rec_v) >= (*(int*)target_v);
+                        break;
                     }
                     case NE_OP: {
                         valid = (*(int*)rec_v) < (*(int*)target_v) || (*(int*)rec_v) > (*(int*)target_v);;
+                        break;
                     }
                     case NO_OP: {
                         valid = target_v == NULL;
+                        break;
                     }
                 }
             }
@@ -460,25 +593,32 @@ public:
                 switch (op) {
                     case EQ_OP: {
 
-                        valid = strcmp(rec_v,target_v) == 0;
+                        valid = (strcmp(rec_v,target_v) == 0);
+                        break;
                     }
                     case LT_OP: {
-                        valid = strcmp(rec_v,target_v) < 0;
+                        valid = (strcmp(rec_v,target_v) < 0);
+                        break;
                     }
                     case GT_OP: {
-                        valid = strcmp(rec_v,target_v) > 0;
+                        valid = (strcmp(rec_v,target_v) > 0);
+                        break;
                     }
                     case LE_OP: {
-                        valid = strcmp(rec_v,target_v) <= 0;
+                        valid = (strcmp(rec_v,target_v) <= 0);
+                        break;
                     }
                     case GE_OP: {
-                        valid = strcmp(rec_v,target_v) >= 0;
+                        valid = (strcmp(rec_v,target_v) >= 0);
+                        break;
                     }
                     case NE_OP: {
-                        valid = strcmp(rec_v,target_v) != 0;
+                        valid = (strcmp(rec_v,target_v) != 0);
+                        break;
                     }
                     case NO_OP: {
-                        valid = target_v == NULL;
+                        valid = (target_v == NULL);
+                        break;
                     }
                     case LIKE_OP: {
                         int len = strlen(target_v);
@@ -492,17 +632,22 @@ public:
                         else {
                             valid = true;
                         }
+                        break;
                     }
                 }
             }
             if(valid)break;
             //不符合，到下一项
-            record = ((BufType)(((char*)record) + value_len)) + ATTR_CHECK_ENTRY_VALUES_INT_OFFSET;
+            char* s = (char*)record;
+            char* temp = (((char*)record) + value_len + ATTR_CHECK_ENTRY_PADDING);
+            record = ((BufType)temp) + ATTR_CHECK_ENTRY_VALUES_INT_OFFSET;
+            char* b = (char*)record;
+            printf("%d\n",b-s);
         }
         return valid;
     }
     //打印一个槽记录信息
-    string printRecordInfo(BufType data, vector<string>& columns) {
+    string printRecordInfo(BufType data) {
         Record record;
         record.setData(data);
         char* begin = (char*)data;
@@ -513,25 +658,10 @@ public:
         int attr_len,not_null;
         AttrType attr_type;
 //        printf("all columns number %d \n",this->attr_count);
-        int column_size = columns.size();
         for(int i = 0 ; i < this->attr_count ; ++i) {
             //获取该列的所有属性信息
             char *attr_name = (char *) attr;
             attr_len = attr[ATTR_VALUE_LENGTH_INT_OFFSET];
-            if (columns[0] != "*") {
-                bool need = false;
-                for (int j = 0; j < column_size; ++j) {
-                    if (string(attr_name) == columns[j]) {
-                        need = true;
-                        break;
-                    }
-                }
-                if (!need) {
-                    begin += attr_len;
-                    attr += ATTR_INT_SIZE;
-                    continue;
-                }
-            }
             attr_type = (AttrType) attr[ATTR_VALUE_TYPE_INT_OFFSET];
             not_null = attr[ATTR_NOT_NULL_INT_OFFSET];
 //            printf("columns name: %s\t",attr_name);
@@ -557,7 +687,7 @@ public:
                         break;
                     }
                     default: {
-                        printf("error%s\n");
+                        printf("error\n");
                         return "type\n";
                     }
                 }
@@ -569,6 +699,7 @@ public:
         printf("\n");
         return "";
     }
+
 
     /**
      * 获取col_name 的数据列 数据类型

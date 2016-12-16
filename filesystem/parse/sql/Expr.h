@@ -71,7 +71,8 @@ namespace hsql {
             name(NULL),
             literal_list(NULL),
             table(NULL),
-            alias(NULL) {};
+            alias(NULL) ,
+            op_char(' '){};
 
         // Interesting side-effect:
         // Making the destructor virtual used to cause segmentation faults

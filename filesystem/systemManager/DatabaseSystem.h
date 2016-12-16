@@ -14,9 +14,15 @@
 #include <iostream>
 #include <cstring>
 #include <map>
+#include <values.h>
+
 using namespace std;
 using namespace hsql;
-
+union AttrValue{
+    char* string_data;
+    int int_data;
+    float float_data;
+};
 class DatabaseSystem {
     SM_Manager* system_manager;
     IndexManager* indexManager;
@@ -107,7 +113,12 @@ public:
                 CreateStatement* createStatement = (CreateStatement*)stmt;
                 printCreateStatementInfo(createStatement,0);
                 int attrCount = createStatement->columns->size();
+
+
                 for(int i=0;i<attrCount;++i){
+                    if((*(createStatement->columns))[i]->check_expr!=NULL){
+                        continue;
+                    }
                     printf("attr_name: %s \t  ",(*(createStatement->columns))[i]->name);
                     printf("attr_type: %d \t  ",(*(createStatement->columns))[i]->type);
                     printf("attr_size: %d \t  ",(*(createStatement->columns))[i]->size);
@@ -120,13 +131,22 @@ public:
                         printf("attr_col_type: %s\t\n","NORMAL");
                     }
                 }
+
                 RM_FileAttr* attr = new RM_FileAttr[1];
-                for(int i=0;i<attrCount;++i){
+                for(int i=0;i<attrCount;++i) {
+                    if((*(createStatement->columns))[i]->check_expr!=NULL){
+                        //获取列名
+                        string colname = string((*(createStatement->columns))[i]->check_expr->expr->name);
+                        int col_index = attr->getColIndex(colname);
+                        attr->check_exprs[col_index] = (*(createStatement->columns))[i]->check_expr;
+                        continue;
+                    }
                     attr->key_name.push_back(string((*(createStatement->columns))[i]->name));
                     attr->key_type.push_back((*(createStatement->columns))[i]->type);
                     attr->value_length.push_back((*(createStatement->columns))[i]->size);
                     int k = (*(createStatement->columns))[i]->not_null;
                     attr->not_null.push_back(k);
+                    attr->check_exprs.push_back(NULL);
 
                     if( createStatement->primary_key != NULL && strcmp((*(createStatement->columns))[i]->name,createStatement->primary_key) == 0) {
                         attr->col_type.push_back(ColType::PRIMARY);
@@ -345,7 +365,7 @@ public:
                 }
 //                string filename = selectStatement->fromTable->getName();
                 RM_FileHandle fileHandle;
-                //TODO 多表!!!!钱目前只查询打开了一个表
+                //TODO 多表!!!!目前只查询打开了一个表
                 printf("filename: %s   size: %lu\n",filenames[0].c_str(),filenames.size());
                 //获取rm handle
                 recordManager->openFile(filenames[0].c_str(),fileHandle);
@@ -357,188 +377,304 @@ public:
                 map<RID,int>rid_list;
                 this->searchRIDListByWhereClause(selectStatement->whereClause,rid_list,fileHandle,0,selectStatement->fromTable->getName());
 //                printf("rid size %lu\n",rid_list.size());
-//                //获取记录
-//                Record record;
-//                RID rid; rid.pid=1; rid.sid=6;
-//                fileHandle.getRec(rid,record);
+
+                if(selectStatement->groupBy!=NULL){
+                    string groupby = (*selectStatement->groupBy->columns)[0]->name;
+                    printf("groupby: %s\n",groupby.c_str());
+                    vector<map<RID,int>> group_rid_list;
+                    vector<int>int_values;
+                    vector<float>float_values;
+                    vector<string>string_values;
+                    //循环遍历左边表达式选取的项在右边表达式是否存在
+                    for (map<RID, int>::iterator it = rid_list.begin(); it != rid_list.end(); ++it){
+                        RID rid = it->first;
+                        Record record;
+                        fileHandle.getRec(rid, record);
+                        int offset = fileAttr->getColValueOffset(groupby);
+                        char *data = record.getData(offset);
+                        switch(fileAttr->getColValueType(groupby)){
+                            case INT:{
+                                bool exist = false;
+                                int value = *((int*)data);
+                                int size = int_values.size();
+                                for(int i=0;i<size;++i){
+                                    if(value == int_values[i]){
+                                        exist = true;
+                                        group_rid_list[i].insert(make_pair(it->first,it->second));
+                                        break;
+                                    }
+                                }
+                                if(!exist){
+                                    int_values.push_back(value);
+                                    map<RID,int> list;
+                                    list.insert(make_pair(it->first,it->second));
+                                    group_rid_list.push_back(list);
+                                }
+                                break;
+                            }
+                            case FLOAT:{
+                                bool exist = false;
+                                float value = *((float *)data);
+                                int size = float_values.size();
+                                for(int i=0;i<size;++i){
+                                    if(value == float_values[i]){
+                                        exist = true;
+                                        group_rid_list[i].insert(make_pair(it->first,it->second));
+                                        break;
+                                    }
+                                }
+                                if(!exist){
+                                    float_values.push_back(value);
+                                    map<RID,int> list;
+                                    list.insert(make_pair(it->first,it->second));
+                                    group_rid_list.push_back(list);
+                                }
+                                break;
+                            }
+                            case STRING:{
+                                bool exist = false;
+                                string value = string(data);
+                                int size = string_values.size();
+                                for(int i=0;i<size;++i){
+                                    if(value == string_values[i]){
+                                        exist = true;
+                                        group_rid_list[i].insert(make_pair(it->first,it->second));
+                                        break;
+                                    }
+                                }
+                                if(!exist){
+                                    string_values.push_back(value);
+                                    map<RID,int> list;
+                                    list.insert(make_pair(it->first,it->second));
+                                    group_rid_list.push_back(list);
+                                }
+                                break;
+                            }
+                        }
+
+                    }
+                    printf("%s    \t",groupby.c_str());
+                    for(int i=0;i<ope_columns.size();++i){
+                        switch (operates[i]) {
+                            case Expr::SUM: {
+                                printf("SUM(%s)   \t",ope_columns[i].c_str());
+                                break;
+                            }
+                            case Expr::AVG: {
+                                printf("AVG(%s)   \t",ope_columns[i].c_str());
+                                break;
+                            }
+                            case Expr::MAX: {
+                                printf("MAX(%s)   \t",ope_columns[i].c_str());
+                                break;
+                            }
+                            case Expr::MIN: {
+                                printf("MIN(%s)   \t",ope_columns[i].c_str());
+                                break;
+                            }
+                        }
+                    }
+                    printf("\n");
+
+                    int group_size = 0;
+                    switch (fileAttr->getColValueType(groupby)){
+                        case INT:{
+                            group_size = int_values.size();
+//                            printf("group size: %d\n",group_size);
+                            for(int i=0;i<group_size;++i){
+                                printf("%d    \t",int_values[i]);
+                                for(int k=0;k<ope_columns.size();++k){
+                                    switch (operates[k]) {
+                                        case Expr::SUM: {
+                                            double sum = printSUM(group_rid_list[i], fileAttr, ope_columns[k], fileHandle);
+                                            printf("%lf    \t",sum);
+                                            break;
+                                        }
+                                        case Expr::AVG: {
+                                            double avg = printAVG(group_rid_list[i], fileAttr, ope_columns[k], fileHandle);
+                                            printf("%lf    \t",avg);
+                                            break;
+                                        }
+                                        case Expr::MAX: {
+                                            double max = printMAX(group_rid_list[i], fileAttr, ope_columns[k], fileHandle);
+                                            printf("%lf    \t",max);
+                                            break;
+                                        }
+                                        case Expr::MIN: {
+                                            double min = printMIN(group_rid_list[i], fileAttr, ope_columns[k], fileHandle);
+                                            printf("%lf    \t",min);
+                                            break;
+                                        }
+                                    }
+                                }
+                                printf("\n");
+                            }
+                            break;
+                        }
+                        case FLOAT:{
+                            group_size = float_values.size();
+                            for(int i=0;i<group_size;++i){
+                                printf("%f    \t",float_values[i]);
+                                for(int k=0;k<ope_columns.size();++k){
+                                    switch (operates[k]) {
+                                        case Expr::SUM: {
+                                            double sum = printSUM(group_rid_list[i], fileAttr, ope_columns[k], fileHandle);
+                                            printf("%lf    \t",sum);
+                                            break;
+                                        }
+                                        case Expr::AVG: {
+                                            double avg = printAVG(group_rid_list[i], fileAttr, ope_columns[k], fileHandle);
+                                            printf("%lf    \t",avg);
+                                            break;
+                                        }
+                                        case Expr::MAX: {
+                                            double max = printMAX(group_rid_list[i], fileAttr, ope_columns[k], fileHandle);
+                                            printf("%lf    \t",max);
+                                            break;
+                                        }
+                                        case Expr::MIN: {
+                                            double min = printMIN(group_rid_list[i], fileAttr, ope_columns[k], fileHandle);
+                                            printf("%lf    \t",min);
+                                            break;
+                                        }
+                                    }
+                                }
+                                printf("\n");
+                            }
+                            break;
+                        }
+                        case STRING:{
+                            group_size = string_values.size();
+                            for(int i=0;i<group_size;++i){
+                                printf("%s    \t",string_values[i].c_str());
+                                for(int k=0;k<ope_columns.size();++k){
+                                    switch (operates[k]) {
+                                        case Expr::SUM: {
+                                            double sum = printSUM(group_rid_list[i], fileAttr, ope_columns[k], fileHandle);
+                                            printf("%lf    \t",sum);
+                                            break;
+                                        }
+                                        case Expr::AVG: {
+                                            double avg = printAVG(group_rid_list[i], fileAttr, ope_columns[k], fileHandle);
+                                            printf("%lf    \t",avg);
+                                            break;
+                                        }
+                                        case Expr::MAX: {
+                                            double max = printMAX(group_rid_list[i], fileAttr, ope_columns[k], fileHandle);
+                                            printf("%lf    \t",max);
+                                            break;
+                                        }
+                                        case Expr::MIN: {
+                                            double min = printMIN(group_rid_list[i], fileAttr, ope_columns[k], fileHandle);
+                                            printf("%lf    \t",min);
+                                            break;
+                                        }
+                                    }
+                                }
+                                printf("\n");
+                            }
+                            break;
+                        }
+                    }
+
+                }
 
                 //非聚集查询与聚集查询分开输出
 
                 //非聚集查询
-                int no_column_size = no_columns.size();
-                if(no_column_size!=0){
-                    if(no_columns[0]=="*"){
-                        no_columns.clear();
-                        for(int i=0;i<fileAttr->attr_count;++i){
-                            printf("%s       \t",fileAttr->key_name[i].c_str());
-                            no_columns.push_back(fileAttr->key_name[i]);
-                        }
-                        no_column_size = no_columns.size();
-//                        printf("size: %d\n",no_column_size);
-                    } else {
-                        for(int i=0;i < no_columns.size();++i){
-                            printf("%s       \t",no_columns[i].c_str());
-                        }
-                    }
-                    printf("\n");
-                    map<RID, int>::iterator it;
-                    //循环遍历左边表达式选取的项在右边表达式是否存在
-                    for (it = rid_list.begin(); it != rid_list.end(); ++it) {
-                        //判断在右边是否存在
-                        RID rid = it->first;
-//                        printf("rid<%d,%d> \t",rid.pid,rid.sid);
-                        Record record;
-                        fileHandle.getRec(rid,record);
-                        //不存在则下一个
-//                        fileAttr->printRecordInfo(record.getData(),no_columns);
-                        int offset = 0;
-                        char *data;
-                        int attr_type = 0;
-                        for(int i=0;i<no_column_size;++i){
-                            attr_type = fileAttr->getColValueType(no_columns[i]);
-                            offset = fileAttr->getColValueOffset(no_columns[i]);
-                            data = record.getData(offset);
-                            int col_index = fileAttr->getColIndex(no_columns[i]);
-
-                            // printf("%d\n",col_index);
-                            if(record.isNULL(col_index)) {
-                                printf("null  \t");
+                else {
+                    int no_column_size = no_columns.size();
+                    if (no_column_size != 0) {
+                        if (no_columns[0] == "*") {
+                            no_columns.clear();
+                            for (int i = 0; i < fileAttr->attr_count; ++i) {
+                                printf("%s       \t", fileAttr->key_name[i].c_str());
+                                no_columns.push_back(fileAttr->key_name[i]);
                             }
-                            else {
-                                switch (attr_type) {
-                                    case INT: {//int
-                                        int val = (*((int *) data));
-                                        printf("%d  \t", val);
-                                        break;
-                                    }
-                                    case FLOAT: {//float
-                                        float val = (*((float *) data));
-                                        printf("%f  \t", val);
-                                        break;
-                                    }
-                                    case STRING: {//string
-                                        printf("%s   \t", data);
-                                        break;
-                                    }
-                                    default: {
-                                        printf("error%s\n");
-                                        return "type\n";
-                                    }
-                                }
+                            no_column_size = no_columns.size();
+//                        printf("size: %d\n",no_column_size);
+                        } else {
+                            for (int i = 0; i < no_columns.size(); ++i) {
+                                printf("%s       \t", no_columns[i].c_str());
                             }
                         }
                         printf("\n");
-                    }
-                }
+                        map<RID, int>::iterator it;
+                        //循环遍历左边表达式选取的项在右边表达式是否存在
+                        for (it = rid_list.begin(); it != rid_list.end(); ++it) {
+                            //判断在右边是否存在
+                            RID rid = it->first;
+//                        printf("rid<%d,%d> \t",rid.pid,rid.sid);
+                            Record record;
+                            fileHandle.getRec(rid, record);
+                            //不存在则下一个
+//                        fileAttr->printRecordInfo(record.getData(),no_columns);
+                            int offset = 0;
+                            char *data;
+                            int attr_type = 0;
+                            for (int i = 0; i < no_column_size; ++i) {
+                                attr_type = fileAttr->getColValueType(no_columns[i]);
+                                offset = fileAttr->getColValueOffset(no_columns[i]);
+                                data = record.getData(offset);
+                                int col_index = fileAttr->getColIndex(no_columns[i]);
 
-                //聚集查询
-                for(int i=0;i < ope_columns.size();++i){
-                    switch (operates[i]){
-                        case Expr::SUM: {
-                            double sum = 0;
-                            for (map<RID, int>::iterator it = rid_list.begin(); it != rid_list.end(); ++it) {
-//                                printf("type: %d\n",fileAttr->getColValueType(ope_columns[i]));
-                                if (fileAttr->getColValueType(ope_columns[i]) != AttrType::INT &&
-                                    fileAttr->getColValueType(ope_columns[i]) != AttrType::FLOAT) {
-                                    printf("column type error\n");
-                                    return "";
-                                }
-                                RID rid = it->first;
-//                                printf("rid<%d,%d> \t", rid.pid, rid.sid);
-                                Record record;
-                                fileHandle.getRec(rid, record);
-                                int offset = fileAttr->getColValueOffset(ope_columns[i]);
-                                char *data = record.getData(offset);
-                                if (fileAttr->getColValueType(ope_columns[i]) == AttrType::INT) {
-                                    sum += *((int *) data);
-                                } else if (fileAttr->getColValueType(ope_columns[i]) == AttrType::FLOAT) {
-                                    sum += *((float *) data);
+                                // printf("%d\n",col_index);
+                                if (record.isNULL(col_index)) {
+                                    printf("null  \t");
+                                } else {
+                                    switch (attr_type) {
+                                        case INT: {//int
+                                            int val = (*((int *) data));
+                                            printf("%d  \t", val);
+                                            break;
+                                        }
+                                        case FLOAT: {//float
+                                            float val = (*((float *) data));
+                                            printf("%f  \t", val);
+                                            break;
+                                        }
+                                        case STRING: {//string
+                                            printf("%s   \t", data);
+                                            break;
+                                        }
+                                        default: {
+                                            printf("error\n");
+                                            return "type\n";
+                                        }
+                                    }
                                 }
                             }
-                            printf("SUM(%s): %lf", ope_columns[i].c_str(), sum);
-                            break;
+                            printf("\n");
                         }
-                        case Expr::AVG: {
-                            double avg_sum = 0;
-                            int count = 0;
-                            for (map<RID, int>::iterator it = rid_list.begin(); it != rid_list.end(); ++it) {
-                                if (fileAttr->getColValueType(ope_columns[i]) != AttrType::INT &&
-                                    fileAttr->getColValueType(ope_columns[i]) != AttrType::FLOAT) {
-                                    printf("column type error\n");
-                                    return "";
-                                }
-                                RID rid = it->first;
-                                printf("rid<%d,%d> \t", rid.pid, rid.sid);
-                                Record record;
-                                fileHandle.getRec(rid, record);
-                                int offset = fileAttr->getColValueOffset(ope_columns[i]);
-                                char *data = record.getData(offset);
-                                if (fileAttr->getColValueType(ope_columns[i]) == AttrType::INT) {
-                                    avg_sum += *((int *) data);
-                                } else if (fileAttr->getColValueType(ope_columns[i]) == AttrType::FLOAT) {
-                                    avg_sum += *((float *) data);
-                                }
-                                ++count;
+                    }
+
+                    //聚集查询
+                    for (int i = 0; i < ope_columns.size(); ++i) {
+                        switch (operates[i]) {
+                            case Expr::SUM: {
+                                double sum = printSUM(rid_list, fileAttr, ope_columns[i], fileHandle);
+                                printf("SUN(%s): %lf", ope_columns[i].c_str(), sum);
+                                break;
                             }
-                            printf("AVG(%s): %lf", ope_columns[i].c_str(), avg_sum / count);
-                            break;
-                        }
-                        case Expr::MAX: {
-                            double max = 0;
-                            for (map<RID, int>::iterator it = rid_list.begin(); it != rid_list.end(); ++it) {
-                                if (fileAttr->getColValueType(ope_columns[i]) != AttrType::INT &&
-                                    fileAttr->getColValueType(ope_columns[i]) != AttrType::FLOAT) {
-                                    printf("column type error\n");
-                                    return "";
-                                }
-                                RID rid = it->first;
-                                printf("rid<%d,%d> \t", rid.pid, rid.sid);
-                                Record record;
-                                fileHandle.getRec(rid, record);
-                                int offset = fileAttr->getColValueOffset(ope_columns[i]);
-                                char *data = record.getData(offset);
-                                if (fileAttr->getColValueType(ope_columns[i]) == AttrType::INT) {
-                                    if (max < *((int *) data))
-                                        max = *((int *) data);
-                                } else if (fileAttr->getColValueType(ope_columns[i]) == AttrType::FLOAT) {
-                                    if (max < *((float *) data))
-                                        max = *((float *) data);
-                                }
+                            case Expr::AVG: {
+                                double avg = printAVG(rid_list, fileAttr, ope_columns[i], fileHandle);
+                                printf("AVG(%s): %lf", ope_columns[i].c_str(), avg);
+                                break;
                             }
-                            printf("MAX(%s): %lf", ope_columns[i].c_str(), max);
-                            break;
-                        }
-                        case Expr::MIN: {
-                            double min = 0;
-                            for (map<RID, int>::iterator it = rid_list.begin(); it != rid_list.end(); ++it) {
-                                if (fileAttr->getColValueType(ope_columns[i]) != AttrType::INT &&
-                                    fileAttr->getColValueType(ope_columns[i]) != AttrType::FLOAT) {
-                                    printf("column type error\n");
-                                    return "";
-                                }
-                                RID rid = it->first;
-                                printf("rid<%d,%d> \t", rid.pid, rid.sid);
-                                Record record;
-                                fileHandle.getRec(rid, record);
-                                int offset = fileAttr->getColValueOffset(ope_columns[i]);
-                                char *data = record.getData(offset);
-                                if (fileAttr->getColValueType(ope_columns[i]) == AttrType::INT) {
-                                    if (min > *((int *) data))
-                                        min = *((int *) data);
-                                } else if (fileAttr->getColValueType(ope_columns[i]) == AttrType::FLOAT) {
-                                    if (min > *((float *) data))
-                                        min = *((float *) data);
-                                }
+                            case Expr::MAX: {
+                                double max = printMAX(rid_list, fileAttr, ope_columns[i], fileHandle);\
+                                printf("MAX(%s): %lf", ope_columns[i].c_str(), max);
+                                break;
                             }
-                            printf("MIN(%s): %lf", ope_columns[i].c_str(), min);
-                            break;
+                            case Expr::MIN: {
+                                double min = printMIN(rid_list, fileAttr, ope_columns[i], fileHandle);
+                                printf("MIN(%s): %lf", ope_columns[i].c_str(), min);
+                                break;
+                            }
                         }
                     }
                 }
-
-
                 delete fileAttr;
-
                 return "";
             }
             case kStmtUpdate:{
@@ -889,6 +1025,105 @@ public:
                 break;
             }
         }
+    }
+
+    double printSUM(map<RID,int>& rid_list,RM_FileAttr* fileAttr,string colname,RM_FileHandle& fileHandle){
+        double sum = 0;
+        for (map<RID, int>::iterator it = rid_list.begin(); it != rid_list.end(); ++it) {
+//                                printf("type: %d\n",fileAttr->getColValueType(ope_columns[i]));
+            if (fileAttr->getColValueType(colname) != AttrType::INT &&
+                fileAttr->getColValueType(colname) != AttrType::FLOAT) {
+                printf("column type error\n");
+                return -1;
+            }
+            RID rid = it->first;
+//                                printf("rid<%d,%d> \t", rid.pid, rid.sid);
+            Record record;
+            fileHandle.getRec(rid, record);
+            int offset = fileAttr->getColValueOffset(colname);
+            char *data = record.getData(offset);
+            if (fileAttr->getColValueType(colname) == AttrType::INT) {
+                sum += *((int *) data);
+            } else if (fileAttr->getColValueType(colname) == AttrType::FLOAT) {
+                sum += *((float *) data);
+            }
+        }
+        return sum;
+    }
+
+    double printAVG(map<RID,int>& rid_list,RM_FileAttr* fileAttr,string colname,RM_FileHandle& fileHandle){
+        double avg_sum = 0;
+        int count = 0;
+        for (map<RID, int>::iterator it = rid_list.begin(); it != rid_list.end(); ++it) {
+            if (fileAttr->getColValueType(colname) != AttrType::INT &&
+                fileAttr->getColValueType(colname) != AttrType::FLOAT) {
+                printf("column type error\n");
+                return -1;
+            }
+            RID rid = it->first;
+//            printf("rid<%d,%d> \t", rid.pid, rid.sid);
+            Record record;
+            fileHandle.getRec(rid, record);
+            int offset = fileAttr->getColValueOffset(colname);
+            char *data = record.getData(offset);
+            if (fileAttr->getColValueType(colname) == AttrType::INT) {
+                avg_sum += *((int *) data);
+            } else if (fileAttr->getColValueType(colname) == AttrType::FLOAT) {
+                avg_sum += *((float *) data);
+            }
+            ++count;
+        }
+        return avg_sum/count;
+    }
+
+    double printMAX(map<RID,int>& rid_list,RM_FileAttr* fileAttr,string colname,RM_FileHandle& fileHandle){
+        double max = 0;
+        for (map<RID, int>::iterator it = rid_list.begin(); it != rid_list.end(); ++it) {
+            if (fileAttr->getColValueType(colname) != AttrType::INT &&
+                fileAttr->getColValueType(colname) != AttrType::FLOAT) {
+                printf("column type error\n");
+                return -1;
+            }
+            RID rid = it->first;
+//            printf("rid<%d,%d> \t", rid.pid, rid.sid);
+            Record record;
+            fileHandle.getRec(rid, record);
+            int offset = fileAttr->getColValueOffset(colname);
+            char *data = record.getData(offset);
+            if (fileAttr->getColValueType(colname) == AttrType::INT) {
+                if (max < *((int *) data))
+                    max = *((int *) data);
+            } else if (fileAttr->getColValueType(colname) == AttrType::FLOAT) {
+                if (max < *((float *) data))
+                    max = *((float *) data);
+            }
+        }
+        return max;
+    }
+
+    double printMIN(map<RID,int>& rid_list,RM_FileAttr* fileAttr,string colname,RM_FileHandle& fileHandle){
+        double min = MAXDOUBLE;
+        for (map<RID, int>::iterator it = rid_list.begin(); it != rid_list.end(); ++it) {
+            if (fileAttr->getColValueType(colname) != AttrType::INT &&
+                fileAttr->getColValueType(colname) != AttrType::FLOAT) {
+                printf("column type error\n");
+                return -1;
+            }
+            RID rid = it->first;
+//            printf("rid<%d,%d> \t", rid.pid, rid.sid);
+            Record record;
+            fileHandle.getRec(rid, record);
+            int offset = fileAttr->getColValueOffset(colname);
+            char *data = record.getData(offset);
+            if (fileAttr->getColValueType(colname) == AttrType::INT) {
+                if (min > *((int *) data))
+                    min = *((int *) data);
+            } else if (fileAttr->getColValueType(colname) == AttrType::FLOAT) {
+                if (min > *((float *) data))
+                    min = *((float *) data);
+            }
+        }
+        return min;
     }
 };
 
