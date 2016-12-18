@@ -184,17 +184,18 @@ public:
                 if (operate != CompOp::IN_OP) {
                     switch (type) {
                         case INT: {
-                            check_values.push_back((char *) &check_expr->ival);
+                            check_values.push_back((char *) &(check_expr->expr2->ival));
+                            printf("target value %d\n",check_expr->expr2->ival);
                             check_ops.push_back(operate);
                             break;
                         }
                         case FLOAT: {
-                            check_values.push_back((char *) &check_expr->fval);
+                            check_values.push_back((char *) &check_expr->expr2->fval);
                             check_ops.push_back(operate);
                             break;
                         }
                         case STRING: {
-                            check_values.push_back(check_expr->name);
+                            check_values.push_back(check_expr->expr2->name);
                             check_ops.push_back(operate);
                             break;
                         }
@@ -278,6 +279,7 @@ public:
                 }
                 printf("entry %d %s\n",op,target_v);
                 printf("addr %d\n",check_entry);
+                printf("value check %d  target %d\n",*check_v,*target_v);
             }
             printf("check entry after %s %d\n",key_name[i].c_str(),(check + i * ATTR_CHECK_INT_SIZE)[ATTR_CHECK_NUMBER_INT_OFFSET]);
         }
@@ -459,7 +461,7 @@ public:
                         }
                     case kExprLiteralInt:
                         if (attr_type == AttrType::INT) {
-                            if(this->checkValues(check_record,(char*)(&(expr->ival)),(AttrType)attr_type,attr_len)) {
+                            if(this->checkValues(check_record,(char*)(&(expr->ival)),(AttrType)attr_type,attr_len,col_index)) {
                                 *((int *) begin) = expr->ival;
                                 record.setNotNULL(col_index);
                                 break;
@@ -518,13 +520,14 @@ public:
 
         //只要满足一项即可
         bool valid = (check_count == 0);
-     //   printf("check_count %s %d\n",key_name[col_index].c_str(),check_count);
+        printf("check_count %s %d\n",key_name[col_index].c_str(),check_count);
         for(int i = 0; i < check_count; ++i) {
             CompOp op = (CompOp)record[ATTR_CHECK_ENTRY_OP_INT_OFFSET];
             char* target_v = (char*)(record + ATTR_CHECK_ENTRY_VALUES_INT_OFFSET);
             char* rec_v = values;
 
        //     printf("check entry %s %s op %d type %s\n",target_v,rec_v,op,this->getColValTypeName(attrType).c_str());
+            printf("check entry %d %d op %d type %s\n",*target_v,*rec_v,op,this->getColValTypeName(attrType).c_str());
             if(attrType == AttrType::FLOAT) {
                 switch (op) {
                     case EQ_OP: {
