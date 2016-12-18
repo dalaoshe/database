@@ -52,9 +52,9 @@ public:
     ~IX_IndexHandle (){};                             // Destructor
     //TODO search-problem(i -> i-1)
     RC InsertEntry     (char *key, RID  rid) {
-        printf("insert \n");
+        printf("index insert \n");
         //待插入索引码该插入的叶级节点
-        Node node;
+        Node* node;
         //待插入的索引码指针对
         Key k = Key((char*)key);
         Pointer pointer(rid.pid,rid.sid);
@@ -64,18 +64,18 @@ public:
         //根级页到叶级页的路径（包括叶级页）
         vector<Pointer> path;
         if(this->searchEntryLeaf(k.key,node,index,path).equal(RC(0))) {
-
+            printf("index leaf \n");
             //索引码存在直接插入指针桶
-            if(node.exist(k)) {
-                int i = node.search(k);
+            if(node->exist(k)) {
+                int i = node->search(k);
                 --i;
-                int index_type = node.getPointerType(i+1);
-                int index_tag = node.getTag(i);
+                int index_type = node->getPointerType(i+1);
+                int index_tag = node->getTag(i);
                 /*
                  * 根据指针为指针桶还是行定位器进行不同的插入操作
                  */
                 if(index_type == IndexType::bucket) {
-                    Pointer bucket_pointer = node.getPointer(i+1);
+                    Pointer bucket_pointer = node->getPointer(i+1);
                     int bucket_index;
                     int bucket_pid = bucket_pointer.pid;
                     BufType bucket_page = this->bpm->getPage(fileID,bucket_pid,bucket_index);
@@ -109,14 +109,16 @@ public:
                         this->bpm->markDirty(bucket_index);
                         page_num += 1;
                     }
+                    delete node;
                     return RC();
                 }
                 else if(index_type == IndexType::id){
                     //如果是无效id项则重置为有效
                     if(index_tag == IndexType::invalid) {
-                        node.setPointerTag(i,IndexType::valid);
-                        node.writeback();
+                        node->setPointerTag(i,IndexType::valid);
+                        node->writeback();
                         this->bpm->markDirty(index);
+                        delete node;
                         return RC(0);
                     }
 
@@ -127,25 +129,27 @@ public:
                                                                  page_header_size,key_type,max_num,min_num,bucket_pointer);
                     bucket.initBucketPageInfo();
 
-                    Pointer old_pointer = node.getPointer(i+1);
-                    int old_tag = node.getTag(i);
+                    Pointer old_pointer = node->getPointer(i+1);
+                    int old_tag = node->getTag(i);
 
                     bucket.insertKey(k,old_pointer,old_tag);
                     bucket.insertKey(k,pointer,tag);
 
-                    node.setPointer(i+1,bucket_pointer);
-                    node.setPointerType(i+1,IndexType::bucket);
-                    node.writeback();
+                    node->setPointer(i+1,bucket_pointer);
+                    node->setPointerType(i+1,IndexType::bucket);
+                    node->writeback();
                     this->bpm->markDirty(index);
                     bucket.writeback();
                     this->bpm->markDirty(bucket_index);
                     page_num += 1;
+                    delete node;
                     return RC();
                 }
             }
             else {
-                node.insertKey(k,pointer,IndexType::id,tag);
-                solveOverflow(node,index,path);
+                node->insertKey(k,pointer,IndexType::id,tag);
+                solveOverflow(*node,index,path);
+                delete node;
                 return RC(0);
             }
         }
@@ -237,7 +241,7 @@ public:
      */
     RC DeleteEntry     (void *key, const RID &rid) {
         //待插入索引码该插入的叶级节点
-        Node node;
+        Node* node;
         //待插入的索引码指针对
         Key k = Key((char*)key);
         Pointer pointer(rid.pid,rid.sid);
@@ -247,25 +251,29 @@ public:
         vector<Pointer> path;
         if(this->searchEntryLeaf(k.key,node,index,path).equal(RC(0))) {
 
-            if(node.exist(k)) {
-                int i = node.search(k);
+            if(node->exist(k)) {
+                int i = node->search(k);
                 --i;
-                int index_type = node.getPointerType(i+1);
+                int index_type = node->getPointerType(i+1);
                 /*
                  * 根据指针为指针桶还是行定位器进行不同的插入操作
                  */
                 if(index_type == IndexType::id) {
-                    Pointer index_pointer = node.getPointer(i+1);
+                    Pointer index_pointer = node->getPointer(i+1);
                     if(index_pointer.pid == rid.pid && index_pointer.offset == rid.sid) {
-                        node.setPointerTag(i,IndexType::invalid);
-                        node.writeback();
+                        node->setPointerTag(i,IndexType::invalid);
+                        node->writeback();
                         this->bpm->markDirty(index);
+                        delete node;
                         return RC(0);
                     }
-                    else return RC(-1);
+                    else {
+                        delete node;
+                        return RC(-1);
+                    }
                 }
                 else if(index_type == IndexType::bucket) {
-                    Pointer bucket_pointer = node.getPointer(i+1);
+                    Pointer bucket_pointer = node->getPointer(i+1);
                     Pointer target = Pointer(rid.pid,rid.sid);
                     int bucket_index;
                     int bucket_pid = bucket_pointer.pid;
@@ -279,14 +287,21 @@ public:
                         bucket.reset(bucket_page,Pointer(bucket_pid,page_header_size));
                         pos = bucket.searchPointer(target);
                     }
-                    if(pos == -1) return RC(-1);
+                    if(pos == -1) {
+                        delete node;
+                        return RC(-1);
+                    }
                     bucket.setPointerTag(pos,IndexType::invalid);
                     bucket.writeback();
                     this->bpm->markDirty(bucket_index);
+                    delete node;
                     return RC(0);
                 }
             }
-            else return RC(-1);
+            else {
+                delete node;
+                return RC(-1);
+            }
         }
     };  // Delete index entry
 
@@ -323,19 +338,18 @@ public:
     /*
      * key索引码 node,索引码所在的叶级节点 path，根到叶级节点的路径
      */
-    RC searchEntryLeaf(void *key, Node &node, int &pageIndexInbpm, vector<Pointer>& path) {
+    RC searchEntryLeaf(void *key, Node *&node, int &pageIndexInbpm, vector<Pointer>& path) {
         Key k = Key((char*)key);
         Pointer pointer = Pointer(rootPageId,page_header_size);
         BufType page = bpm->getPage(fileID,rootPageId,pageIndexInbpm);
-        Node root = Node(page,key_offset,key_byte_size,index_byte_size,page_header_size,key_type,max_num,min_num,pointer);
-        while(!root.isLeaf()) {
-            int i = root.search(k);
+        node = new Node(page,key_offset,key_byte_size,index_byte_size,page_header_size,key_type,max_num,min_num,pointer);
+        while(!node->isLeaf()) {
+            int i = node->search(k);
             path.push_back(pointer);
-            pointer = root.getPointer(i);
-            BufType page = bpm->getPage(fileID,pointer.pid,pageIndexInbpm);
-            root.reset(page,pointer);
+            pointer = node->getPointer(i);
+            page = bpm->getPage(fileID,pointer.pid,pageIndexInbpm);
+            node->reset(page,pointer);
         }
-        node = root;
         return RC(0);
     }
 
@@ -348,23 +362,26 @@ public:
         int temp =0 ;
         vector<Pointer> path;
         Key k = Key((char*)key);
-        Node node;
+        Node* node;
 
         if(!searchEntryLeaf(k.key,node,temp,path).equal(RC())) {
             printf("search leaf error\n");
+            delete node;
             return RC(-1);
         }
 
-        if(node.exist(k)) {
-            int i = node.search(k);
+        if(node->exist(k)) {
+            int i = node->search(k);
             printf("i:%d \n", i);
-            pointer = node.getPointer(i);
-            type = node.getPointerType(i);
-            tag = node.getTag(i-1);
+            pointer = node->getPointer(i);
+            type = node->getPointerType(i);
+            tag = node->getTag(i-1);
+            delete node;
             return RC();
         }
 
         printf("no exist index! %d\n",*(int*)key);
+        delete node;
         return RC(-1);
     };
 
@@ -375,7 +392,11 @@ public:
      */
     RC close() {
         this->ForcePages();
+
+
         bpm->close();
+        fm->closeFile(fileID);
+        delete bpm;
         delete fm;
         return RC();
     }
@@ -408,7 +429,7 @@ public:
         this->key_type = *(((int *)header)+7);
         //每页页头长度
         this->page_header_size = *(((int *)header)+8);
-        //printf("fileId: %d, slot_int_size: %d\n",fileID,slot_int_size);
+        //printf("open index handled init: rootpageid %d, fileid: %d, page_num %d\n",rootPageId,fileID,page_num);
         return RC(0);
     }
 

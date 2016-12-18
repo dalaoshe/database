@@ -441,7 +441,7 @@ public:
                 int col_index = this->getColIndex(attr_name);
                 BufType check_record = check + col_index * ATTR_CHECK_INT_SIZE;
                 //printf("insert coluns: %s\n",attr_name);
-                printf("col_name: %s \t",key_name[col_index].c_str());
+              //  printf("col_name: %s \t",key_name[col_index].c_str());
                 switch (expr->type) {
                     case kExprLiteralFloat:
                         if (attr_type == AttrType::FLOAT) {
@@ -518,13 +518,13 @@ public:
 
         //只要满足一项即可
         bool valid = (check_count == 0);
-        printf("check_count %s %d\n",key_name[col_index].c_str(),check_count);
+     //   printf("check_count %s %d\n",key_name[col_index].c_str(),check_count);
         for(int i = 0; i < check_count; ++i) {
             CompOp op = (CompOp)record[ATTR_CHECK_ENTRY_OP_INT_OFFSET];
             char* target_v = (char*)(record + ATTR_CHECK_ENTRY_VALUES_INT_OFFSET);
             char* rec_v = values;
 
-            printf("check entry %s %s op %d type %s\n",target_v,rec_v,op,this->getColValTypeName(attrType).c_str());
+       //     printf("check entry %s %s op %d type %s\n",target_v,rec_v,op,this->getColValTypeName(attrType).c_str());
             if(attrType == AttrType::FLOAT) {
                 switch (op) {
                     case EQ_OP: {

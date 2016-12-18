@@ -35,7 +35,7 @@ struct Key{
                 return *(float *)key == *(float *) t;
             }
             case STRING:{
-                printf("equal target %s\n",t);
+              //  printf("equal target %s\n",t);
                 return strcmp(t,key) == 0;
             }
         }
@@ -52,7 +52,7 @@ struct Key{
                 return *(float *)key < *(float *) t;
             }
             case STRING:{
-                printf("less target %s\n",t);
+              //  printf("less target %s\n",t);
                 return strcmp(key,t) < 0;
             }
         }
@@ -70,7 +70,7 @@ struct Key{
                 //return true;
             }
             case STRING:{
-                printf("greater target %s\n",t);
+            //    printf("greater target %s\n",t);
                 return strcmp(key,t) > 0;
             }
         }

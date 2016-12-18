@@ -227,5 +227,9 @@ public:
 	void reLoad(uint* da) {
 		data = da;
 	}
+	~MyBitMap() {
+		delete [] data;
+	}
+
 };
 #endif

@@ -176,6 +176,11 @@ public:
                 printf("insert options\n");
 
                 InsertStatement* insertStmt = (InsertStatement*)stmt;
+
+
+                std::vector<std::vector<Expr*>*>* values = insertStmt->values;
+                int entry_size = values->size();
+
                 //获取要插入的表名
                 string filename = insertStmt->tableName;
                 RM_FileHandle fileHandle;
@@ -188,8 +193,6 @@ public:
                 //获取要插入的数据块data
                 BufType data = new unsigned int[fileHandle.getFileHeader()[TABLE_RECORD_INT_SIZE_INT_OFFSET]];
 
-                std::vector<std::vector<Expr*>*>* values = insertStmt->values;
-                int entry_size = values->size();
                 for(int s = 0 ; s < entry_size; ++s) {
                     string info = fileAttr->buildValidInsertData(insertStmt, data, (*values)[s]);
                     if (info != "") {
@@ -219,7 +222,9 @@ public:
                         if (indexHandle.searchEntry(key, p, type, tag).equal(RC()) &&
                             tag == IndexType::valid) {//如果存在,报错。
                             printf("primary key: %s, dumplicate\n", fileAttr->getPrimaryKeyName().c_str());
+                            indexHandle.close();
                         } else {//插入数据，并插入索引
+                           // printf("not dumplicate\n");
                             RID rid;
                             fileHandle.insertRec(data, rid);
                             printf("rid pid %d sid %d\n", rid.pid, rid.sid);
@@ -237,13 +242,14 @@ public:
                                 string index_col_name = list[i];
                                 //创建handle
                                 string indexName = fileAttr->getIndexName(insertStmt->tableName, index_col_name);
-                                IX_IndexHandle indexHandle;
-                                this->indexManager->OpenIndex(indexName.c_str(), indexHandle);
                                 //获取待插入的索引码值
                                 int offset = fileAttr->getColValueOffset(index_col_name.c_str());
-
                                 ColType colType = fileAttr->getColType(index_col_name);
-                                if (colType == ColType::UNIQUE || colType == ColType::PRIMARY) continue;
+                                if (colType == ColType::UNIQUE || colType == ColType::PRIMARY) {
+                                    continue;
+                                }
+
+                                this->indexManager->OpenIndex(indexName.c_str(), indexHandle);
 
                                 char *key = record.getData(offset);
                                 if (indexHandle.InsertEntry(key, record.getRID()).equal(RC())) {
@@ -253,6 +259,7 @@ public:
                                 } else {
                                     printf("insert index %s rid<%d,%d> fail\n", indexName.c_str(), record.getRID().pid,
                                            record.getRID().sid);
+                                    indexHandle.close();
                                 }
                             }
                         }
@@ -272,13 +279,16 @@ public:
                             string index_col_name = list[i];
                             //创建handle
                             string indexName = fileAttr->getIndexName(insertStmt->tableName, index_col_name);
-                            IX_IndexHandle indexHandle;
-                            this->indexManager->OpenIndex(indexName.c_str(), indexHandle);
                             //获取待插入的索引码值
                             int offset = fileAttr->getColValueOffset(index_col_name.c_str());
-
                             ColType colType = fileAttr->getColType(index_col_name);
-                            if (colType == ColType::UNIQUE || colType == ColType::PRIMARY) continue;
+                            if (colType == ColType::UNIQUE || colType == ColType::PRIMARY) {
+                                continue;
+                            }
+
+                            IX_IndexHandle indexHandle;
+                            this->indexManager->OpenIndex(indexName.c_str(), indexHandle);
+                            indexHandle.close();
 
                             char *key = record.getData(offset);
                             if (indexHandle.InsertEntry(key, record.getRID()).equal(RC())) {
@@ -288,6 +298,7 @@ public:
                             } else {
                                 printf("insert index %s rid<%d,%d> fail\n", indexName.c_str(), record.getRID().pid,
                                        record.getRID().sid);
+                                indexHandle.close();
                             }
                         }
                     }

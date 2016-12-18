@@ -102,15 +102,15 @@ struct Node
             return 1;
         }
         if(key.less(this->getKey(1),key_byte_size,key_type)) {
-            printf("less\n");
+           // printf("less\n");
             return 1;
         }
         else if(key.greater(this->getKey(this->index_num),key_byte_size,key_type)) {
-            printf("greater\n");
+           // printf("greater\n");
             return this->index_num + 1;
         }
         else if(key.equal(this->getKey(this->index_num),key_byte_size,key_type)) {
-            printf("equal\n");
+           // printf("equal\n");
             return this->index_num+1;
         }
         else {
