@@ -185,7 +185,7 @@ public:
                     switch (type) {
                         case INT: {
                             check_values.push_back((char *) &(check_expr->expr2->ival));
-                            printf("target value %d\n",check_expr->expr2->ival);
+                          //  printf("target value %d\n",check_expr->expr2->ival);
                             check_ops.push_back(operate);
                             break;
                         }
@@ -230,7 +230,7 @@ public:
                     check_entry_number = in_values.size();
                 }
             }
-            printf("check entry before %s %d\n",key_name[i].c_str(),check_entry_number);
+          //  printf("check entry before %s %d\n",key_name[i].c_str(),check_entry_number);
             //找到这列的check记录
             BufType check_record = check + i * ATTR_CHECK_INT_SIZE;
 
@@ -277,11 +277,11 @@ public:
                     default:
                         return 1;
                 }
-                printf("entry %d %s\n",op,target_v);
-                printf("addr %d\n",check_entry);
-                printf("value check %d  target %d\n",*check_v,*target_v);
+              //  printf("entry %d %s\n",op,target_v);
+             //   printf("addr %d\n",check_entry);
+             //   printf("value check %d  target %d\n",*check_v,*target_v);
             }
-            printf("check entry after %s %d\n",key_name[i].c_str(),(check + i * ATTR_CHECK_INT_SIZE)[ATTR_CHECK_NUMBER_INT_OFFSET]);
+         //   printf("check entry after %s %d\n",key_name[i].c_str(),(check + i * ATTR_CHECK_INT_SIZE)[ATTR_CHECK_NUMBER_INT_OFFSET]);
         }
     }
 
@@ -331,7 +331,7 @@ public:
 
             printf("attr_name: %s \t",this->key_name[i].c_str());
             printf("attr_type: %s\t ",this->getColValTypeName(this->key_type[i]).c_str()) ;
-            printf("attr_length: %d\t ",this->value_length[i]) ;
+            printf("attr_length: %d\t ",this->value_length[i] - RECORD_COL_PAD) ;
             printf("attr_not_null: %d\t ",this->not_null[i]) ;
             printf("col_type: %s\t\n ",this->getColTypeName(this->col_type[i]).c_str());
 
@@ -520,14 +520,14 @@ public:
 
         //只要满足一项即可
         bool valid = (check_count == 0);
-        printf("check_count %s %d\n",key_name[col_index].c_str(),check_count);
+     //   printf("check_count %s %d\n",key_name[col_index].c_str(),check_count);
         for(int i = 0; i < check_count; ++i) {
             CompOp op = (CompOp)record[ATTR_CHECK_ENTRY_OP_INT_OFFSET];
             char* target_v = (char*)(record + ATTR_CHECK_ENTRY_VALUES_INT_OFFSET);
             char* rec_v = values;
 
        //     printf("check entry %s %s op %d type %s\n",target_v,rec_v,op,this->getColValTypeName(attrType).c_str());
-            printf("check entry %d %d op %d type %s\n",*target_v,*rec_v,op,this->getColValTypeName(attrType).c_str());
+      //      printf("check entry %d %d op %d type %s\n",*target_v,*rec_v,op,this->getColValTypeName(attrType).c_str());
             if(attrType == AttrType::FLOAT) {
                 switch (op) {
                     case EQ_OP: {

@@ -143,7 +143,7 @@ public:
                     }
                     attr->key_name.push_back(string((*(createStatement->columns))[i]->name));
                     attr->key_type.push_back((*(createStatement->columns))[i]->type);
-                    attr->value_length.push_back((*(createStatement->columns))[i]->size);
+                    attr->value_length.push_back(((*(createStatement->columns))[i]->size) + RECORD_COL_PAD);
                     int k = (*(createStatement->columns))[i]->not_null;
                     attr->not_null.push_back(k);
                     attr->check_exprs.push_back(NULL);
@@ -219,7 +219,7 @@ public:
                         int type, tag;
                         Pointer p;
                         //检查是否存在
-                        if (indexHandle.searchEntry(key, p, type, tag).equal(RC()) &&
+                        if (false && indexHandle.searchEntry(key, p, type, tag).equal(RC()) &&
                             tag == IndexType::valid) {//如果存在,报错。
                             printf("primary key: %s, dumplicate\n", fileAttr->getPrimaryKeyName().c_str());
                             indexHandle.close();
@@ -227,7 +227,7 @@ public:
                            // printf("not dumplicate\n");
                             RID rid;
                             fileHandle.insertRec(data, rid);
-                            printf("rid pid %d sid %d\n", rid.pid, rid.sid);
+                            printf("rid<%d,%d> id %d\n", rid.pid, rid.sid,*((int*)(key)));
                             //插入主键索引
                             indexHandle.InsertEntry(key, rid);
                             indexHandle.close();
@@ -270,7 +270,7 @@ public:
                         Record record;
                         record.setData(data);
                         record.setRID(rid);
-                        printf("rid pid %d sid %d\n", rid.pid, rid.sid);
+                        printf("rid<%d,%d>\n", rid.pid, rid.sid);
                         //插入索引项
                         int index_entry_numbers = list.size();
                         for (int i = 0; i < index_entry_numbers; ++i) {
@@ -308,8 +308,8 @@ public:
             }
             case kStmtSelect:{
                 //打印语句信息
-            //   printSelectStatementInfo((SelectStatement*)stmt, 0);
-             //   printf("select options\n");
+              // printSelectStatementInfo((SelectStatement*)stmt, 0);
+               // printf("select options\n");
                 vector<Expr::OperatorType> operates;
                 vector<string> ope_columns;
                 vector<string> no_columns;
@@ -689,7 +689,7 @@ public:
                 return "";
             }
             case kStmtUpdate:{
-                printf("update options\n");
+               // printf("update options\n");
                 UpdateStatement* updateStatement = (UpdateStatement*)stmt;
 
                 //获取要选取的表名
@@ -753,6 +753,13 @@ public:
                             default: {
                                 printf("type error %s %s\n",value->name,data);
                             }
+                        }
+
+                        BufType check = fileAttr->page_header + TABLE_CHECK_INT_OFFSET;
+                        BufType check_record = check + col_index * ATTR_CHECK_INT_SIZE;
+                        if(!fileAttr->checkValues(check_record,data,value_type,value_size)) {
+                            printf("not satisfy %s\n",col_name);
+                            return "";
                         }
 
                         //如果修改的是索引项则删除旧索引建立新的索引

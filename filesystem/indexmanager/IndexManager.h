@@ -52,11 +52,11 @@ public:
     ~IX_IndexHandle (){};                             // Destructor
     //TODO search-problem(i -> i-1)
     RC InsertEntry     (char *key, RID  rid) {
-        printf("index insert \n");
+      //  printf("index insert \n");
         //待插入索引码该插入的叶级节点
         Node* node;
         //待插入的索引码指针对
-        Key k = Key((char*)key);
+        Key k = Key(key);
         Pointer pointer(rid.pid,rid.sid);
         int tag = IndexType::valid;
         //叶级节点页在缓存管理器中的下标
@@ -64,7 +64,7 @@ public:
         //根级页到叶级页的路径（包括叶级页）
         vector<Pointer> path;
         if(this->searchEntryLeaf(k.key,node,index,path).equal(RC(0))) {
-            printf("index leaf \n");
+          //  printf("index leaf \n");
             //索引码存在直接插入指针桶
             if(node->exist(k)) {
                 int i = node->search(k);
@@ -160,7 +160,7 @@ public:
      */
     RC solveOverflow(Node node, int index, vector<Pointer>& path) {
         //递归基，不再上溢直接写回缓存标记脏页
-        printf("solve overflow \n");
+      //  printf("solve overflow \n");
         if (!node.overflow()) {
             node.writeback();
             this->bpm->markDirty(index);
@@ -365,14 +365,14 @@ public:
         Node* node;
 
         if(!searchEntryLeaf(k.key,node,temp,path).equal(RC())) {
-            printf("search leaf error\n");
+         //   printf("search leaf error\n");
             delete node;
             return RC(-1);
         }
 
         if(node->exist(k)) {
             int i = node->search(k);
-            printf("i:%d \n", i);
+          //  printf("i:%d \n", i);
             pointer = node->getPointer(i);
             type = node->getPointerType(i);
             tag = node->getTag(i-1);
@@ -380,7 +380,7 @@ public:
             return RC();
         }
 
-        printf("no exist index! %d\n",*(int*)key);
+        //printf("no exist index! %d\n",*(int*)key);
         delete node;
         return RC(-1);
     };

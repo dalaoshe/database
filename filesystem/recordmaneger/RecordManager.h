@@ -183,6 +183,8 @@ public:
     RC close() {
         bpm->markDirty(headIndex);
         bpm->close();
+        fm->closeFile(fileID);
+        delete bpm;
         delete fm;
         return RC();
     }

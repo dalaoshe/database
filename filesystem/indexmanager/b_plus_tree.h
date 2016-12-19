@@ -235,8 +235,8 @@ struct Node
         if(this->index_num == 0)return false;
         int i = this->search(k);
         Key key = this->getKey(i-1);
-        printf("node pid %d ,offset %d\n",this->pointer.pid,this->pointer.offset);
-        printf("index num %d key %d i %d key %s k %s\n",index_num,*(int*)key.key,i,key.key,k.key);
+     //   printf("node pid %d ,offset %d\n",this->pointer.pid,this->pointer.offset);
+     //   printf("index num %d key %d i %d key %s k %s\n",index_num,*(int*)key.key,i,key.key,k.key);
         return k.equal(key,key_byte_size,key_type);
     }
 

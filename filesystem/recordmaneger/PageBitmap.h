@@ -124,7 +124,7 @@ struct PageBitmap{
         int sid = 0;
         //遍历每一个4字节的位图
         //printf("slot_int_num: %d\n",slot_int_num);
-        printf("slot_max_num: %d\n; slot_used_num: %d\n; page_header_size: %d\n",slot_max_number,slot_used_number,*(page_header+1));
+        //printf("slot_max_num: %d\n; slot_used_num: %d\n; page_header_size: %d\n",slot_max_number,slot_used_number,*(page_header+1));
         for(int j = 0 ; j < this->slot_int_num ; ++j) {
             unsigned int slot = *(bitmap-j);
             unsigned int t = 1;

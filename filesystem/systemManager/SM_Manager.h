@@ -360,7 +360,7 @@ public:
         //TODO 已经创建了索引（索引文件存在）
         //检查表是否存在
         if(!checkFileExist(relName)){
-            printf("the table %s doesn't exist",relName);
+            printf("the TABLE %s doesn't exist",relName);
             return RC(-1);
         }
 
@@ -376,7 +376,7 @@ public:
         //检查索引文件是否已经建立
         string indexName = fileAttr->getIndexName(relName,attrName);
         if(checkFileExist(indexName.c_str())){
-            printf("the indexFile %s has exist",indexName.c_str());
+            printf("the TABLE.INDEX %s has exist",indexName.c_str());
             delete fileAttr;
             return RC(-1);
         }
