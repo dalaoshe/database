@@ -393,7 +393,7 @@ public:
     RC close() {
         this->ForcePages();
 
-
+        printf("index handle close\n");
         bpm->close();
         fm->closeFile(fileID);
         delete bpm;
