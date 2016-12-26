@@ -470,7 +470,6 @@ public:
         else if(attrType == AttrType::STRING) {
             switch (op) {
                 case EQ_OP: {
-
                     return strcmp(rec_v,target_v) == 0;
                 }
                 case LT_OP: {

@@ -23,6 +23,14 @@ union AttrValue{
     int int_data;
     float float_data;
 };
+struct columnDef{
+    string tableName;
+    string colName;
+    columnDef(){
+        tableName = "";
+        colName = "";
+    }
+};
 class DatabaseSystem {
     SM_Manager* system_manager;
     IndexManager* indexManager;
@@ -113,15 +121,13 @@ public:
                 CreateStatement* createStatement = (CreateStatement*)stmt;
                 printCreateStatementInfo(createStatement,0);
                 int attrCount = createStatement->columns->size();
-
-
                 for(int i=0;i<attrCount;++i){
                     if((*(createStatement->columns))[i]->check_expr!=NULL){
                         continue;
                     }
                     printf("attr_name: %s \t  ",(*(createStatement->columns))[i]->name);
                     printf("attr_type: %d \t  ",(*(createStatement->columns))[i]->type);
-                    printf("attr_size: %d \t  ",(*(createStatement->columns))[i]->size);
+                    printf("attr_size: %d \t  ",(int)(*(createStatement->columns))[i]->size);
                     printf("attr_not_null: %d\t",(*(createStatement->columns))[i]->not_null);
                     if(createStatement->primary_key == NULL) continue;
                     if(strcmp((*(createStatement->columns))[i]->name,createStatement->primary_key) == 0) {
@@ -338,43 +344,64 @@ public:
               // printSelectStatementInfo((SelectStatement*)stmt, 0);
                // printf("select options\n");
                 vector<Expr::OperatorType> operates;
-                vector<string> ope_columns;
-                vector<string> no_columns;
+                vector<columnDef> ope_columns;
+                vector<columnDef> no_columns;
                 SelectStatement* selectStatement = (SelectStatement*)stmt;
-                //获取要选取的列名(表名.列名 形式需要添加)
-//                vector<string> columns;
+                //获取要选取的列名(表名.列名 表名或者列名默认为""空串)
                 for (Expr* expr : *selectStatement->selectList){
                     switch (expr->type) {
                         case kExprStar: {
-                            printf("*");
-                            no_columns.push_back(string("*"));
+                            printf("columns: *\n");
+                            columnDef temp_col;
+                            temp_col.colName = "*";
+                            no_columns.push_back(temp_col);
                             break;
                         }
                         case kExprColumnRef: {
                             printf("%s %s\n", expr->table, expr->name);
-                            no_columns.push_back(string(expr->name));
+                            columnDef temp_col;
+                            if(expr->table!=NULL)
+                                temp_col.tableName = expr->table;
+                            temp_col.colName = expr->name;
+                            no_columns.push_back(temp_col);
                             break;
                         }
                         case kExprOperator: {
                             switch (expr->op_type) {
                                 case Expr::SUM: {
                                     operates.push_back(Expr::SUM);
-                                    ope_columns.push_back(string(expr->expr->name));
+                                    columnDef temp_col;
+                                    if(expr->expr->table!=NULL)
+                                        temp_col.tableName = expr->expr->table;
+                                    temp_col.colName = expr->expr->name;
+                                    ope_columns.push_back(temp_col);
                                     break;
                                 }
                                 case Expr::AVG: {
                                     operates.push_back(Expr::AVG);
-                                    ope_columns.push_back(string(expr->expr->name));
+                                    columnDef temp_col;
+                                    if(expr->expr->table!=NULL)
+                                        temp_col.tableName = expr->expr->table;
+                                    temp_col.colName = expr->expr->name;
+                                    ope_columns.push_back(temp_col);
                                     break;
                                 }
                                 case Expr::MAX: {
                                     operates.push_back(Expr::MAX);
-                                    ope_columns.push_back(string(expr->expr->name));
+                                    columnDef temp_col;
+                                    if(expr->expr->table!=NULL)
+                                        temp_col.tableName = expr->expr->table;
+                                    temp_col.colName = expr->expr->name;
+                                    ope_columns.push_back(temp_col);
                                     break;
                                 }
                                 case Expr::MIN: {
                                     operates.push_back(Expr::MIN);
-                                    ope_columns.push_back(string(expr->expr->name));
+                                    columnDef temp_col;
+                                    if(expr->expr->table!=NULL)
+                                        temp_col.tableName = expr->expr->table;
+                                    temp_col.colName = expr->expr->name;
+                                    ope_columns.push_back(temp_col);
                                     break;
                                 }
                                 default: {
@@ -391,7 +418,8 @@ public:
                         }
                     }
                 }
-//                获取要选取的表名
+
+                //获取要选取的表名
                 vector<string> filenames;
                 if(selectStatement->fromTable->list == NULL)
                     filenames.push_back(selectStatement->fromTable->getName());
@@ -411,11 +439,9 @@ public:
                 //获取表头信息
                 RM_FileAttr* fileAttr = new RM_FileAttr();
                 fileAttr->getFileAttrFromPageHeader(fileHeader);
-
                 map<RID,int>rid_list;
                 this->searchRIDListByWhereClause(selectStatement->whereClause,rid_list,fileHandle,0,selectStatement->fromTable->getName());
 //                printf("rid size %lu\n",rid_list.size());
-
                 if(selectStatement->groupBy!=NULL){
                     string groupby = (*selectStatement->groupBy->columns)[0]->name;
                     printf("groupby: %s\n",groupby.c_str());
@@ -495,21 +521,17 @@ public:
                     for(int i=0;i<ope_columns.size();++i){
                         switch (operates[i]) {
                             case Expr::SUM: {
-                                printf("SUM(%s)   \t",ope_columns[i].c_str());
-                                break;
-                            }
+                                printf("SUM(%s)   \t",ope_columns[i].colName.c_str());
+                                break; }
                             case Expr::AVG: {
-                                printf("AVG(%s)   \t",ope_columns[i].c_str());
-                                break;
-                            }
+                                printf("AVG(%s)   \t",ope_columns[i].colName.c_str());
+                                break; }
                             case Expr::MAX: {
-                                printf("MAX(%s)   \t",ope_columns[i].c_str());
-                                break;
-                            }
+                                printf("MAX(%s)   \t",ope_columns[i].colName.c_str());
+                                break; }
                             case Expr::MIN: {
-                                printf("MIN(%s)   \t",ope_columns[i].c_str());
-                                break;
-                            }
+                                printf("MIN(%s)   \t",ope_columns[i].colName.c_str());
+                                break; }
                         }
                     }
                     printf("\n");
@@ -524,25 +546,21 @@ public:
                                 for(int k=0;k<ope_columns.size();++k){
                                     switch (operates[k]) {
                                         case Expr::SUM: {
-                                            double sum = printSUM(group_rid_list[i], fileAttr, ope_columns[k], fileHandle);
+                                            double sum = printSUM(group_rid_list[i], fileAttr, ope_columns[k].colName, fileHandle);
                                             printf("%lf    \t",sum);
-                                            break;
-                                        }
+                                            break; }
                                         case Expr::AVG: {
-                                            double avg = printAVG(group_rid_list[i], fileAttr, ope_columns[k], fileHandle);
+                                            double avg = printAVG(group_rid_list[i], fileAttr, ope_columns[k].colName, fileHandle);
                                             printf("%lf    \t",avg);
-                                            break;
-                                        }
+                                            break; }
                                         case Expr::MAX: {
-                                            double max = printMAX(group_rid_list[i], fileAttr, ope_columns[k], fileHandle);
+                                            double max = printMAX(group_rid_list[i], fileAttr, ope_columns[k].colName, fileHandle);
                                             printf("%lf    \t",max);
-                                            break;
-                                        }
+                                            break; }
                                         case Expr::MIN: {
-                                            double min = printMIN(group_rid_list[i], fileAttr, ope_columns[k], fileHandle);
+                                            double min = printMIN(group_rid_list[i], fileAttr, ope_columns[k].colName, fileHandle);
                                             printf("%lf    \t",min);
-                                            break;
-                                        }
+                                            break; }
                                     }
                                 }
                                 printf("\n");
@@ -556,25 +574,21 @@ public:
                                 for(int k=0;k<ope_columns.size();++k){
                                     switch (operates[k]) {
                                         case Expr::SUM: {
-                                            double sum = printSUM(group_rid_list[i], fileAttr, ope_columns[k], fileHandle);
+                                            double sum = printSUM(group_rid_list[i], fileAttr, ope_columns[k].colName, fileHandle);
                                             printf("%lf    \t",sum);
-                                            break;
-                                        }
+                                            break; }
                                         case Expr::AVG: {
-                                            double avg = printAVG(group_rid_list[i], fileAttr, ope_columns[k], fileHandle);
+                                            double avg = printAVG(group_rid_list[i], fileAttr, ope_columns[k].colName, fileHandle);
                                             printf("%lf    \t",avg);
-                                            break;
-                                        }
+                                            break; }
                                         case Expr::MAX: {
-                                            double max = printMAX(group_rid_list[i], fileAttr, ope_columns[k], fileHandle);
+                                            double max = printMAX(group_rid_list[i], fileAttr, ope_columns[k].colName, fileHandle);
                                             printf("%lf    \t",max);
-                                            break;
-                                        }
+                                            break; }
                                         case Expr::MIN: {
-                                            double min = printMIN(group_rid_list[i], fileAttr, ope_columns[k], fileHandle);
+                                            double min = printMIN(group_rid_list[i], fileAttr, ope_columns[k].colName, fileHandle);
                                             printf("%lf    \t",min);
-                                            break;
-                                        }
+                                            break; }
                                     }
                                 }
                                 printf("\n");
@@ -588,25 +602,21 @@ public:
                                 for(int k=0;k<ope_columns.size();++k){
                                     switch (operates[k]) {
                                         case Expr::SUM: {
-                                            double sum = printSUM(group_rid_list[i], fileAttr, ope_columns[k], fileHandle);
+                                            double sum = printSUM(group_rid_list[i], fileAttr, ope_columns[k].colName, fileHandle);
                                             printf("%lf    \t",sum);
-                                            break;
-                                        }
+                                            break; }
                                         case Expr::AVG: {
-                                            double avg = printAVG(group_rid_list[i], fileAttr, ope_columns[k], fileHandle);
+                                            double avg = printAVG(group_rid_list[i], fileAttr, ope_columns[k].colName, fileHandle);
                                             printf("%lf    \t",avg);
-                                            break;
-                                        }
+                                            break; }
                                         case Expr::MAX: {
-                                            double max = printMAX(group_rid_list[i], fileAttr, ope_columns[k], fileHandle);
+                                            double max = printMAX(group_rid_list[i], fileAttr, ope_columns[k].colName, fileHandle);
                                             printf("%lf    \t",max);
-                                            break;
-                                        }
+                                            break; }
                                         case Expr::MIN: {
-                                            double min = printMIN(group_rid_list[i], fileAttr, ope_columns[k], fileHandle);
+                                            double min = printMIN(group_rid_list[i], fileAttr, ope_columns[k].colName, fileHandle);
                                             printf("%lf    \t",min);
-                                            break;
-                                        }
+                                            break; }
                                     }
                                 }
                                 printf("\n");
@@ -616,24 +626,24 @@ public:
                     }
 
                 }
-
                 //非聚集查询与聚集查询分开输出
-
                 //非聚集查询
                 else {
                     int no_column_size = no_columns.size();
                     if (no_column_size != 0) {
-                        if (no_columns[0] == "*") {
+                        if (no_columns[0].colName == "*") {
                             no_columns.clear();
                             for (int i = 0; i < fileAttr->attr_count; ++i) {
                                 printf("%s       \t", fileAttr->key_name[i].c_str());
-                                no_columns.push_back(fileAttr->key_name[i]);
+                                columnDef temp_col;
+                                temp_col.colName = fileAttr->key_name[i];
+                                no_columns.push_back(temp_col);
                             }
                             no_column_size = no_columns.size();
 //                        printf("size: %d\n",no_column_size);
                         } else {
                             for (int i = 0; i < no_columns.size(); ++i) {
-                                printf("%s       \t", no_columns[i].c_str());
+                                printf("%-10s|\t", no_columns[i].colName.c_str());
                             }
                         }
                         printf("\n");
@@ -651,10 +661,10 @@ public:
                             char *data;
                             int attr_type = 0;
                             for (int i = 0; i < no_column_size; ++i) {
-                                attr_type = fileAttr->getColValueType(no_columns[i]);
-                                offset = fileAttr->getColValueOffset(no_columns[i]);
+                                attr_type = fileAttr->getColValueType(no_columns[i].colName);
+                                offset = fileAttr->getColValueOffset(no_columns[i].colName);
                                 data = record.getData(offset);
-                                int col_index = fileAttr->getColIndex(no_columns[i]);
+                                int col_index = fileAttr->getColIndex(no_columns[i].colName);
 
                                 // printf("%d\n",col_index);
                                 if (record.isNULL(col_index)) {
@@ -663,50 +673,45 @@ public:
                                     switch (attr_type) {
                                         case INT: {//int
                                             int val = (*((int *) data));
-                                            printf("%d  \t", val);
-                                            break;
-                                        }
+                                            printf("%-10d|\t", val);
+                                            break; }
                                         case FLOAT: {//float
                                             float val = (*((float *) data));
-                                            printf("%f  \t", val);
-                                            break;
-                                        }
+                                            printf("%-10f|\t", val);
+                                            break; }
                                         case STRING: {//string
-                                            printf("%s   \t", data);
-                                            break;
-                                        }
+                                            printf("%-30s|\t", data);
+                                            break; }
                                         default: {
                                             printf("error\n");
-                                            return "type\n";
-                                        }
+                                            return "type\n"; }
                                     }
                                 }
                             }
                             printf("\n");
                         }
                     }
-
                     //聚集查询
                     for (int i = 0; i < ope_columns.size(); ++i) {
                         switch (operates[i]) {
                             case Expr::SUM: {
-                                double sum = printSUM(rid_list, fileAttr, ope_columns[i], fileHandle);
-                                printf("SUN(%s): %lf", ope_columns[i].c_str(), sum);
+                                double sum = printSUM(rid_list, fileAttr, ope_columns[i].colName, fileHandle);
+                                printf("SUN(%s): %lf", ope_columns[i].colName.c_str(), sum);
                                 break;
                             }
                             case Expr::AVG: {
-                                double avg = printAVG(rid_list, fileAttr, ope_columns[i], fileHandle);
-                                printf("AVG(%s): %lf", ope_columns[i].c_str(), avg);
+                                double avg = printAVG(rid_list, fileAttr, ope_columns[i].colName, fileHandle);
+                                printf("AVG(%s): %lf", ope_columns[i].colName.c_str(), avg);
                                 break;
                             }
                             case Expr::MAX: {
-                                double max = printMAX(rid_list, fileAttr, ope_columns[i], fileHandle);\
-                                printf("MAX(%s): %lf", ope_columns[i].c_str(), max);
+                                double max = printMAX(rid_list, fileAttr, ope_columns[i].colName, fileHandle);\
+                                printf("MAX(%s): %lf", ope_columns[i].colName.c_str(), max);
                                 break;
                             }
                             case Expr::MIN: {
-                                double min = printMIN(rid_list, fileAttr, ope_columns[i], fileHandle);
-                                printf("MIN(%s): %lf", ope_columns[i].c_str(), min);
+                                double min = printMIN(rid_list, fileAttr, ope_columns[i].colName, fileHandle);
+                                printf("MIN(%s): %lf", ope_columns[i].colName.c_str(), min);
                                 break;
                             }
                         }
@@ -778,7 +783,7 @@ public:
                         switch(value_type) {
                             case AttrType::INT: {
                                 *(int*)data = value->ival;
-                                printf("new INT  %d %d\n",value->ival,*(int*)data);
+                                printf("new INT  %d %d\n",(int)value->ival,*(int*)data);
                                 break;
                             }
                             case AttrType::FLOAT: {
@@ -937,7 +942,8 @@ public:
      * @param filename 文件名
      * @return
      */
-    string readSQLfile(string filename ){
+    string readSQLfile(string filename){
+        cout<<filename<<endl;
         ifstream fin(filename.c_str());
         string sql_stmt;
         if(fin){
@@ -949,15 +955,19 @@ public:
                 if(temp[temp.length()-1]==';') {
                     cout<<sql_stmt<<endl;
                     string result = readSQL(sql_stmt);
+                    sql_stmt = "";
                     printf("\n");
                 }
 //                printf("%s",result.c_str());
             }
         }
+        else {
+            printf("file doesn't exist\n");
+            system("ls");
+        }
         fin.close();
         return  "";
     }
-
     RC searchRIDListByWhereClause(Expr* whereclause, map<RID,int> & rid_list , RM_FileHandle &fileHandle , int numIndent, char* tableName) {
         //whereclause type is kExprOperator
         if (whereclause == NULL) {
@@ -996,19 +1006,22 @@ public:
             case Expr::SIMPLE_OP: {
                 //= < >
                 //递归基，符号两边为列名和属性值，进行查找
-                char *col_name = whereclause->expr->name;
+                columnDef left_col,right_col;
+                if(whereclause->expr->table!=NULL)
+                    left_col.tableName = whereclause->expr->table;
+                left_col.colName = whereclause->expr->name;
                 RM_FileAttr *fileAttr = new RM_FileAttr();
                 fileAttr->getFileAttrFromPageHeader(fileHandle.getFileHeader());
                 //数据行的偏移量
-                int offset = fileAttr->getColValueOffset(col_name);
+                int offset = fileAttr->getColValueOffset(left_col.colName.c_str());
                 //数据列对应数据长度
-                int value_size = fileAttr->getColValueSize(col_name);
+                int value_size = fileAttr->getColValueSize(left_col.colName.c_str());
                 //数据类型
-                AttrType value_type = fileAttr->getColValueType(col_name);
+                AttrType value_type = fileAttr->getColValueType(left_col.colName.c_str());
                 //列类型
-                ColType col_type = fileAttr->getColType(col_name);
+                ColType col_type = fileAttr->getColType(left_col.colName.c_str());
                 //数据列位置
-                int col_index = fileAttr->getColIndex(col_name);
+                int col_index = fileAttr->getColIndex(left_col.colName.c_str());
                // printf("col_index %d\n",col_index);
                 char op_char = whereclause->op_char;
                 if (op_char == '<') {
@@ -1030,9 +1043,13 @@ public:
                             *((int *) col_values) = whereclause->expr2->ival;
                             break;
                         case kExprLiteralString:
-                           // printf("taget %s\n", whereclause->expr2->name);
+                            printf("taget: %s\n", whereclause->expr2->name);
                             strcpy(col_values, whereclause->expr2->name);
                             break;
+                        case kExprColumnRef:
+                            if(whereclause->expr2->table!=NULL)
+                                right_col.tableName = whereclause->expr2->table;
+                            right_col.colName = whereclause->expr2->name;
                         default:
                             return RC(-1);
                     }
@@ -1041,7 +1058,7 @@ public:
                 if((col_type == ColType::INDEX || col_type == ColType::UNIQUE || col_type == ColType::PRIMARY) && op == CompOp::EQ_OP) {
                    // printf("index search\n");
                     IX_IndexScan* indexScan = new IX_IndexScan();
-                    string indexName = fileAttr->getIndexName(tableName,col_name);
+                    string indexName = fileAttr->getIndexName(tableName,left_col.colName.c_str());
                     IX_IndexHandle indexHandle;
                    // printf("index filename %s\n",indexName.c_str());
                     this->indexManager->OpenIndex(indexName.c_str(),indexHandle);
@@ -1206,6 +1223,11 @@ public:
         }
         return min;
     }
+
+//    RC getColNames(SelectStatement* selectStatement,vector<columnDef>& ope_columns,vector<columnDef>& no_columns,vector<Expr::OperatorType>& operates){
+//
+//        return RC(0);
+//    }
 };
 
 

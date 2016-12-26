@@ -645,7 +645,7 @@ public:
             char* temp = (((char*)record) + value_len + ATTR_CHECK_ENTRY_PADDING);
             record = ((BufType)temp) + ATTR_CHECK_ENTRY_VALUES_INT_OFFSET;
             char* b = (char*)record;
-            printf("%d\n",b-s);
+            printf("%ld\n",b-s);
         }
         return valid;
     }
