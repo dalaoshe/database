@@ -1043,8 +1043,17 @@ public:
                             *((int *) col_values) = whereclause->expr2->ival;
                             break;
                         case kExprLiteralString:
-                            printf("taget: %s\n", whereclause->expr2->name);
+//                            printf("taget: %s\n", whereclause->expr2->name);
                             strcpy(col_values, whereclause->expr2->name);
+                            break;
+                        case kExprOperator:
+                            if(value_type==AttrType::INT) {
+                                *((int *) col_values) = (int)getConstValue(whereclause->expr2);
+                                printf("expr2_value: %d \n",*((int *) col_values));
+                            }
+                            else if(value_type==AttrType::FLOAT) {
+                                *((float *) col_values) = getConstValue(whereclause->expr2);
+                            }
                             break;
                         case kExprColumnRef:
                             if(whereclause->expr2->table!=NULL)
@@ -1224,10 +1233,79 @@ public:
         return min;
     }
 
-//    RC getColNames(SelectStatement* selectStatement,vector<columnDef>& ope_columns,vector<columnDef>& no_columns,vector<Expr::OperatorType>& operates){
-//
-//        return RC(0);
-//    }
+    float getConstValue(Expr* expr) {
+        float left = 0, right = 0;
+        if(expr->expr2==NULL){
+            if (expr->expr->type == kExprLiteralInt)
+                left = expr->expr->ival;
+            else if (expr->expr->type == kExprLiteralFloat)
+                left = expr->expr->fval;
+            return left;
+        }
+        if(expr->expr==NULL){
+            if (expr->expr2->type == kExprLiteralInt)
+                right = expr->expr2->ival;
+            else if (expr->expr2->type == kExprLiteralFloat)
+                right = expr->expr2->fval;
+            return right;
+        }
+        if (isConst(expr->expr) && isConst(expr->expr2)) {
+            if (expr->expr->type == kExprLiteralInt)
+                left = expr->expr->ival;
+            else if (expr->expr->type == kExprLiteralFloat)
+                left = expr->expr->fval;
+
+            if (expr->expr2->type == kExprLiteralInt)
+                right = expr->expr2->ival;
+            else if (expr->expr2->type == kExprLiteralFloat)
+                right = expr->expr2->fval;
+            printf("%d\n",kExprLiteralInt);
+            printf("%d\n",kExprOperator);
+            printf("%d\n",expr->type);
+            printf("%d\n",expr->expr->type);
+            printf("%d\n",expr->expr2->type);
+            printf("left: %f;right: %f\n",left,right);
+            switch (expr->op_char) {
+                case '+':
+                    return left + right;
+                case '-':
+                    return left - right;
+                case '*':
+                    return left * right;
+                case '/': {
+                    if (right == 0)
+                        printf("division 0 ;expression is invalid\n");
+                    return 0;
+                }
+                default:
+                    return 0;
+            }
+        }
+        left = getConstValue(expr->expr);
+        right = getConstValue(expr->expr2);
+        printf("left1: %f;right1: %f\n",left,right);
+        switch (expr->op_char) {
+            case '+':
+                return left + right;
+            case '-':
+                return left - right;
+            case '*':
+                return left * right;
+            case '/': {
+                if (right == 0)
+                    printf("division 0 ;expression is invalid\n");
+                return 0;
+            }
+            default:
+                return 0;
+        }
+        return 0;
+    }
+    bool isConst(Expr* expr){
+        if(expr->type!=kExprOperator&&(expr->type==kExprLiteralInt||expr->type==kExprFunctionRef))
+            return true;
+        return false;
+    }
 };
 
 

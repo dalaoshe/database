@@ -374,6 +374,8 @@ public:
  * 按属性查找器，尚未测试
  */
 #include <map>
+#include <regex>
+
 class RM_FileScan {
     AttrType attrType;
     CompOp op;
@@ -493,11 +495,28 @@ public:
                 case LIKE_OP: {
                     int len = strlen(target_v);
                     //printf("pattern %s len %d\n",target_v,len);
-                    string pattern = string(target_v).substr(1,len-2);
-                    string rec = string(rec_v);
+                    string pattern = string(target_v);
                     //cout<<"rec "<<rec<<" "<<pattern<<endl;
-                    if(rec.find(pattern) == string::npos) return false;
-                    return true;
+                    string r1= "(.*)" ;
+                    string r2 = "(.)";
+                    string s1 = "%";
+                    string s2 = "_";
+                    string::size_type pos = 0;
+                    while((pos = pattern.find(s1,pos)) != string::npos){
+                        pattern.replace(pos,s1.size(),r1);
+                        pos++;
+                    }
+                    pos = 0;
+                    while((pos = pattern.find(s2,pos)) != string::npos){
+                        pattern.replace(pos,s2.size(),r2);
+                        pos++;
+                    }
+                    std::regex e (pattern);
+                    string recv = string(rec_v);
+                    if(regex_match (recv,e)) {
+                        return true;
+                    }
+                    return false;
                 }
             }
         }
