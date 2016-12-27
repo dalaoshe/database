@@ -31,6 +31,7 @@ struct columnDef{
         colName = "";
     }
 };
+//struct N_Table_Params;
 class DatabaseSystem {
     SM_Manager* system_manager;
     IndexManager* indexManager;
@@ -341,12 +342,36 @@ public:
             }
             case kStmtSelect:{
                 //打印语句信息
-              // printSelectStatementInfo((SelectStatement*)stmt, 0);
-               // printf("select options\n");
+                printSelectStatementInfo((SelectStatement*)stmt, 0);
+                printf("select options\n");
+
+
+
                 vector<Expr::OperatorType> operates;
                 vector<columnDef> ope_columns;
                 vector<columnDef> no_columns;
                 SelectStatement* selectStatement = (SelectStatement*)stmt;
+
+                /**
+                * TEST Join
+                */
+                if(((SelectStatement*)stmt)->fromTable->type == kTableCrossProduct) {
+                    TableRef* table = ((SelectStatement*)stmt)->fromTable;
+                    N_Table_Params* params = new N_Table_Params();
+                    for (TableRef* tbl : *table->list) {
+                        printf("table name: %s\n",tbl->name);
+                        params->addTable(tbl->name);
+
+                    }
+                    params->init(this,this->recordManager);
+                    printf("begin search\n");
+                    params->getAssociationSearchResult(selectStatement->whereClause);
+                    printf("search ok\n");
+                    params->printTest();
+                    return "";
+                }
+
+
                 //获取要选取的列名(表名.列名 表名或者列名默认为""空串)
                 for (Expr* expr : *selectStatement->selectList){
                     switch (expr->type) {
@@ -1134,6 +1159,290 @@ public:
         }
     }
 
+    /**
+     *
+     * @param whereclause
+     * @param rid_list
+     * @param fileHandle
+     * @param numIndent
+     * @param tableName
+     * @return
+     */
+
+    RC searchRIDListByWhereClauseOfNTable(Expr* whereclause, map<RID,int>& rid_list,
+                                          map<string,Record*>& targetMap, map<string,RM_FileAttr*>& targetFileAttrMap,
+                                          RM_FileHandle &fileHandle , int numIndent, string tableName) {
+        //没有where语句则直接返回
+        if (whereclause == NULL) {
+            printf("null where get all record\n");
+            RM_FileScan *fileScan = new RM_FileScan();
+            fileScan->openScan(&fileHandle, AttrType::FLOAT, 0, 0, CompOp::EQ_OP, NULL, 0);
+            fileScan->getAllRecordOfFile(rid_list);
+            delete fileScan;
+            return RC(0);
+        }
+        //分表达式左边与右边查询，然后去合并的集合
+        map<RID,int> left;
+        map<RID,int> right;
+
+        CompOp op = EQ_OP;
+
+        switch (whereclause->op_type) {
+            case Expr::LESS_EQ: {// <=
+                if(whereclause->op_type == Expr::LESS_EQ) op = LE_OP;
+            }
+            case Expr::GREATER_EQ: {// >=
+                if(whereclause->op_type == Expr::GREATER_EQ) op = GE_OP;
+            }
+            case Expr::NOT_EQUALS: {// <>
+                if(whereclause->op_type == Expr::NOT_EQUALS) op = NE_OP;
+            }
+            case Expr::LIKE: {
+                if(whereclause->op_type == Expr::LIKE) op = LIKE_OP;
+            }
+            case Expr::ISNULL: {
+                if(whereclause->op_type == Expr::ISNULL) {
+                    //     printf("select null\n");
+                    op = ISNULL_OP;
+                }
+            }
+            case Expr::SIMPLE_OP: {
+                //= < >
+                //递归基，符号两边为列名和属性值，进行查找
+                columnDef left_col,right_col;
+                if(whereclause->expr->table!=NULL)
+                    left_col.tableName = whereclause->expr->table;
+                left_col.colName = whereclause->expr->name;
+
+                //如果这个表达式不是一个联合查询表达式，并且表达式左侧不是待查表，则该表达式必定为true
+                if( (!whereclause->isTableAssosicateOP()) &&
+                        (left_col.tableName != tableName)) {
+                    //均返回待查表的所有记录
+                    printf("where is not assosication but %d, search and left not target table but %s, get all record\n",whereclause->expr2->type,left_col.tableName.c_str());
+                    RM_FileScan *fileScan = new RM_FileScan();
+                    fileScan->openScan(&fileHandle, AttrType::FLOAT, 0, 0, CompOp::EQ_OP, NULL, 0);
+                    fileScan->getAllRecordOfFile(rid_list);
+                    delete fileScan;
+                    return RC(0);
+                }
+
+                //要获取的待查表的数据信息
+                RM_FileAttr *fileAttr = new RM_FileAttr();
+                int offset, value_size, col_index;
+                AttrType value_type;
+                ColType col_type;
+                char *col_values;
+
+                if(left_col.tableName == tableName) {
+                    //如果表达式左侧表名为待查表，则获取左侧表的数据信息
+
+                    //表达式左侧表的表头handle
+                    fileAttr->getFileAttrFromPageHeader(fileHandle.getFileHeader());
+                    //数据行的偏移量
+                    offset = fileAttr->getColValueOffset(left_col.colName);
+                    //数据列对应数据长度
+                    value_size = fileAttr->getColValueSize(left_col.colName);
+                    //数据类型
+                    value_type = fileAttr->getColValueType(left_col.colName);
+                    //列类型
+                    col_type = fileAttr->getColType(left_col.colName);
+                    //数据列位置
+                    col_index = fileAttr->getColIndex(left_col.colName);
+                    //待比较数据
+                    col_values = new char[value_size];
+                }
+
+                // printf("col_index %d\n",col_index);
+                char op_char = whereclause->op_char;
+                if (op_char == '<') {
+                    op = LT_OP;
+                } else if (op_char == '>') {
+                    op = GT_OP;
+                } else if (op_char == '=') {
+                    op = EQ_OP;
+                }
+
+                //whereclause->expr2 为目标属性值表达式
+                if(!(op == CompOp::ISNULL_OP)) {
+                    switch (whereclause->expr2->type) {
+                        //根据类型进行处理
+                        case kExprLiteralFloat:
+                            *((float *) col_values) = whereclause->expr2->fval;
+                            break;
+                        case kExprLiteralInt:
+                            *((int *) col_values) = whereclause->expr2->ival;
+                            break;
+                        case kExprLiteralString:
+//                            printf("taget: %s\n", whereclause->expr2->name);
+                            strcpy(col_values, whereclause->expr2->name);
+                            break;
+                        case kExprOperator:
+                            if (value_type == AttrType::INT) {
+                                *((int *) col_values) = (int) getConstValue(whereclause->expr2);
+                                printf("expr2_value: %d \n", *((int *) col_values));
+                            } else if (value_type == AttrType::FLOAT) {
+                                *((float *) col_values) = getConstValue(whereclause->expr2);
+                            }
+                            break;
+                        case kExprColumnRef:{
+                            //该表达式是个联合查询表达式
+
+                            if (whereclause->expr2->table != NULL)
+                                right_col.tableName = whereclause->expr2->table;
+                            right_col.colName = whereclause->expr2->name;
+
+                            //表达式左右都不存在说明待匹配数据表还未查，此表达式结果为true
+                            bool both_checked = (targetMap.count(left_col.tableName) > 0 &&
+                                                 targetMap.count(right_col.tableName) > 0);
+                            //表达式左右都存在，则此表达式结果必定为true
+                            bool neither_checked = (targetMap.count(left_col.tableName) == 0 &&
+                                                    targetMap.count(right_col.tableName) == 0);
+                            //表达式一方是待查表另外一方不存在
+                            bool other_not_checked =
+                                    (right_col.tableName == tableName && targetMap.count(left_col.tableName) == 0)
+                                    || (left_col.tableName == tableName && targetMap.count(right_col.tableName) == 0);
+                            //表达式左右都不是待查表
+                            bool neither_is_target_table =
+                                    (right_col.tableName != tableName) && (left_col.tableName != tableName);
+                            //若该表达式必定为true，则获取所有记录
+                            bool get_all_record = other_not_checked || neither_is_target_table;
+
+
+                            if (get_all_record) {
+                                //均返回待查表的所有记录
+                                printf("get all record, because:\n");
+                                cout << "other_not_checked: " << other_not_checked << endl;
+                                cout << "neither_is_target_table: " << neither_is_target_table << endl;
+                                RM_FileScan *fileScan = new RM_FileScan();
+                                fileScan->openScan(&fileHandle, AttrType::FLOAT, 0, 0, CompOp::EQ_OP, NULL, 0);
+                                fileScan->getAllRecordOfFile(rid_list);
+                                delete fileScan;
+                                delete fileAttr;
+                                return RC(0);
+                            }
+
+                            //否则进行查找
+                            if (right_col.tableName == tableName) {//表达式右侧为待查项，需要重新构造数据信息
+                                //获取表头信息
+                                fileAttr->getFileAttrFromPageHeader(fileHandle.getFileHeader());
+                                //数据行的偏移量
+                                offset = fileAttr->getColValueOffset(right_col.colName);
+                                //数据列对应数据长度
+                                value_size = fileAttr->getColValueSize(right_col.colName);
+                                //数据类型
+                                value_type = fileAttr->getColValueType(right_col.colName);
+                                //列类型
+                                col_type = fileAttr->getColType(right_col.colName);
+                                //数据列位置
+                                col_index = fileAttr->getColIndex(right_col.colName);
+
+                                //目标数据的记录
+                                Record *target_record = targetMap[left_col.tableName];
+                                //目标数据的表头信息
+                                RM_FileAttr *target_fileAttr = targetFileAttrMap[left_col.tableName];
+                                //获取待比较的目标数据
+                                int target_offset = target_fileAttr->getColValueOffset(left_col.colName);
+                                col_values = target_record->getData(target_offset);
+                            } else if (left_col.tableName == tableName) {
+                                //目标数据的记录
+                                Record *target_record = targetMap[right_col.tableName];
+                                //目标数据的表头信息
+                                RM_FileAttr *target_fileAttr = targetFileAttrMap[right_col.tableName];
+                                //获取待比较的目标数据
+                                int target_offset = target_fileAttr->getColValueOffset(right_col.colName);
+                                cout<<"right offset: "<<target_offset<<endl;
+                                col_values = target_record->getData(target_offset);
+                            } else {
+                                printf("ERROR!\n");
+                                return RC(-1);
+                            }
+                            cout<<"association search: "<<left_col.tableName<<"."<<left_col.colName<<"="<<right_col.tableName<<"."<<right_col.colName<<endl;
+                            cout<<*((int*)(col_values))<<endl;
+                            break;
+                        }
+                        default:
+                            return RC(-1);
+                    }
+                }
+                //如果查找列是索引列，并且是等号查找，并且不是模糊查找，则按索引查找
+                if((col_type == ColType::INDEX || col_type == ColType::UNIQUE || col_type == ColType::PRIMARY) && op == CompOp::EQ_OP) {
+                    printf("index search\n");
+                    IX_IndexScan* indexScan = new IX_IndexScan();
+                    string indexName = fileAttr->getIndexName(tableName,left_col.colName.c_str());
+                    IX_IndexHandle indexHandle;
+                    printf("index filename %s\n",indexName.c_str());
+                    this->indexManager->OpenIndex(indexName.c_str(),indexHandle);
+                    indexScan->OpenScan(&indexHandle,op,col_values);
+                    indexScan->getAllRecord(rid_list);
+                    delete indexScan;
+                }
+                else {
+                    RM_FileScan *fileScan = new RM_FileScan();
+                    fileScan->openScan(&fileHandle, value_type, value_size, offset, op, col_values, col_index);
+                    printf("base search\n");
+                    printf("op %c\n", whereclause->op_char);
+                    fileScan->getAllRecord(rid_list);
+                    // printf("base search ok %c\n", whereclause->op_char);
+                    delete fileScan;
+                }
+                delete fileAttr;
+                break;
+            }
+                //符号两边为表达式，继续递归根据符号取交、并、补
+            case Expr::AND: {
+                RC l_rc = searchRIDListByWhereClauseOfNTable(whereclause->expr, left,
+                                                             targetMap,targetFileAttrMap,
+                                                             fileHandle, numIndent + 1,tableName);
+                RC r_rc = searchRIDListByWhereClauseOfNTable(whereclause->expr2, right,
+                                                             targetMap,targetFileAttrMap,
+                                                             fileHandle, numIndent + 1,tableName);
+                map<RID, int>::iterator it;
+                //循环遍历左边表达式选取的项在右边表达式是否存在
+                for (it = left.begin(); it != left.end(); ++it) {
+                    //判断在右边是否存在
+                    map<RID, int>::iterator r_it = right.find(it->first);
+                    //不存在则下一个
+                    if (r_it == right.end()) continue;
+                    rid_list.insert(pair<RID, int>(it->first, 1));
+                }
+                printf("AND\n");
+                return RC();
+            }
+            case Expr::OR: {
+                RC l_rc = searchRIDListByWhereClauseOfNTable(whereclause->expr, left,
+                                                             targetMap,targetFileAttrMap,
+                                                             fileHandle, numIndent + 1,tableName);
+                RC r_rc = searchRIDListByWhereClauseOfNTable(whereclause->expr2, right,
+                                                             targetMap,targetFileAttrMap,
+                                                             fileHandle, numIndent + 1,tableName);
+                map<RID, int>::iterator it;
+                //将右边表达式选取的记录插入
+                for (it = right.begin(); it != right.end(); ++it) {
+                    rid_list.insert(pair<RID, int>(it->first, 1));
+                }
+
+                //循环遍历左边的记录是否存在右边，若存在则剔除
+                for (it = left.begin(); it != left.end(); ++it) {
+                    //判断在右边是否存在
+                    map<RID, int>::iterator r_it = right.find(it->first);
+                    //若右边存在则剔除
+                    if (r_it != right.end()) continue;
+                    rid_list.insert(pair<RID, int>(it->first, 1));
+                }
+                printf("OR");
+                return RC();
+            }
+            case Expr::NOT: {
+                printf("NOT");
+                break;
+            }
+            default: {
+                printf("%d\n", whereclause->op_type);
+                break;
+            }
+        }
+    }
+
     double printSUM(map<RID,int>& rid_list,RM_FileAttr* fileAttr,string colname,RM_FileHandle& fileHandle){
         double sum = 0;
         for (map<RID, int>::iterator it = rid_list.begin(); it != rid_list.end(); ++it) {
@@ -1306,7 +1615,231 @@ public:
             return true;
         return false;
     }
+
+    struct N_Table_Params {
+        vector<string> table_list;
+        vector<RM_FileAttr*> fileAttrList;
+        vector<RM_FileHandle*> fileHandleList;
+        struct TableRecord{
+            RID rid;//这条记录的rid
+            int next_table_max_index;//这条记录对应下个表的记录的最大索引下标+1
+            TableRecord() {
+                next_table_max_index = 0;
+            };
+        };
+        typedef vector<TableRecord*> RecordList;
+        vector<RecordList*> table_record_list;
+        //已经查过的所有表的数量
+        int table_checked_number;
+        DatabaseSystem* db;
+        N_Table_Params() {
+            this->table_checked_number = 0;
+        }
+
+        void init(DatabaseSystem* db, RecordManager* rm) {
+            this->db = db;
+            for(int i = 0; i < this->getTableCount(); ++i) {
+                RM_FileHandle* fileHandle = new RM_FileHandle();
+                rm->openFile(this->table_list[i].c_str(), *fileHandle);
+                BufType fileHeader = fileHandle->getFileHeader();
+                RM_FileAttr* fileAttr = new RM_FileAttr();
+                fileAttr->getFileAttrFromPageHeader(fileHeader);
+                fileAttrList.push_back(fileAttr);
+                fileHandleList.push_back(fileHandle);
+            }
+        }
+
+        void addTable(string tablename) {
+            this->table_list.push_back(tablename);
+            RecordList* record_list = new RecordList;
+            this->table_record_list.push_back(record_list);
+        }
+
+        RecordList* getRecordList(string tablename) {
+            for(int i = 0 ; i < table_list.size(); ++i) {
+                if(table_list[i] == tablename) return table_record_list[i];
+            }
+        }
+
+        int getTableCount() {
+            return this->table_list.size();
+        }
+        void setNextTableMaxIndex(string tablename, int i, int index) {
+            RecordList* list = this->getRecordList(tablename);
+            (*list)[i]->next_table_max_index = index;
+        }
+
+        RC searchRIDListByWhereClauseOfNTable(Expr* whereclause, map<RID,int>& rid_list,
+                                              map<string,Record*>& targetMap, map<string,RM_FileAttr*>& targetFileAttrMap,
+                                              RM_FileHandle &fileHandle , int numIndent, string tableName){
+            return RC();
+        }
+
+        //table_index表的的record_index条记录为条件
+        void search(int table_index, int record_index, Expr* where, TableRecord* lastTableRecord,
+                    map<string,Record*> &targetMap, map<string,RM_FileAttr*>& targetFileAttrMap,
+                    RM_FileHandle *check_fileHandle ) {
+            if(table_index >= table_checked_number) {
+                cout<<"check new table"<<endl;
+                //前面的所有记录信息已经匹配，直接查找
+                map<RID,int> rid_list;
+                //要查询的表名
+                string tableName = this->table_list[table_index];
+                //进行查找
+                cout<<"search table: "<<tableName<<endl;
+
+                db->searchRIDListByWhereClauseOfNTable(where,rid_list,targetMap,targetFileAttrMap,*check_fileHandle,0,tableName);
+                cout<<"search table: "<<tableName<<" ok, add to list"<<endl;
+
+                RecordList* list = this->getRecordList(tableName);
+                map<RID, int>::iterator it;
+                for (it = rid_list.begin(); it != rid_list.end(); ++it) {
+                    RID rid = it->first;
+                    TableRecord* record = new TableRecord();
+                    record->rid = rid;
+                    (*list).push_back(record);
+                }
+                //如果查的不是第一张表，则要更新连接到该表的上表记录的索引
+                if(lastTableRecord != NULL) {
+                    lastTableRecord->next_table_max_index = (int) (*list).size();
+                }
+                return;
+            }
+            else {
+                string tableName = this->table_list[table_index];
+                cout<<"\ncheck last table: "<<tableName<<endl;
+                RM_FileHandle* fileHandle = this->fileHandleList[table_index];
+                RM_FileAttr* fileAttr = this->fileAttrList[table_index];
+                RecordList* list = this->table_record_list[table_index];
+
+                if(record_index >= (*list).size()) {
+                    return;
+                }
+
+                TableRecord* tableRecord = (*list)[record_index];
+                Record record;
+                fileHandle->getRec(tableRecord->rid,record);
+//             rid_list.insert(pair<RID, int>(it->first, 1));
+                if(targetMap.count(tableName) == 0)
+                    targetMap.insert(pair<string,Record*>(tableName,&record));
+                else targetMap[tableName] = &record;
+
+                if(targetFileAttrMap.count(tableName) == 0)
+                    targetFileAttrMap.insert(pair<string,RM_FileAttr*>(tableName,fileAttr));
+
+                if( table_index < table_checked_number-1 ) {
+                    //如果之后还有已经查过的表
+                    int start = 0;
+                    if (record_index > 0) {
+                        start = (*list)[record_index - 1]->next_table_max_index;
+                    }
+                    for (int i = start; i < tableRecord->next_table_max_index; ++i) {
+                        this->search(table_index + 1, i, where, tableRecord, targetMap, targetFileAttrMap,
+                                     check_fileHandle);
+                    }
+                }
+
+                else {
+                    //如果之后没有表
+                    this->search(table_index + 1, 0, where, tableRecord, targetMap, targetFileAttrMap,
+                                 check_fileHandle);
+                }
+
+            }
+        }
+
+        void getAssociationSearchResult(Expr* where) {
+            for(int i = 0; i < this->getTableCount(); ++i) {
+                //每个表作一次查询
+                map<string,Record*> targetMap;
+                map<string,RM_FileAttr*> targetFileAttrMap;
+                cout<<"try to search table: "<<this->table_list[i]<<endl;
+                if(i == 0)
+                    this->search(0,0,where,NULL,targetMap,targetFileAttrMap,this->fileHandleList[i]);
+                else
+                    for(int j = 0 ; j < this->table_record_list[j]->size(); ++j) {
+                        this->search(0,j,where,NULL,targetMap,targetFileAttrMap,this->fileHandleList[i]);
+                    }
+                printf("search %s ok, find %d record\n\n",this->table_list[i].c_str(),(this->table_record_list[i]->size()));
+                this->table_checked_number ++;
+            }
+        }
+
+        typedef vector<RID> Result;
+        typedef vector<Result> ResultList;
+
+        void getAllResult(int table_index, int record_index, Result& result, ResultList& list) {
+            if(table_index >= this->table_list.size()-1) {
+                //已经是最后一个表了
+                RecordList* record_list = this->table_record_list[table_index];
+                //要的超过限制
+                if(record_index >= record_list->size())
+                    return;
+                //
+                TableRecord* record = (*record_list)[record_index];
+                result.push_back(record->rid);
+                //往列表中塞入
+                list.push_back(result);
+                //弹出最后项继续
+                result.pop_back();
+                return;
+            }
+            else {
+                //不是最后个表
+                string tableName = this->table_list[table_index];
+                RecordList* record_list = this->table_record_list[table_index];
+
+                if(record_index >= (*record_list).size()) {
+                    //上表要的记录该表没有，则返回
+                    return;
+                }
+
+                TableRecord* tableRecord = (*record_list)[record_index];
+                result.push_back(tableRecord->rid);
+
+                //往下一个表查询
+                int start = 0;
+                if (record_index > 0) {
+                    start = (*record_list)[record_index - 1]->next_table_max_index;
+                }
+                for (int i = start; i < tableRecord->next_table_max_index; ++i) {
+                    //从下一个表的第i条记录开始查询
+                    getAllResult(table_index+1,i,result,list);
+                }
+                //对于该表的该记录已经全部遍历，弹出
+                result.pop_back();
+
+            }
+        }
+
+        void printAll(ResultList list) {
+            for(int i = 0; i < list.size(); ++i) {
+                Result result = list[i];
+                printf("number %d: \n");
+                for(int j = 0; j < result.size(); ++j) {
+                    RID rid = result[j];
+                    RM_FileAttr* fileAttr = this->fileAttrList[i];
+                    RM_FileHandle* fileHandle = this->fileHandleList[i];
+                    Record record;
+                    fileHandle->getRec(rid,record);
+                    fileAttr->printRecordInfo(record.getData());
+                }
+                printf("\n\n");
+            }
+        }
+
+        void printTest() {
+            Result result;
+            ResultList list;
+            this->getAllResult(0,0,result,list);
+            cout<<"found: "<<list.size()<<endl;
+            this->printAll(list);
+        }
+
+
+    };
 };
+
 
 
 #endif //DATABASE_DATABASESYSTEM_H

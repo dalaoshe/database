@@ -119,6 +119,10 @@ namespace hsql {
         inline bool isSimpleOp(char op) {
             return isSimpleOp() && op_char == op;
         }
+        inline bool isTableAssosicateOP() {
+            return (this->expr2->type == kExprColumnRef);
+        }
+
 
 
         /**
