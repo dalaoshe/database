@@ -61,9 +61,6 @@ int test_parse(int argc, char **argv){
         }
     }
     else if (argv[1][0]=='1'){
-        char *name = argv[2];
-        printf("name: %s\n",name);
-        myDB.readSQLfile("test_example/"+string(name));
 //        myDB.readSQLfile( "test_example/create.sql");
 //        cout<<myDB.readSQLfile("test_example/publisher.sql");
 //        cout<<myDB.readSQLfile("test_example/customer.sql");
@@ -72,23 +69,34 @@ int test_parse(int argc, char **argv){
         string sqlStmt;
         while(true)
         {
-            char sql[1000];
-            cin.getline(sql, 1000);
+            char sql[4096];
+            cin.getline(sql, 4096);
             string temp_sqlStmt = string(sql);
 
-            if(sqlStmt.substr(0,4) == string("quit"))
+            if(temp_sqlStmt.substr(0,4) == string("quit")) {
                 break;
+            }
             else if(temp_sqlStmt[temp_sqlStmt.length()-1] != ';'){
-                sqlStmt += temp_sqlStmt;
+                sqlStmt += " "+temp_sqlStmt;
                 continue;
             }
             else{
+                sqlStmt += " "+temp_sqlStmt;
+                printf("sql: %s\n",sqlStmt.c_str());
+                if(sqlStmt.substr(1,4)=="file"){
+                    string filename = sqlStmt.substr(6,sqlStmt.length()-7);
+                    myDB.readSQLfile(filename);
+                    sqlStmt = "";
+                    continue;
+                }
                 cout<<myDB.readSQL(sqlStmt);
                 cout<<endl<<endl;
+                sqlStmt = "";
             }
         }
     }
 }
+
 
 void only_test_index(){
     FileManager* fm = new FileManager();

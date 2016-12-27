@@ -231,7 +231,7 @@ public:
 
         }
         fin.close();
-        printf("use database %s succeed ! tablelist size: %d\n",dbName,TableList.size());
+        printf("use database %s succeed ! tablelist size: %ld\n",dbName,TableList.size());
         return RC();
     }
 
@@ -255,22 +255,28 @@ public:
     }
 
     RC ShowDatabases(){
+        printf("+");
+        for(int i=0;i<20;++i) { printf("-"); }
+        printf("+\n");
         ifstream fin(DBRootPath+"/"+DBLIST);
         int count = 0;
         fin>>count;
-        printf("database size : %d\n",count);
         for(int i=0;i<count;++i){
             string db_name;
             fin>>db_name;
-            printf("%s\n",db_name.c_str());
+            printf("|%-20s|\n",db_name.c_str());
         }
+        printf("+");
+        for(int i=0;i<20;++i) { printf("-"); }
+        printf("+\n");
+        printf("database size : %d\n",count);
         printf("\n");
     }
 
     RC CreateTable (const char *relName,                // Create relation
                     int        attrCount,
                     RM_FileAttr   *attributes){
-        printf("tablelist size: %d\n",TableList.size());
+        printf("tablelist size: %ld\n",TableList.size());
         vector<string>::iterator it = find(TableList.begin(), TableList.end(), string(relName));
         if(it != TableList.end()){
             printf("Error: The table %s already exists.\n",relName);
@@ -342,15 +348,21 @@ public:
     }
 
     RC ShowTables(){
+        printf("+");
+        for(int i=0;i<20;++i) { printf("-"); }
+        printf("+\n");
         ifstream fin(TABLELIST);
         int count = 0;
         fin>>count;
-        printf("table size : %d\n",count);
         for(int i=0;i<count;++i){
             string tb_name;
             fin>>tb_name;
-            printf("%s\n",tb_name.c_str());
+            printf("|%-20s|\n",tb_name.c_str());
         }
+        printf("+");
+        for(int i=0;i<20;++i) { printf("-"); }
+        printf("+\n");
+        printf("table size : %d\n",count);
         printf("\n");
     }
 
@@ -363,10 +375,6 @@ public:
             printf("the TABLE %s doesn't exist",relName);
             return RC(-1);
         }
-
-
-
-
         RM_FileHandle fileHandle;
         rmm->openFile(relName,fileHandle);
         BufType fileHeader = fileHandle.getFileHeader();
