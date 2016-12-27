@@ -667,7 +667,7 @@ public:
             attr_len = attr[ATTR_VALUE_LENGTH_INT_OFFSET];
             attr_type = (AttrType) attr[ATTR_VALUE_TYPE_INT_OFFSET];
             not_null = attr[ATTR_NOT_NULL_INT_OFFSET];
-//            printf("columns name: %s\t",attr_name);
+            printf("columns name: %s\t",attr_name);
             int col_index = this->getColIndex(attr_name);
             printf("%d\n",col_index);
             if(record.isNULL(col_index)) {
