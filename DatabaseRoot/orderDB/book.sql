@@ -98,7 +98,7 @@ INSERT INTO book VALUES
  (200097,'Beneath a Midnight Moon','Robert G. Allen',104252,5814,1742),
  (200098,'Deadlines and Datelines','LOUIS DE BERNIERES',101756,8459,1592),
  (200099,'Gulac War (Sobs, No 6)','Pam Proctor',100546,9538,2544),
- (200100,'Anyone Can Have a Happy','null',103343,3358,2213),
+ (200100,'Anyone Can Have a Happy',null,103343,3358,2213),
  (200101,'Cuba, larme secr??te','Irene Gonzalez Frei',100061,9269,1187),
  (200102,'La foire aux vanit??s','Michael Jan Friedman',103319,8836,1729),
  (200103,'La Terre sous ses pieds','Glendon Swarthout',101291,4391,2600),
@@ -50057,3 +50057,4 @@ INSERT INTO book VALUES
  (249998,'Braid: Poems (Florida Poetry Series)','W. Scott Olsen',102883,7081,2261),
  (249999,'Falling For You (First Love, No 215)','Tena Carlyle',104386,3283,1436),
  (250000,'A Cherished Reward (Homespun Series)','Anthony Boucher',100339,7366,2711);
+ 

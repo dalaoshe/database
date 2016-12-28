@@ -312,7 +312,13 @@ public:
                             fileHandle->insertRec(data, rid);
                             printf("rid<%d,%d> id %d\n", rid.pid, rid.sid,*((int*)(key)));
                             //插入主键索引
-                            primaryHandle->InsertEntry(key, rid);
+                            if(primaryHandle->InsertEntry(key, rid).equal(RC())) {
+                                //printf("insert primary %s rid<%d,%d> ok\n", primary_col_name.c_str(), rid.pid,
+                                //       rid.sid);
+                            } else {
+                                printf("insert primary %s rid<%d,%d> fail\n", primary_col_name.c_str(), rid.pid,
+                                       rid.sid);
+                            }
                             //插入其余索引
                             Record record;
                             record.setData(data);
@@ -424,7 +430,7 @@ public:
                     params->init(this,this->recordManager);
                     printf("begin search\n");
                     params->getAssociationSearchResult(selectStatement->whereClause);
-                    printf("search ok\n");
+                    printf("search okn\n\n\n\n\n\n\n\n");
                     params->printTest();
                     return "";
                 }
@@ -1027,20 +1033,26 @@ public:
      */
     string readSQLfile(string filename){
         cout<<filename<<endl;
-        ifstream fin(filename.c_str());
-        string sql_stmt;
+//        ifstream fin(filename.c_str());
+        FILE* fin =fopen(filename.c_str(),"r");
+        string sql_stmt = "";
         if(fin){
-            string temp;
-            while (getline(fin,temp)){
-                sql_stmt += " "+temp;
-                if(temp=="")
-                    continue;
-                if(temp[temp.length()-1]==';') {
-                    cout<<sql_stmt<<endl;
+            char temp;
+            while(!feof(fin)){
+                temp=fgetc(fin);
+                if(temp=='\n'&&sql_stmt[sql_stmt.length()-1]==';') {
+                    cout<<"after: "<<sql_stmt<<endl;
                     string result = readSQL(sql_stmt);
                     sql_stmt = "";
                     printf("\n");
                 }
+                else if(temp!='\r'){
+                    sql_stmt+=temp;
+                }
+//                cout<<"before: "<<sql_stmt<<endl;
+//                else {
+//                        cout<<"else: "<<temp<<" "<<temp<<endl;
+//                };
 //                printf("%s",result.c_str());
             }
         }
@@ -1048,7 +1060,6 @@ public:
             printf("file doesn't exist\n");
             system("ls");
         }
-        fin.close();
         return  "";
     }
     RC searchRIDListByWhereClause(Expr* whereclause, map<RID,int> & rid_list , RM_FileHandle &fileHandle , int numIndent, char* tableName) {
@@ -1924,7 +1935,7 @@ public:
                         }
                     }
                     //如果查找列是索引列，并且是等号查找，并且不是模糊查找，则按索引查找
-                    if(false && (col_type == ColType::INDEX || col_type == ColType::UNIQUE || col_type == ColType::PRIMARY) && op == CompOp::EQ_OP) {
+                    if(true && (col_type == ColType::INDEX || col_type == ColType::UNIQUE || col_type == ColType::PRIMARY) && op == CompOp::EQ_OP) {
                         printf("index search\n");
                         IX_IndexScan* indexScan = new IX_IndexScan();
                         string indexName = fileAttr->getIndexName(tableName,left_col.colName.c_str());

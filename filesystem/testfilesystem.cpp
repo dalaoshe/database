@@ -37,62 +37,62 @@ int test_parse(int argc, char **argv){
     DatabaseSystem myDB;
 
     if(argv[1][0]=='0') {
-        string sqlStmt;
+        string sql_stmt;
         //freopen("out.txt","w",stdout);
-        while(true)
+        char temp;
+        char quit[4]={' ',' ',' ',' '};
+        while(scanf("%c",&temp))
         {
-            char sql[500000];
-            cin.getline(sql, 500000);
-            string temp_sqlStmt = string(sql);
+            for(int i=3;i>0;--i){
+                quit[i-1] = quit[i];
+            }
+            quit[3]=temp;
+            if(temp=='\n'&&sql_stmt[sql_stmt.length()-1]==';') {
+                cout<<"sql: "<<sql_stmt<<endl;
+                myDB.readSQL(sql_stmt);
+                sql_stmt = "";
+                printf("\n");
+            }
+            else if(temp!='\r'){
+                sql_stmt+=temp;
+                if(sql_stmt=="quit")
+                    return 0;
+            }
 
-            if(temp_sqlStmt.substr(0,4) == string("quit")) {
-                break;
-            }
-            else if(temp_sqlStmt[temp_sqlStmt.length()-1] != ';'){
-                sqlStmt += " "+temp_sqlStmt;
-                continue;
-            }
-            else{
-                sqlStmt += " "+temp_sqlStmt;
-                printf("sql: %s\n",sqlStmt.c_str());
-                cout<<myDB.readSQL(sqlStmt);
-                cout<<endl<<endl;
-                sqlStmt = "";
-            }
         }
     }
     else if (argv[1][0]=='1'){
 //        myDB.readSQLfile( "test_example/create.sql");
-//        cout<<myDB.readSQLfile("test_example/publisher.sql");
-//        cout<<myDB.readSQLfile("test_example/customer.sql");
-//        cout<<myDB.readSQLfile("test_example/book.sql");
-//        cout<<myDB.readSQLfile("test_example/orders.sql");
-        string sqlStmt;
-        while(true)
+        string sql_stmt;
+        //freopen("out.txt","w",stdout);
+        char temp;
+        char input[4]={' ',' ',' ',' '};
+        bool isFile = false;
+        while(scanf("%c",&temp))
         {
-            char sql[4096];
-            cin.getline(sql, 4096);
-            string temp_sqlStmt = string(sql);
-
-            if(temp_sqlStmt.substr(0,4) == string("quit")) {
-                break;
+//            cout<<sql_stmt<<endl;
+            for(int i=3;i>0;--i){
+                input[i-1] = input[i];
             }
-            else if(temp_sqlStmt[temp_sqlStmt.length()-1] != ';'){
-                sqlStmt += " "+temp_sqlStmt;
-                continue;
-            }
-            else{
-                sqlStmt += " "+temp_sqlStmt;
-                printf("sql: %s\n",sqlStmt.c_str());
-                if(sqlStmt.substr(1,4)=="file"){
-                    string filename = sqlStmt.substr(6,sqlStmt.length()-7);
-                    myDB.readSQLfile(filename);
-                    sqlStmt = "";
-                    continue;
+            input[3]=temp;
+            if(temp=='\n'&&sql_stmt[sql_stmt.length()-1]==';') {
+                cout<<"sql: "<<sql_stmt<<endl;
+                if(isFile){
+                    isFile = false;
+                    myDB.readSQLfile(sql_stmt.substr(5,sql_stmt.length()-6));
+                    sql_stmt = "";
+                }else{
+                    myDB.readSQL(sql_stmt);
+                    sql_stmt = "";
+                    printf("\n");
                 }
-                cout<<myDB.readSQL(sqlStmt);
-                cout<<endl<<endl;
-                sqlStmt = "";
+            }
+            else if(temp!='\r'){
+                sql_stmt+=temp;
+                if(sql_stmt=="quit")
+                    return 0;
+                if(sql_stmt=="file")
+                    isFile = true;
             }
         }
     }
