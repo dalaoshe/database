@@ -98,7 +98,7 @@ public:
                         bucket.writeback();
                         this->bpm->markDirty(bucket_index);
                         //创建新的指针桶
-                        bucket_page = this->bpm->allocPage(fileID, page_num, bucket_index);
+                        bucket_page = this->bpm->getPage(fileID, page_num, bucket_index);
                         //初始化该指针桶页信息
                         bucket = BucketPageManager(bucket_page,key_offset,key_byte_size,index_byte_size,
                                                    page_header_size,key_type,max_num,min_num,Pointer(page_num,page_header_size));
@@ -115,16 +115,20 @@ public:
                 else if(index_type == IndexType::id){
                     //如果是无效id项则重置为有效
                     if(index_tag == IndexType::invalid) {
+                        cout<<"change invalid to valid"<<endl;
                         node->setPointerTag(i,IndexType::valid);
+                        node->setPointer(i+1,pointer);
                         node->writeback();
                         this->bpm->markDirty(index);
                         delete node;
                         return RC(0);
                     }
 
+
+
                     int bucket_index;
                     Pointer bucket_pointer(page_num,page_header_size);
-                    BufType bucket_page = this->bpm->allocPage(fileID, page_num, bucket_index);
+                    BufType bucket_page = this->bpm->getPage(fileID, page_num, bucket_index);
                     BucketPageManager bucket = BucketPageManager(bucket_page,key_offset,key_byte_size,index_byte_size,
                                                                  page_header_size,key_type,max_num,min_num,bucket_pointer);
                     bucket.initBucketPageInfo();
@@ -147,6 +151,7 @@ public:
                 }
             }
             else {
+                cout<<"insert pointer<"<<pointer.pid<<","<<pointer.offset<<"> to pointer<"<<node->pointer.pid<<","<<node->index_num<<","<<node->max_num<<">"<<endl;
                 node->insertKey(k,pointer,IndexType::id,tag);
                 solveOverflow(*node,index,path);
                 delete node;
@@ -162,15 +167,18 @@ public:
         //递归基，不再上溢直接写回缓存标记脏页
       //  printf("solve overflow \n");
         if (!node.overflow()) {
+            cout<<"overflow end node.pid: "<<node.pointer.pid<<endl;
             node.writeback();
             this->bpm->markDirty(index);
+
             return RC(0);
         }
+        cout<<"overflow begin node.pid: "<<node.pointer.pid<<endl;
         //分裂的轴点
         int split = node.getSplit();
         //获取新的索引节点页并初始化该页的信息
         int new_index;
-        BufType new_page = this->bpm->allocPage(fileID, page_num, new_index);
+        BufType new_page = this->bpm->getPage(fileID, page_num, new_index);
         Node new_node = Node(new_page,key_offset,key_byte_size,index_byte_size,page_header_size,key_type,max_num,min_num,Pointer(page_num, page_header_size));
         new_node.isleaf = node.isleaf;
         new_node.index_num = 0;
@@ -207,7 +215,7 @@ public:
         int pIndex;
         if (path.size() == 0) {
             //如果原节点没有父亲则新建
-            BufType pPage = this->bpm->allocPage(fileID, page_num, pIndex);
+            BufType pPage = this->bpm->getPage(fileID, page_num, pIndex);
             p = Node(pPage, key_offset, key_byte_size, index_byte_size, page_header_size, key_type, max_num, min_num, Pointer(page_num, page_header_size));
             p.isleaf = false;
             p.index_num = 0;
@@ -217,11 +225,10 @@ public:
             //新生成的父节点的最左孩子为分裂前的节点
             p.setPointer(1,node.pointer);
             //关联父子节点
-            //node.parent_pointer = new_node.parent_pointer = p.pointer;
         } else {
             BufType pPage = this->bpm->getPage(fileID,path[path.size()-1].pid,pIndex);
+            p = Node(pPage, key_offset, key_byte_size, index_byte_size, page_header_size, key_type, max_num, min_num, Pointer(path[path.size()-1].pid, page_header_size));
             path.pop_back();
-            p = Node(pPage, key_offset, key_byte_size, index_byte_size, page_header_size, key_type, max_num, min_num, Pointer(page_num, page_header_size));
         }
 
         //将分裂的字节点数据写回缓存
@@ -345,6 +352,7 @@ public:
         node = new Node(page,key_offset,key_byte_size,index_byte_size,page_header_size,key_type,max_num,min_num,pointer);
         while(!node->isLeaf()) {
             int i = node->search(k);
+            //cout<<"currente pid: "<<node->pointer.pid<<" i: "<<i<<endl;
             path.push_back(pointer);
             pointer = node->getPointer(i);
             page = bpm->getPage(fileID,pointer.pid,pageIndexInbpm);
@@ -490,7 +498,7 @@ public:
                     index_byte_size = key_offset + key_byte_size + 8 + 4,
                     page_header_size = INDEX_PAGE_HEADER_SIZE;//TODO page_header_size definition where?
                 //每页能存的最多索引数为页大小-页头大小-3个预留索引长度 / 索引长度
-                max_num = (PAGE_SIZE - page_header_size - index_byte_size * 3) / index_byte_size;
+                max_num = (PAGE_SIZE - page_header_size - index_byte_size * 4) / index_byte_size;
                 //最少为最多的一半
                 min_num = max_num / 2;
                 //初始化根页页号pid为1,页数为2
