@@ -840,6 +840,29 @@ public:
         }
         return list;
     }
+
+    void printData(char* data,string colName){
+        AttrType attrType = this->getColValueType(colName);
+        switch (attrType) {
+            case INT: {//int
+                int val = (*((int *) data));
+                printf("%-10d|\t", val);
+                break;
+            }
+            case FLOAT: {//float
+                float val = (*((float *) data));
+                printf("%-10f|\t", val);
+                break;
+            }
+            case STRING: {//string
+                printf("%-30s|\t", data);
+                break;
+            }
+            default: {
+                printf("error\n");
+            }
+        }
+    }
 };
 
 

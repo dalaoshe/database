@@ -409,32 +409,10 @@ public:
                 printSelectStatementInfo((SelectStatement*)stmt, 0);
                 printf("select options\n");
 
-
-
                 vector<Expr::OperatorType> operates;
                 vector<columnDef> ope_columns;
                 vector<columnDef> no_columns;
                 SelectStatement* selectStatement = (SelectStatement*)stmt;
-
-                /**
-                * TEST Join
-                */
-                if(((SelectStatement*)stmt)->fromTable->type == kTableCrossProduct) {
-                    TableRef* table = ((SelectStatement*)stmt)->fromTable;
-                    N_Table_Params* params = new N_Table_Params();
-                    for (TableRef* tbl : *table->list) {
-                        printf("table name: %s\n",tbl->name);
-                        params->addTable(tbl->name);
-
-                    }
-                    params->init(this,this->recordManager);
-                    printf("begin search\n");
-                    params->getAssociationSearchResult(selectStatement->whereClause);
-                    printf("search okn\n\n\n\n\n\n\n\n");
-                    params->printTest();
-                    return "";
-                }
-
 
                 //获取要选取的列名(表名.列名 表名或者列名默认为""空串)
                 for (Expr* expr : *selectStatement->selectList){
@@ -506,6 +484,24 @@ public:
                             return "error";
                         }
                     }
+                }
+
+                /**
+                * TEST Join
+                */
+                if(((SelectStatement*)stmt)->fromTable->type == kTableCrossProduct) {
+                    TableRef* table = ((SelectStatement*)stmt)->fromTable;
+                    N_Table_Params* params = new N_Table_Params();
+                    for (TableRef* tbl : *table->list) {
+                        printf("table name: %s\n",tbl->name);
+                        params->addTable(tbl->name);
+                    }
+                    params->init(this,this->recordManager);
+                    printf("begin search\n");
+                    params->getAssociationSearchResult(selectStatement->whereClause);
+                    printf("search ok\n\n\n\n\n\n\n\n");
+                    params->printTest(no_columns);
+                    return "";
                 }
 
                 //获取要选取的表名
@@ -716,7 +712,7 @@ public:
 
                 }
                 //非聚集查询与聚集查询分开输出
-                //非聚集查询
+                //非分组聚集查询
                 else {
                     int no_column_size = no_columns.size();
                     if (no_column_size != 0) {
@@ -754,7 +750,6 @@ public:
                                 offset = fileAttr->getColValueOffset(no_columns[i].colName);
                                 data = record.getData(offset);
                                 int col_index = fileAttr->getColIndex(no_columns[i].colName);
-
                                 // printf("%d\n",col_index);
                                 if (record.isNULL(col_index)) {
                                     printf("null  \t");
@@ -2198,23 +2193,54 @@ public:
             }
         }
 
-        void printAll(ResultList list) {
+        void printAll(ResultList list,vector<columnDef>& no_columns) {
+            if(no_columns.size()==1&&no_columns[0].colName=="*"){
+                no_columns.clear();
+                for(int i=0;i<this->fileAttrList.size();++i){
+                    int attrSize = this->fileAttrList[i]->key_name.size();
+                    for(int j=0;j<attrSize;++j){
+                        columnDef temp_col;
+                        temp_col.tableName = this->table_list[i];
+                        temp_col.colName = this->fileAttrList[i]->key_name[j];
+                        no_columns.push_back(temp_col);
+                    }
+                }
+            }
+            for(columnDef i:no_columns){
+                printf("%s.%s     |",i.tableName.c_str(),i.colName.c_str());
+            }
+            printf("\n");
             for(int i = 0; i < list.size(); ++i) {
                 Result result = list[i];
-                printf("number %d: \n",i);
-                for(int j = 0; j < result.size(); ++j) {
-                    RID rid = result[j];
-                    RM_FileAttr* fileAttr = this->fileAttrList[j];
-                    RM_FileHandle* fileHandle = this->fileHandleList[j];
+//                printf("number %d: \n",i);
+                for(int k=0;k<no_columns.size();++k){
+                    RM_FileAttr* fileAttr;
+                    RM_FileHandle* fileHandle;
+                    columnDef cur_col = no_columns[k];
                     Record record;
-                    fileHandle->getRec(rid,record);
-                    fileAttr->printRecordInfo(record.getData());
+                    for(int j = 0; j < result.size(); ++j) {
+                        if(this->table_list[j]==cur_col.tableName){
+                            RID rid = result[j];
+                            fileAttr = this->fileAttrList[j];
+                            int  offset = fileAttr->getColValueOffset(cur_col.colName);
+                            fileHandle = this->fileHandleList[j];
+                            fileHandle->getRec(rid,record);
+                            char* data = record.getData(offset);
+                            int col_index = fileAttr->getColIndex(cur_col.colName);
+                            if (record.isNULL(col_index)) {
+                                printf("null  \t");
+                            } else {
+                                fileAttr->printData(data,cur_col.colName);
+                            }
+                            break;
+                        }
+                    }
                 }
-                printf("\n\n");
+                printf("\n");
             }
         }
 
-        void printTest() {
+        void printTest(vector<columnDef>& no_columns) {
             Result result;
             ResultList list;
             for(int j = 0 ; j < this->table_record_list[0]->size(); ++j) {
@@ -2222,9 +2248,8 @@ public:
             }
             //this->getAllResult(0,0,result,list);
             cout<<"found: "<<list.size()<<endl;
-            this->printAll(list);
+            this->printAll(list,no_columns);
         }
-
 
     };
 };
