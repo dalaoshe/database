@@ -15,6 +15,19 @@
 #include <cstring>
 #include <map>
 #include <values.h>
+/*
+ * map按value排序
+ */
+typedef pair<string, int> PAIR;
+bool cmp_by_value(const PAIR& lhs, const PAIR& rhs) {
+    return lhs.second < rhs.second;
+}
+
+struct CmpByValue {
+    bool operator()(const PAIR& lhs, const PAIR& rhs) {
+        return lhs.second > rhs.second;
+    }
+};
 
 using namespace std;
 using namespace hsql;
@@ -356,8 +369,8 @@ public:
             }
             case kStmtSelect:{
                 //打印语句信息
-                printSelectStatementInfo((SelectStatement*)stmt, 0);
-                printf("select options\n");
+                //printSelectStatementInfo((SelectStatement*)stmt, 0);
+                //printf("select options\n");
 
                 vector<Expr::OperatorType> operates;
                 vector<columnDef> ope_columns;
@@ -442,14 +455,26 @@ public:
                 if(((SelectStatement*)stmt)->fromTable->type == kTableCrossProduct) {
                     TableRef* table = ((SelectStatement*)stmt)->fromTable;
                     N_Table_Params* params = new N_Table_Params();
+                    map<string,int> tableMap;
+
                     for (TableRef* tbl : *table->list) {
-                        printf("table name: %s\n",tbl->name);
-                        params->addTable(tbl->name);
+                  //      printf("table name: %s\n",tbl->name);
+                        tableMap.insert(pair<string,int>(tbl->name,0));
+//                        params->addTable(tbl->name);
+                    }
+                    //按在表达式中的约束排序，出现次数最多先查
+                    params->firgureTableTime(selectStatement->whereClause,tableMap);
+                    vector<PAIR> name_score_vec(tableMap.begin(), tableMap.end());
+                    sort(name_score_vec.begin(), name_score_vec.end(), CmpByValue());
+
+                    for(int t = 0 ; t < name_score_vec.size(); ++t) {
+                  //      printf("table name: %s\n",name_score_vec[t].first.c_str());
+                        params->addTable(name_score_vec[t].first);
                     }
                     params->init(this,this->recordManager);
-                    printf("begin search\n");
+                  //  printf("begin search\n");
                     params->getAssociationSearchResult(selectStatement->whereClause);
-                    printf("search ok\n\n\n\n\n\n\n\n");
+                   // printf("search ok\n\n\n\n\n\n\n\n");
                     params->printTest(no_columns);
                     return "";
                 }
@@ -464,10 +489,7 @@ public:
                         filenames.push_back((*selectStatement->fromTable->list)[i]->getName());
                     }
                 }
-//                string filename = selectStatement->fromTable->getName();
                 RM_FileHandle fileHandle;
-                //TODO 多表!!!!目前只查询打开了一个表
-                printf("filename: %s   size: %lu\n",filenames[0].c_str(),filenames.size());
                 //获取rm handle
                 recordManager->openFile(filenames[0].c_str(),fileHandle);
                 BufType fileHeader = fileHandle.getFileHeader();
@@ -787,7 +809,7 @@ public:
                 map<RID,int>rid_list;
                 this->searchRIDListByWhereClause(updateStatement->where,rid_list,fileHandle,0,updateStatement->table->name);
                 map<RID, int>::iterator it;
-                printf("update rid size %lu\n",rid_list.size());
+               // printf("update rid size %lu\n",rid_list.size());
 
                 //更新记录
                 for (it = rid_list.begin(); it != rid_list.end(); ++it) {
@@ -801,7 +823,7 @@ public:
                         char* col_name = ((*updateStatement->updates)[i])->column;
                         //要更新的新值
                         Expr* value = ((*updateStatement->updates)[i])->value;
-                        printf("update col name %s\n",col_name);
+                       // printf("update col name %s\n",col_name);
                         AttrType value_type = fileAttr->getColValueType(col_name);
                         int offset = fileAttr->getColValueOffset(col_name);
                         int value_size = fileAttr->getColValueSize(col_name);
@@ -817,17 +839,17 @@ public:
                         switch(value_type) {
                             case AttrType::INT: {
                                 *(int*)data = value->ival;
-                                printf("new INT  %d %d\n",(int)value->ival,*(int*)data);
+                               // printf("new INT  %d %d\n",(int)value->ival,*(int*)data);
                                 break;
                             }
                             case AttrType::FLOAT: {
                                 *(float*)data = value->fval;
-                                printf("new FLOAT  %f %f\n",value->fval,*(float *)data);
+                              //  printf("new FLOAT  %f %f\n",value->fval,*(float *)data);
                                 break;
                             }
                             case AttrType::STRING: {
                                 strcpy(data, value->name);
-                                printf("update string %s %s\n",value->name,data);
+                              //  printf("update string %s %s\n",value->name,data);
                                 break;
                             }
                             default: {
@@ -1462,9 +1484,10 @@ public:
 
                     //要获取的待查表的数据信息
                     RM_FileAttr *fileAttr = new RM_FileAttr();
-                    int offset, value_size, col_index;
-                    AttrType value_type;
-                    ColType col_type;
+                    int offset = 0, value_size = 0, col_index = 0;
+                    AttrType value_type = AttrType::INT;
+                    ColType col_type = ColType::NORMAL;
+
                     char *col_values;
 
                     if(left_col.tableName == tableName) {
@@ -1557,6 +1580,7 @@ public:
 
                                 //否则进行查找
                                 if (right_col.tableName == tableName) {//表达式右侧为待查项，需要重新构造数据信息
+                                 //   cout<<"target in right "<<right_col.colName<<endl;
                                     //获取表头信息
                                     fileAttr->getFileAttrFromPageHeader(fileHandle.getFileHeader());
                                     //数据行的偏移量
@@ -1598,20 +1622,28 @@ public:
                                 return RC(-1);
                         }
                     }
+                    cout<<"search"<<" "<<col_type<<endl;
                     //如果查找列是索引列，并且是等号查找，并且不是模糊查找，则按索引查找
                     if(true && (col_type == ColType::INDEX || col_type == ColType::UNIQUE || col_type == ColType::PRIMARY) && op == CompOp::EQ_OP) {
-                        printf("index search\n");
+                     //   printf("index search\n");
+                     //   cout<<"association search: "<<left_col.tableName<<"."<<left_col.colName<<"="<<right_col.tableName<<"."<<right_col.colName<<endl;
+                     //   cout<<*((int*)(col_values))<<endl;
                         IX_IndexScan* indexScan = new IX_IndexScan();
-                        string indexName = fileAttr->getIndexName(tableName,left_col.colName.c_str());
+                        string col_name = left_col.colName;
+                        if(left_col.tableName != tableName) col_name = right_col.colName;
+                        string indexName = fileAttr->getIndexName(tableName,col_name);
                         if(this->indexHandleMap.count(indexName)==0) {
                             IX_IndexHandle *indexHandle = new IX_IndexHandle();
                             printf("index filename %s\n", indexName.c_str());
                             this->db->indexManager->OpenIndex(indexName.c_str(), *indexHandle);
                             this->indexHandleMap.insert(pair<string,IX_IndexHandle*>(indexName,indexHandle));
                         }
+
                         IX_IndexHandle *indexHandle = this->indexHandleMap[indexName];
                         indexScan->OpenScan(indexHandle,op,col_values);
+                        cout<<"begin index search"<<endl;
                         indexScan->getAllRecord(rid_list);
+                        cout<<"index search ok, find: "<<rid_list.size()<<endl;
                         delete indexScan;
                     }
                     else {
@@ -1920,7 +1952,50 @@ public:
             this->printAll(list,no_columns);
         }
 
+        RC firgureTableTime(Expr* whereclause, map<string,int>& tableMap){
+            //没有where语句则直接返回
+            if (whereclause == NULL) {
+                return RC();
+            }
+            CompOp op = EQ_OP;
+
+            switch (whereclause->op_type) {
+                case Expr::NOT:
+                case Expr::LESS_EQ:
+                case Expr::GREATER_EQ:
+                case Expr::NOT_EQUALS:
+                case Expr::LIKE:
+                case Expr::ISNULL:
+                case Expr::SIMPLE_OP: {
+                    //= < >
+                    //递归基，符号两边为列名和属性值，进行查找
+                    columnDef left_col,right_col;
+                    if(whereclause->expr->table!=NULL)
+                        left_col.tableName = whereclause->expr->table;
+                    tableMap[left_col.tableName]++;
+                    if(whereclause->isTableAssosicateOP()) {
+                        if (whereclause->expr2->table != NULL)
+                            right_col.tableName = whereclause->expr2->table;
+                        tableMap[right_col.tableName]++;
+                    }
+                    break;
+                }
+                    //符号两边为表达式，继续递归根据符号取交、并、补
+                case Expr::AND:
+                case Expr::OR: {
+                    RC l_rc = firgureTableTime(whereclause->expr,tableMap);
+                    RC r_rc = firgureTableTime(whereclause->expr2,tableMap);
+                    break;
+                }
+                default: {
+                    printf("%d\n", whereclause->op_type);
+                    break;
+                }
+            }
+            return RC();
+        }
     };
+
 };
 
 

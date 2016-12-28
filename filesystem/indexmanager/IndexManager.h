@@ -380,7 +380,7 @@ public:
 
         if(node->exist(k)) {
             int i = node->search(k);
-          //  printf("i:%d \n", i);
+           // printf("i:%d \n", i);
             pointer = node->getPointer(i);
             type = node->getPointerType(i);
             tag = node->getTag(i-1);
@@ -388,7 +388,7 @@ public:
             return RC();
         }
 
-        //printf("no exist index! %d\n",*(int*)key);
+      //  printf("no exist index! %d\n",*(int*)key);
         delete node;
         return RC(-1);
     };
