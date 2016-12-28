@@ -38,10 +38,11 @@ int test_parse(int argc, char **argv){
 
     if(argv[1][0]=='0') {
         string sqlStmt;
+        //freopen("out.txt","w",stdout);
         while(true)
         {
-            char sql[4096];
-            cin.getline(sql, 4096);
+            char sql[500000];
+            cin.getline(sql, 500000);
             string temp_sqlStmt = string(sql);
 
             if(temp_sqlStmt.substr(0,4) == string("quit")) {

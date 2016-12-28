@@ -38,6 +38,7 @@ class DatabaseSystem {
     RecordManager* recordManager;
     FileManager* fm;
     BufPageManager* bpm;
+    int tt;
 public:
     IndexManager* indexManager;
 
@@ -46,7 +47,7 @@ public:
         this->bpm = new BufPageManager(fm);
         this->indexManager = new IndexManager(fm,bpm);
         this->recordManager = new RecordManager(fm,bpm);
-
+        tt = 0;
         system_manager = new SM_Manager(indexManager,recordManager,fm,bpm);
     }
 
@@ -65,7 +66,7 @@ public:
             for (hsql::SQLStatement* stmt : result->statements) {
                 // process the statements...
                 string result = processSQL(stmt);
-                printf("%s",result.c_str());
+              //  printf("%s",result.c_str());
                 return result;
             }
         } else {
@@ -189,15 +190,15 @@ public:
                 int entry_size = values->size();
                 //获取要插入的表名
                 string filename = insertStmt->tableName;
-                RM_FileHandle fileHandle;
+                RM_FileHandle* fileHandle = new RM_FileHandle();
                 //打开RM_Handle
-                recordManager->openFile(filename.c_str(),fileHandle);
-                BufType fileHeader = fileHandle.getFileHeader();
+                recordManager->openFile(filename.c_str(),*fileHandle);
+                BufType fileHeader = fileHandle->getFileHeader();
                 //获取表头信息
                 RM_FileAttr* fileAttr = new RM_FileAttr();
                 fileAttr->getFileAttrFromPageHeader(fileHeader);
                 //申请插入的数据块data缓冲区
-                BufType data = new unsigned int[fileHandle.getFileHeader()[TABLE_RECORD_INT_SIZE_INT_OFFSET]];
+                BufType data = new unsigned int[fileHandle->getFileHeader()[TABLE_RECORD_INT_SIZE_INT_OFFSET]];
                 //打开主键约束Handle（如果存在主键约束）
                 IX_IndexHandle* primaryHandle;
                 if (fileAttr->getPrimaryKeyName() != "") {
@@ -227,11 +228,65 @@ public:
                     this->indexManager->OpenIndex(indexName.c_str(), *indexHandle);
                     indexHandleList.push_back(indexHandle);
                 }
+                tt += entry_size;
+                cout <<"size: "<< tt <<endl;
+                //return "";
 
                 //插入每一项
                 for(int s = 0 ; s < entry_size; ++s) {
                     //获取数据信息
                     string info = fileAttr->buildValidInsertData(insertStmt, data, (*values)[s]);
+
+                    if(s % 4500 == 1 && s > 1) {
+
+                        delete fileHandle;
+                        fileHandle = new RM_FileHandle;
+                        recordManager->openFile(filename.c_str(),*fileHandle);
+                        fileAttr->getFileAttrFromPageHeader(fileHandle->getFileHeader());
+
+                        if (fileAttr->getPrimaryKeyName() != "") {
+                            //获取主键约束的列名
+                            primaryHandle->close();
+                            delete primaryHandle;
+
+                            primaryHandle = new IX_IndexHandle;
+                            string primary_col_name = fileAttr->getPrimaryKeyName();
+                            string indexName = fileAttr->getIndexName(insertStmt->tableName, primary_col_name);
+                            this->indexManager->OpenIndex(indexName.c_str(), *primaryHandle);
+
+                        }
+
+                        for (int i = 0; i < list.size(); ++i) {
+                            //获取索引的列名
+                            string index_col_name = list[i];
+                            //检查类型，如果是UNIQUE和PRIMARY则不插入
+                            ColType colType = fileAttr->getColType(index_col_name);
+                            if (colType == ColType::UNIQUE || colType == ColType::PRIMARY) {
+                                continue;
+                            }
+                            //获取该索引的handle
+                            IX_IndexHandle* indexHandle = indexHandleList[i];
+                            indexHandle->close();
+                            delete indexHandle;
+                        }
+
+                        for(int i = 0 ; i < list.size() ; ++i) {
+                            //获取索引的列名
+                            string index_col_name = list[i];
+                            //创建handle
+                            string indexName = fileAttr->getIndexName(insertStmt->tableName, index_col_name);
+                            //获取索引列类型，排除PRIMARY和UNIQUE
+                            ColType colType = fileAttr->getColType(index_col_name);
+                            if (colType == ColType::UNIQUE || colType == ColType::PRIMARY) {
+                                indexHandleList.push_back(NULL);
+                                continue;
+                            }
+                            //打开该索引的Handle
+                            IX_IndexHandle* indexHandle = new IX_IndexHandle;
+                            this->indexManager->OpenIndex(indexName.c_str(), *indexHandle);
+                            indexHandleList[i] = indexHandle;
+                        }
+                    }
 
                     if (info != "") {
                         printf("%s", info.c_str());
@@ -254,7 +309,7 @@ public:
                             printf("primary key: %s, dumplicate\n", fileAttr->getPrimaryKeyName().c_str());
                         } else {//插入数据，并插入索引
                             RID rid;
-                            fileHandle.insertRec(data, rid);
+                            fileHandle->insertRec(data, rid);
                             printf("rid<%d,%d> id %d\n", rid.pid, rid.sid,*((int*)(key)));
                             //插入主键索引
                             primaryHandle->InsertEntry(key, rid);
@@ -288,7 +343,7 @@ public:
                     } else {//没有主键和UNIQUE约束，直接插入数据项和索引项
                         RID rid;
                         //插入数据项
-                        fileHandle.insertRec(data, rid);
+                        fileHandle->insertRec(data, rid);
                         Record record;
                         record.setData(data);
                         record.setRID(rid);
@@ -318,6 +373,7 @@ public:
                         }
                     }
                 }
+
                 if (fileAttr->getPrimaryKeyName() != "") {
                     //获取主键约束的列名
                     primaryHandle->close();
@@ -339,6 +395,7 @@ public:
                 }
                 delete [] data;
                 delete fileAttr;
+                delete fileHandle;
                 return "";
             }
             case kStmtSelect:{
