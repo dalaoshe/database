@@ -48,7 +48,7 @@ int test_parse(int argc, char **argv){
             }
             quit[3]=temp;
             if(temp=='\n'&&sql_stmt[sql_stmt.length()-1]==';') {
-                cout<<"sql: "<<sql_stmt<<endl;
+              //  cout<<"sql: "<<sql_stmt<<endl;
                 myDB.readSQL(sql_stmt);
                 sql_stmt = "";
                 printf("\n");
@@ -76,7 +76,7 @@ int test_parse(int argc, char **argv){
             }
             input[3]=temp;
             if(temp=='\n'&&sql_stmt[sql_stmt.length()-1]==';') {
-                cout<<"sql: "<<sql_stmt<<endl;
+                //cout<<"sql: "<<sql_stmt<<endl;
                 if(isFile){
                     isFile = false;
                     myDB.readSQLfile(sql_stmt.substr(5,sql_stmt.length()-6));
