@@ -4,6 +4,7 @@
 
 #ifndef RC_H
 #define RC_H
+
 class RC {
     int c;
 public:
@@ -15,6 +16,9 @@ public:
     }
     bool equal(RC r) {
         return this->c == r.c;
+    }
+    int getc(){
+        return c;
     }
 };
 #endif //RC_H

@@ -177,7 +177,7 @@ public:
                     }
                 }
 
-                printf("operate； %d\n", operate);
+//                printf("operate； %d\n", operate);
                 //根据列名获取数据类型
                 AttrType type = this->getColValueType(colname);
                 //建立op-values对
@@ -321,22 +321,17 @@ public:
     }
 
     void showFileAttrInfo() {
-        printf("page_ID: %d\n",page_ID);
-        printf("record_int_size: %d\n",record_int_size);
-        printf("attr_count: %d\n",attr_count);
-        printf("free_pageID: %d\n",free_pageId);
-        printf("last_pageID: %d\n",last_page_id);
+//        printf("page_ID: %d\n",page_ID);
+//        printf("record_int_size: %d\n",record_int_size);
+//        printf("attr_count: %d\n",attr_count);
+//        printf("free_pageID: %d\n",free_pageId);
+//        printf("last_pageID: %d\n",last_page_id);
         for(int i=0; i < this->attr_count; ++i) {
-
-
-            printf("attr_name: %s \t",this->key_name[i].c_str());
-            printf("attr_type: %s\t ",this->getColValTypeName(this->key_type[i]).c_str()) ;
-            printf("attr_length: %d\t ",this->value_length[i] - RECORD_COL_PAD) ;
-            printf("attr_not_null: %d\t ",this->not_null[i]) ;
-            printf("col_type: %s\t\n ",this->getColTypeName(this->col_type[i]).c_str());
-
-
-
+            printf("attr_name: %-15s\t",this->key_name[i].c_str());
+            printf("attr_type: %-15s\t ",this->getColValTypeName(this->key_type[i]).c_str()) ;
+            printf("attr_length: %-5d\t ",this->value_length[i] - RECORD_COL_PAD) ;
+            printf("attr_not_null: %-4d\t ",this->not_null[i]) ;
+            printf("col_type: %-10s\t\n ",this->getColTypeName(this->col_type[i]).c_str());
         }
     }
     /**
@@ -453,7 +448,7 @@ public:
                                 break;
                             }
                             else {
-                                printf("insert float: %f\n",*((float *) begin));
+//                                printf("insert float: %f\n",*((float *) begin));
                                 break;
                             }
                         } else {
@@ -468,7 +463,7 @@ public:
                             }
                             else {
 
-                                printf("insert int: %d\n", *((int *) begin));
+//                                printf("insert int: %d\n", *((int *) begin));
                                 break;
                             }
                         }
@@ -482,7 +477,7 @@ public:
                                 record.setNotNULL(col_index);
                                 break;
                             }else {
-                                printf("insert string: %s\n",begin);
+//                                printf("insert string: %s\n",begin);
                                 break;
                             }
                         }

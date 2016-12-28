@@ -206,7 +206,7 @@ public:
         BufType page = this->bpm->getPage(fileID,1,index);
         pm->resetPage(page);
 
-        printf("fileId: %d record_int_size %d\n",fileID,this->record_int_size);
+//        printf("fileId: %d record_int_size %d\n",fileID,this->record_int_size);
         bpm->markDirty(this->headIndex);
         return RC();
     }
@@ -311,16 +311,16 @@ public:
 
             //获取数据行长度
             int record_int_size = page_header[TABLE_RECORD_INT_SIZE_INT_OFFSET];
-            printf("init header! record_int_size: %d\n",record_int_size);
+//            printf("init header! record_int_size: %d\n",record_int_size);
             //初始化第一个数据页信息（pid=1）
             BufType first_data_page = bpm->getPage(fileID,1,index);
             PageManager* pm = new PageManager();
             pm->allocateFreePage(first_data_page,1,record_int_size);
             bpm->markDirty(index);
             bpm->writeBack(index);
-            printf("allocate first page! record_int_size: %d\n",record_int_size);
+//            printf("allocate first page! record_int_size: %d\n",record_int_size);
             delete pm;
-            printf("create! record_int_size: %d\n",record_int_size);
+//            printf("create! record_int_size: %d\n",record_int_size);
             return RC();
         }
         return RC(-1);

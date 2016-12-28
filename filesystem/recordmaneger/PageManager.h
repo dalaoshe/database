@@ -47,7 +47,7 @@ public:
             char slot = 0;
             buf[i] = slot;
         }
-        printf("clean bitmap ok\n");
+//        printf("clean bitmap ok\n");
 
         this->bitmap->setBitmap(this->page);
         //初始化页头信息

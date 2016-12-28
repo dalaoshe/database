@@ -115,7 +115,7 @@ public:
                 else if(index_type == IndexType::id){
                     //如果是无效id项则重置为有效
                     if(index_tag == IndexType::invalid) {
-                        cout<<"change invalid to valid"<<endl;
+//                        cout<<"change invalid to valid"<<endl;
                         node->setPointerTag(i,IndexType::valid);
                         node->setPointer(i+1,pointer);
                         node->writeback();
@@ -151,7 +151,7 @@ public:
                 }
             }
             else {
-                cout<<"insert pointer<"<<pointer.pid<<","<<pointer.offset<<"> to pointer<"<<node->pointer.pid<<","<<node->index_num<<","<<node->max_num<<">"<<endl;
+//                cout<<"insert pointer<"<<pointer.pid<<","<<pointer.offset<<"> to pointer<"<<node->pointer.pid<<","<<node->index_num<<","<<node->max_num<<">"<<endl;
                 node->insertKey(k,pointer,IndexType::id,tag);
                 solveOverflow(*node,index,path);
                 delete node;
@@ -167,13 +167,13 @@ public:
         //递归基，不再上溢直接写回缓存标记脏页
       //  printf("solve overflow \n");
         if (!node.overflow()) {
-            cout<<"overflow end node.pid: "<<node.pointer.pid<<endl;
+//            cout<<"overflow end node.pid: "<<node.pointer.pid<<endl;
             node.writeback();
             this->bpm->markDirty(index);
 
             return RC(0);
         }
-        cout<<"overflow begin node.pid: "<<node.pointer.pid<<endl;
+//        cout<<"overflow begin node.pid: "<<node.pointer.pid<<endl;
         //分裂的轴点
         int split = node.getSplit();
         //获取新的索引节点页并初始化该页的信息
@@ -401,7 +401,7 @@ public:
     RC close() {
         this->ForcePages();
 
-        printf("index handle close\n");
+//        printf("index handle close\n");
         bpm->close();
         fm->closeFile(fileID);
         delete bpm;
@@ -513,12 +513,12 @@ public:
                 this->bpm->markDirty(index);
                 this->bpm->writeBack(index);
                 fm->closeFile(fileID);
-                printf("create success \n");
-                return RC();
+//                printf("create success \n");
+                return RC(CreateIndexOK);
             }
-            printf("create success but open fail\n");
+            printf("create index success but open fail\n");
         }
-        printf("create error\n");
+        printf("create index error\n");
         //return;
         return RC(-1);
     };
@@ -577,7 +577,7 @@ public:
             indexHandle.init();
             return RC(0);
         }
-        printf("error\n");
+        printf("open Index error\n");
         return RC(-1);
     };
 

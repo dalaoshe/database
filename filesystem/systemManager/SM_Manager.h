@@ -105,6 +105,7 @@ public:
         fout.close();
         DBlist.clear();
     }
+
     RC createDB    (const char *dbname) {                //create database
         //save old path
         char old_path[100];
@@ -113,13 +114,13 @@ public:
 
         vector<string>::iterator it = find(DBlist.begin(), DBlist.end(), string(dbname));
         if(it != DBlist.end()){
-            printf("Error: The DataBase %s has already exist.\n",dbname);
+            printf("Error: The DataBase %s has already exist.\n\n",dbname);
             return RC(-1);
         }
         changeWorkingDir(DBRootPath.c_str());
         int status = mkdir(dbname,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
         if(status ==-1){
-            printf("ERROR: Create database %s failed\n",dbname);
+            printf("ERROR: Create database %s failed\n\n",dbname);
             return RC(-1);
         }
 
@@ -147,10 +148,9 @@ public:
         fout2.close();
         DBlist.push_back(string(dbname));
         printf("Create database %s succeed\n",dbname);
-
         //back to original working dir
         changeWorkingDir(old_path);
-        return RC(0);
+        return RC(CreateDBOK);
     }
     RC dropDB      (const char *dbname){                //drop database
         char old_path[100];
@@ -164,7 +164,7 @@ public:
         ////cout<<dir<<endl;
         DIR* Dir = opendir(dir.c_str());
         if(Dir == NULL){
-            printf("Error: The DataBase %s does not exist.\n",dbname);
+            printf("Error: The DataBase %s does not exist.\n\n",dbname);
             return RC(-1);
         }
         //remove file
@@ -184,7 +184,7 @@ public:
         //remove dirctory
         int res = rmdir(dir.c_str());
         if(res == -1){
-            printf("Error: drop DataBase: %s failed.\n",dbname);
+            printf("Error: drop DataBase: %s failed.\n\n",dbname);
             return RC(-1);
         }
         //remove from DBlist
@@ -197,22 +197,21 @@ public:
         for(int i=0;i<db_count;++i){
             fout1<<DBlist[i]<<endl;
         }
-        printf("Drop DataBase: %s succeed.\n",dbname);
-
+        printf("Drop DataBase: %s succeed.\n\n",dbname);
         changeWorkingDir(old_path);
-        return RC();
+        return RC(DropDBOK);
     }
 
     RC OpenDB      (const char *dbName){                // Open database
         //not exist
         vector<string>::iterator it = find(DBlist.begin(), DBlist.end(), string(dbName));
         if(it == DBlist.end()){
-            printf("Error: The DataBase %s doesn't exist.\n",dbName);
+            printf("Error: The DataBase %s doesn't exist.\n\n",dbName);
             return RC(-1);
         }
         //already open
         if((string)dbName == currentDB){
-            printf("Error: The DataBase %s already open.\n",dbName);
+            printf("Error: The DataBase %s already open.\n\n",dbName);
             return RC(-1);
         }
         CloseDB();
@@ -231,11 +230,11 @@ public:
 
         }
         fin.close();
-        printf("use database %s succeed ! tablelist size: %ld\n",dbName,TableList.size());
-        return RC();
+        printf("use database %s succeed ! tablelist size: %ld\n\n",dbName,TableList.size());
+        return RC(UseDBOK);
     }
 
-    RC CloseDB     (){// Close database
+    RC CloseDB(){// Close database
         if(!currentDB.empty()){
             ofstream fout(TABLELIST);
             unsigned long size = TableList.size();
@@ -271,15 +270,16 @@ public:
         printf("+\n");
         printf("database size : %d\n",count);
         printf("\n");
+        printf("\n");
     }
 
     RC CreateTable (const char *relName,                // Create relation
                     int        attrCount,
                     RM_FileAttr   *attributes){
-        printf("tablelist size: %ld\n",TableList.size());
+        printf("table count: %ld\n",TableList.size());
         vector<string>::iterator it = find(TableList.begin(), TableList.end(), string(relName));
         if(it != TableList.end()){
-            printf("Error: The table %s already exists.\n",relName);
+            printf("Error: The table %s already exists.\n\n",relName);
             return RC(-1);
         }
         int size = 0;
@@ -299,6 +299,8 @@ public:
         for(int i=0;i<table_size;++i){
             fout<<TableList[i]<<endl;
         }
+        printf("create table %s succeed\n\n",relName);
+        return RC(CreateTableOK);
     }
 
     RC DropTable   (const char *relName) {               // Destroy relation
@@ -321,7 +323,7 @@ public:
                 //删除索引
                 if(!ixm->DestroyIndex(indexName.c_str()).equal(RC())) {
                     printf("delete index error\n");
-                    return RC(-1);
+                    return RC(DeleteIndexW);
                 }
             }
             //删除表
@@ -344,7 +346,8 @@ public:
         for(int i=0;i<table_size;++i){
             fout<<TableList[i]<<endl;
         }
-
+        printf("Drop table %s succeed\n",relName);
+        return RC(DropTableOK);
     }
 
     RC ShowTables(){
@@ -364,6 +367,8 @@ public:
         printf("+\n");
         printf("table size : %d\n",count);
         printf("\n");
+        printf("\n");
+        return RC(ShowTablesOK);
     }
 
     RC CreateIndex (const char *relName,                // Create index
@@ -372,7 +377,7 @@ public:
         //TODO 已经创建了索引（索引文件存在）
         //检查表是否存在
         if(!checkFileExist(relName)){
-            printf("the TABLE %s doesn't exist",relName);
+            printf("the TABLE %s doesn't exist\n",relName);
             return RC(-1);
         }
         RM_FileHandle fileHandle;
@@ -384,7 +389,7 @@ public:
         //检查索引文件是否已经建立
         string indexName = fileAttr->getIndexName(relName,attrName);
         if(checkFileExist(indexName.c_str())){
-            printf("the TABLE.INDEX %s has exist",indexName.c_str());
+            printf("the TABLE.INDEX %s has exist\n",indexName.c_str());
             delete fileAttr;
             return RC(-1);
         }
@@ -413,16 +418,16 @@ public:
             map<RID, char*>::iterator it;
             for (it = rid_list.begin(); it != rid_list.end(); ++it) {
                 RID rid = it->first;
-                printf("insert rid<%d,%d> id %d\t\n",rid.pid,rid.sid,*((int*)(it->second)));
+//                printf("insert rid<%d,%d> id %d\t\n",rid.pid,rid.sid,*((int*)(it->second)));
                 indexHandle.InsertEntry(it->second,rid);
             }
             indexHandle.close();
 
             delete fileScan;
             delete fileAttr;
-            return RC();
+            printf("create index %s on %s succeed\n ",attrName,relName);
+            return RC(CreateIndexOK);
         }
-
         return RC(-1);
     }
     RC DropIndex   (const char *relName,                // Destroy index
@@ -435,10 +440,6 @@ public:
             printf("the table %s doesn't exist\n",relName);
             return RC(-1);
         }
-
-
-
-
         RM_FileHandle fileHandle;
         rmm->openFile(relName,fileHandle);
         BufType fileHeader = fileHandle.getFileHeader();
@@ -466,7 +467,8 @@ public:
             //删除索引文件成功，修改头页对应列的列类型
             fileAttr->setColType(attrName,colType);
             delete fileAttr;
-            return RC();
+            printf("Drop Index %s on %s succeed\n",attrName,relName);
+            return RC(DropIndexOK);
         }
     }
 

@@ -110,4 +110,38 @@ typedef char Boolean;
 #define NULL 0
 #endif
 
+#define CreateDBOK 1
+#define CreateDBW 2
+#define DropDBOK 3
+#define DropDBW 4
+#define CreateTableOK 5
+#define CreateTableW 6
+#define DropTableOK 7
+#define DropTableW 8
+#define UseDBOK 9
+#define UseDBW 10
+#define InsertOK 11
+#define DeleteOK 12
+#define UpdateOK 13
+#define SelectOK 14
+#define CreateIndexOK 15
+#define DropIndexOK 16
+#define ShowDBOK 17
+#define ShowTablesOK 18
+
+#define DumplicatePrimaryKey 19
+#define InsertW 20
+#define DeleteW 21
+#define UpdateW 22
+#define SelectW 23
+#define InvalidInput 24
+#define InsertPrimaryW 25
+#define InsertIndexW 26
+#define OperateW 27
+#define DataTypeW 28
+#define CheckW 29
+#define DeleteIndexW 30
+#define SearchByWhereOK 31
+
+
 #endif
