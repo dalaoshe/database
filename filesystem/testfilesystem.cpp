@@ -29,62 +29,48 @@
 #include "parse/sqlhelper.h"
 #include "parse/sql/statements.h"
 #include "systemManager/DatabaseSystem.h"
-
+#include <sys/time.h>
 using namespace std;
 using namespace hsql;
 
 int test_parse(int argc, char **argv){
     DatabaseSystem myDB;
-
-    if(argv[1][0]=='0') {
+    string SQL = "sql>";
+    string SQL_CONTINUE = "--->";
+    cout<<SQL;
+    if (argv[1][0]=='1'){
         string sql_stmt;
-        //freopen("out.txt","w",stdout);
-        char temp;
-        char quit[4]={' ',' ',' ',' '};
-        while(scanf("%c",&temp))
-        {
-            for(int i=3;i>0;--i){
-                quit[i-1] = quit[i];
-            }
-            quit[3]=temp;
-            if(temp=='\n'&&sql_stmt[sql_stmt.length()-1]==';') {
-              //  cout<<"sql: "<<sql_stmt<<endl;
-                myDB.readSQL(sql_stmt);
-                sql_stmt = "";
-                printf("\n");
-            }
-            else if(temp!='\r'){
-                sql_stmt+=temp;
-                if(sql_stmt=="quit")
-                    return 0;
-            }
-
-        }
-    }
-    else if (argv[1][0]=='1'){
-//        myDB.readSQLfile( "test_example/create.sql");
-        string sql_stmt;
-        //freopen("out.txt","w",stdout);
         char temp;
         char input[4]={' ',' ',' ',' '};
         bool isFile = false;
         while(scanf("%c",&temp))
         {
-//            cout<<sql_stmt<<endl;
             for(int i=3;i>0;--i){
                 input[i-1] = input[i];
             }
             input[3]=temp;
-            if(temp=='\n'&&sql_stmt[sql_stmt.length()-1]==';') {
-                //cout<<"sql: "<<sql_stmt<<endl;
-                if(isFile){
-                    isFile = false;
-                    myDB.readSQLfile(sql_stmt.substr(5,sql_stmt.length()-6));
-                    sql_stmt = "";
-                }else{
-                    myDB.readSQL(sql_stmt);
-                    sql_stmt = "";
-                    printf("\n");
+            if(temp=='\n') {
+                if(sql_stmt[sql_stmt.length()-1]==';') {
+                    if (isFile) {
+                        isFile = false;
+                        time_t start,finish;
+                        start = clock();
+                        myDB.readSQLfile(sql_stmt.substr(5, sql_stmt.length() - 6));
+                        finish = clock();
+                        cout<<"file exe ok, cost time:"<<((finish-start) / 1000.0)<<" ms"<<endl;
+                        sql_stmt = "";
+                    } else {
+                        time_t start,finish;
+                        start = clock();
+                        myDB.readSQL(sql_stmt);
+                        finish = clock();
+                        cout<<"sql exe ok, cost time:"<<((finish-start) / 1000.0)<<" ms"<<endl;
+                        sql_stmt = "";
+                    }
+                    cout << SQL;
+                }
+                else {
+                    cout<<SQL_CONTINUE;
                 }
             }
             else if(temp!='\r'){
@@ -95,6 +81,9 @@ int test_parse(int argc, char **argv){
                     isFile = true;
             }
         }
+    }
+    else {
+        cout<<"fail to exe"<<endl;
     }
 }
 

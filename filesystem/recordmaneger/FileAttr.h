@@ -420,7 +420,7 @@ public:
 
             }
         }
-        else {//没有列名，一一对应插入
+        else {// INSERT INTO TABLE VALUES(a,b,....),(a,b...).....;
             int num = (*values).size();
             int attr_type, not_null, attr_len;
             //获取写入数据的写入首地址
@@ -448,8 +448,8 @@ public:
                                 break;
                             }
                             else {
-//                                printf("insert float: %f\n",*((float *) begin));
-                                break;
+                                 return string("CHECK ERROR, ") + string(attr_name) + " dissatisfy CHECK RESTRAIN \n";
+//                                break;
                             }
                         } else {
                             return string("insert type error, ") + string(attr_name) + " need " + this->getColValTypeName((AttrType)attr_type) + " type\n";
@@ -463,8 +463,8 @@ public:
                             }
                             else {
 
-//                                printf("insert int: %d\n", *((int *) begin));
-                                break;
+                               return string("CHECK ERROR, ") + string(attr_name) + " dissatisfy CHECK RESTRAIN \n";
+  //                              break;
                             }
                         }
                         else {
@@ -477,15 +477,26 @@ public:
                                 record.setNotNULL(col_index);
                                 break;
                             }else {
-//                                printf("insert string: %s\n",begin);
-                                break;
+                                return string("CHECK ERROR, ") + string(attr_name) + " dissatisfy CHECK RESTRAIN \n";
+                             //   break;
                             }
                         }
                         else {
                             return string("insert type error, ") + string(attr_name) + " need " + this->getColValTypeName((AttrType)attr_type) + " type\n";
                         }
+                    case kExprLiteralNull: {
+                        if(not_null) {
+
+                            return string("insert type error, ") + string(attr_name) + " cannot be null\n";
+                        }
+                        else {
+                            cout<<"Insert NULL value into"<<attr_name<<endl;
+                            record.setNULL(col_index);
+                        }
+                        break;
+                    }
                     default:
-                        return "type error\n";
+                        return "Type error, only support INT,FLOAT,VARCHAR and NULL\n";
                 }
                 //下一列
                 begin += attr_len;
@@ -515,14 +526,10 @@ public:
 
         //只要满足一项即可
         bool valid = (check_count == 0);
-     //   printf("check_count %s %d\n",key_name[col_index].c_str(),check_count);
         for(int i = 0; i < check_count; ++i) {
             CompOp op = (CompOp)record[ATTR_CHECK_ENTRY_OP_INT_OFFSET];
             char* target_v = (char*)(record + ATTR_CHECK_ENTRY_VALUES_INT_OFFSET);
             char* rec_v = values;
-
-       //     printf("check entry %s %s op %d type %s\n",target_v,rec_v,op,this->getColValTypeName(attrType).c_str());
-      //      printf("check entry %d %d op %d type %s\n",*target_v,*rec_v,op,this->getColValTypeName(attrType).c_str());
             if(attrType == AttrType::FLOAT) {
                 switch (op) {
                     case EQ_OP: {
@@ -620,10 +627,8 @@ public:
                     }
                     case LIKE_OP: {
                         int len = strlen(target_v);
-                        //printf("pattern %s len %d\n",target_v,len);
                         string pattern = string(target_v).substr(1,len-2);
                         string rec = string(rec_v);
-                        //cout<<"rec "<<rec<<" "<<pattern<<endl;
                         if(rec.find(pattern) == string::npos) {
                             valid = false;
                         }
@@ -640,7 +645,7 @@ public:
             char* temp = (((char*)record) + value_len + ATTR_CHECK_ENTRY_PADDING);
             record = ((BufType)temp) + ATTR_CHECK_ENTRY_VALUES_INT_OFFSET;
             char* b = (char*)record;
-            printf("%ld\n",b-s);
+            //printf("%ld\n",b-s);
         }
         return valid;
     }

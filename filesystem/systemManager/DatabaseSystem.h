@@ -47,7 +47,6 @@ class DatabaseSystem {
     RecordManager* recordManager;
     FileManager* fm;
     BufPageManager* bpm;
-    int tt;
 public:
     IndexManager* indexManager;
 
@@ -56,7 +55,6 @@ public:
         this->bpm = new BufPageManager(fm);
         this->indexManager = new IndexManager(fm,bpm);
         this->recordManager = new RecordManager(fm,bpm);
-        tt = 0;
         system_manager = new SM_Manager(indexManager,recordManager,fm,bpm);
     }
 
@@ -70,12 +68,9 @@ public:
 
         // check whether the parsing was successful
         if (result->isValid) {
-//            printf("Parsed successfully!\n");
-//            printf("Number of statements: %lu\n", result->size());
             for (hsql::SQLStatement* stmt : result->statements) {
                 // process the statements...
                 RC result = processSQL(stmt);
-              //  printf("%s",result.c_str());
                 switch (result.getc()){
                     case InvalidInput:
                         printf("invalid expression\n");
@@ -141,24 +136,7 @@ public:
             }
             case kStmtCreate:{
                 CreateStatement* createStatement = (CreateStatement*)stmt;
-//                printCreateStatementInfo(createStatement,0);
                 int attrCount = createStatement->columns->size();
-//                for(int i=0;i<attrCount;++i){
-//                    if((*(createStatement->columns))[i]->check_expr!=NULL){
-//                        continue;
-//                    }
-//                    printf("attr_name: %s \t  ",(*(createStatement->columns))[i]->name);
-//                    printf("attr_type: %d \t  ",(*(createStatement->columns))[i]->type);
-//                    printf("attr_size: %d \t  ",(int)(*(createStatement->columns))[i]->size);
-//                    printf("attr_not_null: %d\t",(*(createStatement->columns))[i]->not_null);
-//                    if(createStatement->primary_key == NULL) continue;
-//                    if(strcmp((*(createStatement->columns))[i]->name,createStatement->primary_key) == 0) {
-//                        printf("attr_col_type: %s\t\n","PRIMARY");
-//                    }
-//                    else{
-//                        printf("attr_col_type: %s\t\n","NORMAL");
-//                    }
-//                }
                 RM_FileAttr* attr = new RM_FileAttr[1];
                 for(int i=0;i<attrCount;++i) {
                     if((*(createStatement->columns))[i]->check_expr!=NULL){
@@ -177,11 +155,9 @@ public:
 
                     if( createStatement->primary_key != NULL && strcmp((*(createStatement->columns))[i]->name,createStatement->primary_key) == 0) {
                         attr->col_type.push_back(ColType::PRIMARY);
-//                        printf("attr_col_type: %s\t\n","PRIMARY");
                     }
                     else{
                         attr->col_type.push_back(ColType::NORMAL);
-                        //printf("attr_col_type: %s\t\n","NORMAL");
                     }
                 }
                 RC r1 = system_manager->CreateTable(createStatement->tableName,attrCount,attr);
@@ -200,9 +176,8 @@ public:
             }
             case kStmtInsert:{
                 //打印语句信息
-                //printInsertStatementInfo((InsertStatement*)stmt, 0);
-                //printf("insert options\n");
-
+                string INSERT = "Insert ROW:";
+                int counter = 0;
                 InsertStatement* insertStmt = (InsertStatement*)stmt;
                 std::vector<std::vector<Expr*>*>* values = insertStmt->values;
                 //该语句中所有要插入项的总数
@@ -247,10 +222,6 @@ public:
                     this->indexManager->OpenIndex(indexName.c_str(), *indexHandle);
                     indexHandleList.push_back(indexHandle);
                 }
-                tt += entry_size;
-//                cout <<"size: "<< tt <<endl;
-                //return "";
-
                 //插入每一项
                 for(int s = 0 ; s < entry_size; ++s) {
                     //获取数据信息
@@ -258,6 +229,7 @@ public:
                     if (info != "") {
                         printf("%s", info.c_str());
                         delete fileAttr;
+                        cout<<INSERT<<counter<<endl;
                         return RC(InvalidInput);
                     }
                     //检查是否有主键约束
@@ -273,6 +245,7 @@ public:
                         if (primaryHandle->searchEntry(key, p, type, tag).equal(RC()) &&
                             tag == IndexType::valid) {//如果存在,报错。
                             printf("primary key: %s, dumplicate\n", fileAttr->getPrimaryKeyName().c_str());
+                            cout<<INSERT<<counter<<endl;
                             return RC(DumplicatePrimaryKey);
                         } else {//插入数据，并插入索引
                             RID rid;
@@ -283,6 +256,7 @@ public:
 //                                printf("insert primary %s rid<%d,%d> ok\n", primary_col_name.c_str(), rid.pid, rid.sid);
                             } else {
                                 printf("insert primary %s rid<%d,%d> fail\n", primary_col_name.c_str(), rid.pid, rid.sid);
+                                cout<<INSERT<<counter<<endl;
                                 return RC(InsertPrimaryW);
                             }
                             //插入其余索引
@@ -303,13 +277,13 @@ public:
                                 int index_col_offset = fileAttr->getColValueOffset(index_col_name.c_str());
                                 //获取待插入的索引码值
                                 char *index_key = record.getData(index_col_offset);
-                                if (indexHandle->InsertEntry(index_key, record.getRID()).equal(RC())) {
-//                                    printf("insert index %s rid<%d,%d> ok\n", index_col_name.c_str(), record.getRID().pid, record.getRID().sid);
-                                } else {
+                                if (!indexHandle->InsertEntry(index_key, record.getRID()).equal(RC())) {
                                     printf("insert index %s rid<%d,%d> fail\n", index_col_name.c_str(), record.getRID().pid, record.getRID().sid);
+                                    cout<<INSERT<<counter<<endl;
                                     return RC(InsertIndexW);
                                 }
                             }
+                            counter++;
                         }
                     } else {//没有主键和UNIQUE约束，直接插入数据项和索引项
                         RID rid;
@@ -318,7 +292,6 @@ public:
                         Record record;
                         record.setData(data);
                         record.setRID(rid);
-//                        printf("rid<%d,%d>\n", rid.pid, rid.sid);
                         //插入索引项
                         for (int i = 0; i < list.size(); ++i) {
                             //获取索引的列名
@@ -334,13 +307,13 @@ public:
                             int index_col_offset = fileAttr->getColValueOffset(index_col_name.c_str());
                             //获取待插入的索引码值
                             char *index_key = record.getData(index_col_offset);
-                            if (indexHandle->InsertEntry(index_key, record.getRID()).equal(RC())) {
-//                                printf("insert index %s rid<%d,%d> ok\n", index_col_name.c_str(), record.getRID().pid, record.getRID().sid);
-                            } else {
+                            if (!indexHandle->InsertEntry(index_key, record.getRID()).equal(RC())) {
                                 printf("insert index %s rid<%d,%d> fail\n", index_col_name.c_str(), record.getRID().pid, record.getRID().sid);
+                                cout<<INSERT<<counter<<endl;
                                 return RC(InsertIndexW);
                             }
                         }
+                        counter ++;
                     }
                 }
 
@@ -363,6 +336,7 @@ public:
                     indexHandle->close();
                     delete indexHandle;
                 }
+                cout<<INSERT<<counter<<endl;
                 delete [] data;
                 delete fileAttr;
                 delete fileHandle;
@@ -370,9 +344,7 @@ public:
             }
             case kStmtSelect:{
                 //打印语句信息
-                //printSelectStatementInfo((SelectStatement*)stmt, 0);
-                //printf("select options\n");
-
+                string FIND = "Find ROW:";
                 vector<Expr::OperatorType> operates;
                 vector<columnDef> ope_columns;
                 vector<columnDef> no_columns;
@@ -382,14 +354,12 @@ public:
                 for (Expr* expr : *selectStatement->selectList){
                     switch (expr->type) {
                         case kExprStar: {
-//                            printf("columns: *\n");
                             columnDef temp_col;
                             temp_col.colName = "*";
                             no_columns.push_back(temp_col);
                             break;
                         }
                         case kExprColumnRef: {
-//                            printf("%s %s\n", expr->table, expr->name);
                             columnDef temp_col;
                             if(expr->table!=NULL)
                                 temp_col.tableName = expr->table;
@@ -442,7 +412,6 @@ public:
                             }
                             break;
                         }
-                            // case kExprTableColumnRef: inprint(expr->table, expr->name, numIndent); break;
                         default: {
                             fprintf(stderr, "Unrecognized expression type %d\n", expr->type);
                             return RC(InvalidInput);
@@ -451,7 +420,7 @@ public:
                 }
 
                 /**
-                * TEST Join
+                * MultiTable Search Join
                 */
                 if(((SelectStatement*)stmt)->fromTable->type == kTableCrossProduct) {
                     TableRef* table = ((SelectStatement*)stmt)->fromTable;
@@ -459,9 +428,7 @@ public:
                     map<string,int> tableMap;
 
                     for (TableRef* tbl : *table->list) {
-                  //      printf("table name: %s\n",tbl->name);
                         tableMap.insert(pair<string,int>(tbl->name,0));
-//                        params->addTable(tbl->name);
                     }
                     //按在表达式中的约束排序，出现次数最多先查
                     params->firgureTableTime(selectStatement->whereClause,tableMap);
@@ -469,13 +436,10 @@ public:
                     sort(name_score_vec.begin(), name_score_vec.end(), CmpByValue());
 
                     for(int t = 0 ; t < name_score_vec.size(); ++t) {
-                  //      printf("table name: %s\n",name_score_vec[t].first.c_str());
                         params->addTable(name_score_vec[t].first);
                     }
                     params->init(this,this->recordManager);
-                  //  printf("begin search\n");
                     params->getAssociationSearchResult(selectStatement->whereClause);
-                   // printf("search ok\n\n\n\n\n\n\n\n");
                     params->printTest(no_columns);
                     return RC(0);
                 }
@@ -499,10 +463,8 @@ public:
                 fileAttr->getFileAttrFromPageHeader(fileHeader);
                 map<RID,int>rid_list;
                 this->searchRIDListByWhereClause(selectStatement->whereClause,rid_list,fileHandle,0,selectStatement->fromTable->getName());
-//                printf("rid size %lu\n",rid_list.size());
                 if(selectStatement->groupBy!=NULL){
                     string groupby = (*selectStatement->groupBy->columns)[0]->name;
-//                    printf("groupby: %s\n",groupby.c_str());
                     vector<map<RID,int>> group_rid_list;
                     vector<int>int_values;
                     vector<float>float_values;
@@ -774,11 +736,14 @@ public:
                         }
                     }
                 }
+                cout<<FIND<<rid_list.size()<<endl;
                 delete fileAttr;
                 return RC(SelectOK);
             }
             case kStmtUpdate:{
-               // printf("update options\n");
+                string FIND = "Find ROW:";
+                string UPDATE = "UPDATE ROW:";
+                int counter = 0;
                 UpdateStatement* updateStatement = (UpdateStatement*)stmt;
                 //获取要选取的表名
                 string filename = updateStatement->table->name;
@@ -810,8 +775,6 @@ public:
                 map<RID,int>rid_list;
                 this->searchRIDListByWhereClause(updateStatement->where,rid_list,fileHandle,0,updateStatement->table->name);
                 map<RID, int>::iterator it;
-               // printf("update rid size %lu\n",rid_list.size());
-
                 //更新记录
                 for (it = rid_list.begin(); it != rid_list.end(); ++it) {
                     RID rid = it->first;
@@ -840,21 +803,17 @@ public:
                         switch(value_type) {
                             case AttrType::INT: {
                                 *(int*)data = value->ival;
-                               // printf("new INT  %d %d\n",(int)value->ival,*(int*)data);
                                 break;
                             }
                             case AttrType::FLOAT: {
                                 *(float*)data = value->fval;
-                              //  printf("new FLOAT  %f %f\n",value->fval,*(float *)data);
                                 break;
                             }
                             case AttrType::STRING: {
                                 strcpy(data, value->name);
-                              //  printf("update string %s %s\n",value->name,data);
                                 break;
                             }
                             default: {
-                                printf("type error %s %s\n",value->name,data);
                                 return RC(DataTypeW);
                             }
                         }
@@ -862,7 +821,8 @@ public:
                         BufType check = fileAttr->page_header + TABLE_CHECK_INT_OFFSET;
                         BufType check_record = check + col_index * ATTR_CHECK_INT_SIZE;
                         if(!fileAttr->checkValues(check_record,data,value_type,value_size)) {
-                            printf("input not satisfy %s\n",col_name);
+                            cout<<string("CHECK ERROR, ") + string(col_name) + " dissatisfy CHECK RESTRAIN \n";
+                            cout<<FIND<<rid_list.size()<<" "<<UPDATE<<counter<<endl;
                             return RC(CheckW);
                         }
 
@@ -877,6 +837,7 @@ public:
                             if((col_type == ColType::UNIQUE || col_type == ColType::PRIMARY) &&
                                 indexHandle->searchEntry(data,p,type,tag).equal(RC()) && tag == IndexType::valid) {//如果存在,报错。
                                 printf("primary key: %s, dumplicate, update fail\n",fileAttr->getPrimaryKeyName().c_str());
+                                cout<<FIND<<rid_list.size()<<" "<<UPDATE<<counter<<endl;
                                 return RC(DumplicatePrimaryKey);
                             }
                             //否则删除索引并插入新的索引
@@ -887,11 +848,13 @@ public:
 //                                    printf("insert index %s %s rid<%d,%d> ok\n",col_name,data,rid.pid,rid.sid);
                                 } else {
                                     printf("insert index %s rid<%d,%d> fail\n",col_name,rid.pid,rid.sid);
+                                    cout<<FIND<<rid_list.size()<<" "<<UPDATE<<counter<<endl;
                                     return RC(InsertIndexW);
                                 }
                             }
                             else {
                                 printf("delete index %s rid<%d,%d> fail\n",col_name,rid.pid,rid.sid);
+                                cout<<FIND<<rid_list.size()<<" "<<UPDATE<<counter<<endl;
                                 return RC(DeleteIndexW);
                             }
                         }
@@ -899,6 +862,7 @@ public:
                     }
                     //所有列的修改完成后修改数据项
                     fileHandle.updateRec(record);
+                    counter++;
                 }
 
                 for (index_handle_it = indexHandleList.begin(); index_handle_it != indexHandleList.end(); ++index_handle_it) {
@@ -908,10 +872,14 @@ public:
                 }
 
                 delete fileAttr;
+                cout<<FIND<<rid_list.size()<<" "<<UPDATE<<counter<<endl;
                 return RC(UpdateOK);
             }
             case kStmtDelete:{
 //                printf("delete options\n");
+                string FIND = "Find ROW:";
+                string DELETE = "DELETE ROW";
+                int counter = 0;
                 DeleteStatement* deleteStatement = (DeleteStatement*)stmt;
                 //获取要选取的表名
                 string filename = deleteStatement->tableName;
@@ -968,6 +936,7 @@ public:
 //                                printf("delete index %s rid<%d,%d> fail\n", index_col_name.c_str(), record.getRID().pid, record.getRID().sid);
                             }
                         }
+                        counter++;
                     }
                     else {
                         printf("delete data rid<%d,%d> fail \n", rid.pid, rid.sid);
@@ -980,7 +949,7 @@ public:
                     indexHandle->close();
                     delete indexHandle;
                 }
-
+                cout<<FIND<<rid_list.size()<<" "<<DELETE<<counter<<endl;
                 delete fileAttr;
                 return RC(DeleteOK);
             }
@@ -998,8 +967,6 @@ public:
      * @return
      */
     string readSQLfile(string filename){
-//        cout<<filename<<endl;
-//        ifstream fin(filename.c_str());
         FILE* fin =fopen(filename.c_str(),"r");
         string sql_stmt = "";
         if(fin){
@@ -1025,9 +992,7 @@ public:
         return  "";
     }
     RC searchRIDListByWhereClause(Expr* whereclause, map<RID,int> & rid_list , RM_FileHandle &fileHandle , int numIndent, char* tableName) {
-        //whereclause type is kExprOperator
         if (whereclause == NULL) {
-//            printf("null where get all record\n");
             RM_FileScan *fileScan = new RM_FileScan();
             fileScan->openScan(&fileHandle, AttrType::FLOAT, 0, 0, CompOp::EQ_OP, NULL, 0);
             fileScan->getAllRecordOfFile(rid_list);
@@ -1055,7 +1020,6 @@ public:
             }
             case Expr::ISNULL: {
                 if(whereclause->op_type == Expr::ISNULL) {
-               //     printf("select null\n");
                     op = ISNULL_OP;
                 }
             }
@@ -1099,13 +1063,11 @@ public:
                             *((int *) col_values) = whereclause->expr2->ival;
                             break;
                         case kExprLiteralString:
-//                            printf("taget: %s\n", whereclause->expr2->name);
                             strcpy(col_values, whereclause->expr2->name);
                             break;
                         case kExprOperator:
                             if(value_type==AttrType::INT) {
                                 *((int *) col_values) = (int)getConstValue(whereclause->expr2);
-//                                printf("expr2_value: %d \n",*((int *) col_values));
                             }
                             else if(value_type==AttrType::FLOAT) {
                                 *((float *) col_values) = getConstValue(whereclause->expr2);
@@ -1121,24 +1083,18 @@ public:
                 }
                 //如果查找列是索引列，并且是等号查找，并且不是模糊查找，则按索引查找
                 if((col_type == ColType::INDEX || col_type == ColType::UNIQUE || col_type == ColType::PRIMARY) && op == CompOp::EQ_OP) {
-//                    printf("index search\n");
                     IX_IndexScan* indexScan = new IX_IndexScan();
                     string indexName = fileAttr->getIndexName(tableName,left_col.colName.c_str());
                     IX_IndexHandle indexHandle;
-//                    printf("index filename %s\n",indexName.c_str());
                     this->indexManager->OpenIndex(indexName.c_str(),indexHandle);
                     indexScan->OpenScan(&indexHandle,op,col_values);
                     indexScan->getAllRecord(rid_list);
-//                    printf("index search over, find:  %d\n",rid_list.size());
                     delete indexScan;
                 }
                 else {
                     RM_FileScan *fileScan = new RM_FileScan();
                     fileScan->openScan(&fileHandle, value_type, value_size, offset, op, col_values, col_index);
-                  //  printf("base search\n");
-                   // printf("op %c\n", whereclause->op_char);
                     fileScan->getAllRecord(rid_list);
-                   // printf("base search ok %c\n", whereclause->op_char);
                     delete fileScan;
                 }
                 delete fileAttr;
@@ -1157,7 +1113,6 @@ public:
                     if (r_it == right.end()) continue;
                     rid_list.insert(pair<RID, int>(it->first, 1));
                 }
-//                printf("AND");
                 return RC();
             }
             case Expr::OR: {
@@ -1177,11 +1132,9 @@ public:
                     if (r_it != right.end()) continue;
                     rid_list.insert(pair<RID, int>(it->first, 1));
                 }
-//                printf("OR");
                 return RC();
             }
             case Expr::NOT: {
-//                printf("NOT");
                 break;
             }
             default: {
@@ -1196,14 +1149,12 @@ public:
     double printSUM(map<RID,int>& rid_list,RM_FileAttr* fileAttr,string colname,RM_FileHandle& fileHandle){
         double sum = 0;
         for (map<RID, int>::iterator it = rid_list.begin(); it != rid_list.end(); ++it) {
-//                                printf("type: %d\n",fileAttr->getColValueType(ope_columns[i]));
             if (fileAttr->getColValueType(colname) != AttrType::INT &&
                 fileAttr->getColValueType(colname) != AttrType::FLOAT) {
                 printf("column type error\n");
                 return -1;
             }
             RID rid = it->first;
-//                                printf("rid<%d,%d> \t", rid.pid, rid.sid);
             Record record;
             fileHandle.getRec(rid, record);
             int offset = fileAttr->getColValueOffset(colname);
@@ -1227,7 +1178,6 @@ public:
                 return -1;
             }
             RID rid = it->first;
-//            printf("rid<%d,%d> \t", rid.pid, rid.sid);
             Record record;
             fileHandle.getRec(rid, record);
             int offset = fileAttr->getColValueOffset(colname);
@@ -1945,6 +1895,7 @@ public:
             //this->getAllResult(0,0,result,list);
 //            cout<<"found: "<<list.size()<<endl;
             this->printAll(list,no_columns);
+            cout<<"Find ROW: "<<list.size()<<endl;
         }
 
         RC firgureTableTime(Expr* whereclause, map<string,int>& tableMap){
