@@ -452,6 +452,7 @@ public:
 //                                break;
                             }
                         } else {
+                            cout<<"float error\n";
                             return string("insert type error, ") + string(attr_name) + " need " + this->getColValTypeName((AttrType)attr_type) + " type\n";
                         }
                     case kExprLiteralInt:
@@ -468,6 +469,7 @@ public:
                             }
                         }
                         else {
+                            cout<<"int error: "<<expr->ival<<"\n";
                             return string("insert type error, ") + string(attr_name) + " need " + this->getColValTypeName((AttrType)attr_type) + " type\n";
                         }
                     case kExprLiteralString:
@@ -482,6 +484,7 @@ public:
                             }
                         }
                         else {
+                            cout<<"string error\n";
                             return string("insert type error, ") + string(attr_name) + " need " + this->getColValTypeName((AttrType)attr_type) + " type\n";
                         }
                     case kExprLiteralNull: {

@@ -535,11 +535,12 @@ public:
                 Record record;
                 if( this->fileHandle->getRec(rid,record).equal(RC(0)) ) {
                     //存在这条记录，判断是否符合要求
-                   // printf("check rid<%d,%d>\n",rid.pid,rid.sid);
+                    //printf("check rid<%d,%d>\n",rid.pid,rid.sid);
                     if(this->checkRecord(record)) {
                         //该记录符合要求
                         rid_list.insert(pair<RID, int>(rid, 1));
                     }
+                    record.cleanData();
                 }
             }
         }
@@ -562,6 +563,7 @@ public:
                 Record record;
                 if( this->fileHandle->getRec(rid,record).equal(RC(0)) ) {
                     rid_list.insert(pair<RID, int>(rid, 1));
+                    record.cleanData();
                 }
             }
         }
@@ -581,6 +583,7 @@ public:
                 if( this->fileHandle->getRec(rid,record).equal(RC(0)) ) {
                     char* key = record.getData(this->attrOffset);
                     rid_list.insert(pair<RID, char*>(rid, key));
+                    //record.cleanData();
                 }
             }
         }

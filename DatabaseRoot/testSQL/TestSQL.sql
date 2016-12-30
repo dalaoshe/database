@@ -41,7 +41,19 @@ SELECT book.title,orders.quantity FROM book,orders WHERE book.id=orders.book_id 
 
 
 #EXPAND 
-8. 
+8.
+drop table book; 
+CREATE TABLE book (
+  id int(10) NOT NULL,
+  title varchar(100) NOT NULL,
+  authors varchar(200),
+  publisher_id int(10) NOT NULL,
+  copies int(10),
+  pages int(10)
+);
+SELECT book.title,orders.quantity FROM book,orders WHERE book.id=orders.book_id AND orders.quantity>8;
+CREATE INDEX book(id);
+SELECT book.title,orders.quantity FROM book,orders WHERE book.id=orders.book_id AND orders.quantity>8;
 
 CREATE INDEX customer(name);
 DROP INDEX customer(name);
@@ -86,6 +98,6 @@ SELECT MIN(quantity) FROM orders;# 求出所有订单中最小订购量。
 13.
 
 SELECT customer_id,SUM(quantity) FROM orders GROUP BY customer_id;# 求出所有订单中每个顾客订购书的总量。
-SELECT customer_id,SUM(quantity) FROM orders GROUP BY quantity;# 求出所有订单中每个顾客订购书的总量。
-SELECT publisher_id,title,authors,AVG(copies) FROM book GROUP BY publisher_id;
+SELECT quantity,SUM(quantity) FROM orders GROUP BY quantity;# 求出所有订单中每个顾客订购书的总量。
+SELECT publisher_id,AVG(copies) FROM book GROUP BY publisher_id;
 

@@ -514,7 +514,7 @@ public:
                 this->bpm->writeBack(index);
                 fm->closeFile(fileID);
 //                printf("create success \n");
-                return RC(CreateIndexOK);
+                return RC();
             }
             printf("create index success but open fail\n");
         }

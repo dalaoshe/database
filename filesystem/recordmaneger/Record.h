@@ -105,6 +105,10 @@ public:
      //   cout<<"bit: "<<unsigned(a) <<" "<<unsigned(b)<<endl;
         return a == 0;
     }
+
+    void cleanData() {
+        delete [] data;
+    }
 };
 
 #endif //RECORD_H

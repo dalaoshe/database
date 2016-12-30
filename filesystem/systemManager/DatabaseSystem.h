@@ -537,7 +537,7 @@ public:
                         }
 
                     }
-                    printf("%s    \t",groupby.c_str());
+                    printf("%-10s\t",groupby.c_str());
                     for(int i=0;i<ope_columns.size();++i){
                         switch (operates[i]) {
                             case Expr::SUM: {
@@ -562,7 +562,7 @@ public:
                             group_size = int_values.size();
 //                            printf("group size: %d\n",group_size);
                             for(int i=0;i<group_size;++i){
-                                printf("%d    \t",int_values[i]);
+                                printf("%d\t",int_values[i]);
                                 for(int k=0;k<ope_columns.size();++k){
                                     switch (operates[k]) {
                                         case Expr::SUM: {
@@ -715,22 +715,22 @@ public:
                         switch (operates[i]) {
                             case Expr::SUM: {
                                 double sum = printSUM(rid_list, fileAttr, ope_columns[i].colName, fileHandle);
-                                printf("SUN(%s): %lf", ope_columns[i].colName.c_str(), sum);
+                                printf("SUM(%s): %lf\n", ope_columns[i].colName.c_str(), sum);
                                 break;
                             }
                             case Expr::AVG: {
                                 double avg = printAVG(rid_list, fileAttr, ope_columns[i].colName, fileHandle);
-                                printf("AVG(%s): %lf", ope_columns[i].colName.c_str(), avg);
+                                printf("AVG(%s): %lf\n", ope_columns[i].colName.c_str(), avg);
                                 break;
                             }
                             case Expr::MAX: {
                                 double max = printMAX(rid_list, fileAttr, ope_columns[i].colName, fileHandle);\
-                                printf("MAX(%s): %lf", ope_columns[i].colName.c_str(), max);
+                                printf("MAX(%s): %lf\n", ope_columns[i].colName.c_str(), max);
                                 break;
                             }
                             case Expr::MIN: {
                                 double min = printMIN(rid_list, fileAttr, ope_columns[i].colName, fileHandle);
-                                printf("MIN(%s): %lf", ope_columns[i].colName.c_str(), min);
+                                printf("MIN(%s): %lf\n", ope_columns[i].colName.c_str(), min);
                                 break;
                             }
                         }
@@ -1570,7 +1570,7 @@ public:
 //                    cout<<"search"<<" "<<col_type<<endl;
                     //如果查找列是索引列，并且是等号查找，并且不是模糊查找，则按索引查找
                     if(true && (col_type == ColType::INDEX || col_type == ColType::UNIQUE || col_type == ColType::PRIMARY) && op == CompOp::EQ_OP) {
-                     //   printf("index search\n");
+                      //  printf("index search\n");
                      //   cout<<"association search: "<<left_col.tableName<<"."<<left_col.colName<<"="<<right_col.tableName<<"."<<right_col.colName<<endl;
                      //   cout<<*((int*)(col_values))<<endl;
                         IX_IndexScan* indexScan = new IX_IndexScan();
@@ -1594,10 +1594,10 @@ public:
                     else {
                         RM_FileScan *fileScan = new RM_FileScan();
                         fileScan->openScan(&fileHandle, value_type, value_size, offset, op, col_values, col_index);
-//                        printf("base search\n");
+                    //    printf("base search\n");
 //                        printf("op %c\n", whereclause->op_char);
                         fileScan->getAllRecord(rid_list);
-                        // printf("base search ok %c\n", whereclause->op_char);
+                     //    printf("base search ok %c\n", whereclause->op_char);
                         delete fileScan;
                     }
                     delete fileAttr;
@@ -1785,6 +1785,7 @@ public:
                     this->search(0,0,where,NULL,targetMap,targetFileAttrMap,this->fileHandleList[i]);
                 else
                     for(int j = 0 ; j < this->table_record_list[0]->size(); ++j) {
+                        cout<<j<<"/"<<table_record_list[0]->size()<<endl;
                         this->search(0,j,where,NULL,targetMap,targetFileAttrMap,this->fileHandleList[i]);
                     }
 //                printf("search %s ok, find %d record\n\n",this->table_list[i].c_str(),(this->table_record_list[i]->size()));

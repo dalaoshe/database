@@ -418,7 +418,7 @@ public:
             map<RID, char*>::iterator it;
             for (it = rid_list.begin(); it != rid_list.end(); ++it) {
                 RID rid = it->first;
-//                printf("insert rid<%d,%d> id %d\t\n",rid.pid,rid.sid,*((int*)(it->second)));
+             //  printf("insert rid<%d,%d> id %d\t\n",rid.pid,rid.sid,*((int*)(it->second)));
                 indexHandle.InsertEntry(it->second,rid);
             }
             indexHandle.close();
@@ -426,7 +426,7 @@ public:
             delete fileScan;
             delete fileAttr;
             printf("create index %s on %s succeed\n ",attrName,relName);
-            return RC(CreateIndexOK);
+            return RC();
         }
         return RC(-1);
     }
