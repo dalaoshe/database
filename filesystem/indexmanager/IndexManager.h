@@ -8,7 +8,6 @@
 #include "../utils/base.h"
 #include "../fileio/FileManager.h"
 #include "../bufmanager/BufPageManager.h"
-#include "IndexPageManager.h"
 #include "BucketPageManager.h"
 #include "b_plus_tree.h"
 #include <iostream>

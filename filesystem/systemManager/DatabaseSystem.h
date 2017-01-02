@@ -250,10 +250,9 @@ public:
                         } else {//插入数据，并插入索引
                             RID rid;
                             fileHandle->insertRec(data, rid);
-//                            printf("rid<%d,%d> id %d\n", rid.pid, rid.sid,*((int*)(key)));
                             //插入主键索引
                             if(primaryHandle->InsertEntry(key, rid).equal(RC())) {
-//                                printf("insert primary %s rid<%d,%d> ok\n", primary_col_name.c_str(), rid.pid, rid.sid);
+
                             } else {
                                 printf("insert primary %s rid<%d,%d> fail\n", primary_col_name.c_str(), rid.pid, rid.sid);
                                 cout<<INSERT<<counter<<endl;
@@ -802,15 +801,30 @@ public:
                         //获取新的值
                         switch(value_type) {
                             case AttrType::INT: {
-                                *(int*)data = value->ival;
+                                if(value->type == kExprLiteralInt)
+                                    *(int*)data = value->ival;
+                                else {
+                                   cout<<string("UPDATE type error, ") + string(col_name) + " need INT" + " type\n";
+                                    return RC(InvalidInput);
+                                }
                                 break;
                             }
                             case AttrType::FLOAT: {
-                                *(float*)data = value->fval;
+                                if(value->type == kExprLiteralFloat)
+                                     *(float*)data = value->fval;
+                                else {
+                                    cout<<string("UPDATE type error, ") + string(col_name) + " need FLOAT" + " type\n";
+                                    return RC(InvalidInput);
+                                }
                                 break;
                             }
                             case AttrType::STRING: {
-                                strcpy(data, value->name);
+                                if(value->type == kExprLiteralString)
+                                  strcpy(data, value->name);
+                                else {
+                                    cout<<string("UPDATE error, ") + string(col_name) + " need STRING" + " type\n";
+                                    return RC(InvalidInput);
+                                }
                                 break;
                             }
                             default: {

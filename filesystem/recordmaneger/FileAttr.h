@@ -243,15 +243,7 @@ public:
             int value_len = this->value_length[i];
             //记录每一项的可能值
             for(int j = 0 ; j < check_entry_number; ++j) {
-//                char* s = (char*)record;
-//                char* temp = (((char*)record) + value_len);
-//                record = ((BufType)temp) + ATTR_CHECK_ENTRY_VALUES_INT_OFFSET;
-//                char* b = (char*)record;
-//                printf("%d\n",b-s);
-
-                //TODO 获取该项的限制方法，默认为EQUAL
                 CompOp op = check_ops[j];
-                //TODO 获取该项的限制值
                 char* target_v = check_values[j];
                 //定位到这一项
                 char* temp = ((char*)check_record) + (value_len + ATTR_CHECK_ENTRY_PADDING) * j;

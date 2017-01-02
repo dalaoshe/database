@@ -115,7 +115,6 @@ public:
         BufType page = bpm->getPage(fileID,pid,index);
         pm->resetPage(page);
         if(pm->insertRecord(data,rid)) {
-
             bpm->markDirty(index);
             return RC();
         }
@@ -281,13 +280,6 @@ public:
         this->fm = fm;
         this->bpm = bpm;
     }
-    /*
-    * @函数名createFile
-    * @参数name:建立文件名
-    * @参数record_int_size:该文件每个槽位的int长度，规定槽位长度为4字节对齐
-    * 功能:新建一个文件，并初始化文件头页对应的信息写入文件
-    * 返回:成功操作返回RC(0)
-    */
     /**
      *
      * @param name 表名
@@ -311,21 +303,18 @@ public:
 
             //获取数据行长度
             int record_int_size = page_header[TABLE_RECORD_INT_SIZE_INT_OFFSET];
-//            printf("init header! record_int_size: %d\n",record_int_size);
             //初始化第一个数据页信息（pid=1）
             BufType first_data_page = bpm->getPage(fileID,1,index);
             PageManager* pm = new PageManager();
             pm->allocateFreePage(first_data_page,1,record_int_size);
             bpm->markDirty(index);
             bpm->writeBack(index);
-//            printf("allocate first page! record_int_size: %d\n",record_int_size);
             delete pm;
-//            printf("create! record_int_size: %d\n",record_int_size);
             return RC();
         }
         return RC(-1);
     }
-    /*
+    /**
     * @函数名destroyFile
     * @参数name:待删除的文件名
     * 功能:删除一个文件
@@ -337,7 +326,7 @@ public:
         }
         return RC(-1);
     }
-    /*
+    /**
     * @函数名openFile
     * @参数name:待打开的文件名
     * @参数fileHandle:待初始化的文件记录管理操作句柄
@@ -357,16 +346,6 @@ public:
         }
         printf("error\n");
         return RC(-1);
-    }
-    /*
-    * @函数名closeFile
-    * @参数fileHandle:待关闭的文件句柄
-    * 功能:关闭对应的RM_FileHandle
-    * 返回:成功操作返回RC(0)
-    */
-    RC closeFile(RM_FileHandle& fileHandle) {
-        fileHandle.close();
-        return RC();
     }
 };
 
